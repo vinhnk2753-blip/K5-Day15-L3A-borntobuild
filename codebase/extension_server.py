@@ -10,7 +10,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT))
 
 import tracing  # noqa: E402
-from agent import analyze_reviews  # noqa: E402
+from agent import analyze_review_payload  # noqa: E402
 from shopee_reviews import _anonymize_text  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -76,7 +76,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         try:
             request = json.loads(self.rfile.read(length).decode("utf-8"))
-            product_url = request.get("url")
+            product = request.get("product") if isinstance(request.get("product"), dict) else {}
+            product_url = request.get("url") or product.get("url")
             incoming = request.get("reviews")
             if not isinstance(incoming, list) or len(incoming) > 250:
                 raise ValueError("Danh sách review phải có tối đa 250 mục.")
@@ -103,12 +104,11 @@ class Handler(BaseHTTPRequestHandler):
 
             tracing.begin("extension")
             try:
-                result = analyze_reviews(product_url, reviews, {
-                    "counts_complete": None,
-                    "source": "Shopee public review endpoint; completeness not confirmed",
-                    "max_per_star": 50,
-                    "collected_per_star": per_star,
-                })
+                agent_input = dict(request)
+                agent_input["url"] = product_url
+                agent_input["reviews"] = reviews
+                agent_input["counts_by_star"] = per_star
+                result = analyze_review_payload(agent_input)
             finally:
                 tracing.end()
             self._send(200, result)

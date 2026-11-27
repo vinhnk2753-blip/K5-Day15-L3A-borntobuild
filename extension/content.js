@@ -36,6 +36,11 @@
       .json-output { max-height: 48vh; overflow: auto; padding: 10px; margin: 0;
         border-radius: 8px; background: #f5f7f6; color: #24332b; font: 11px/1.45 ui-monospace, monospace;
         white-space: pre; }
+      .agent-title { margin: 14px 0 6px; font-weight: 700; }
+      .agent-output { max-height: 42vh; overflow: auto; padding: 10px; margin: 0;
+        border-radius: 8px; background: #f5f7f6; color: #24332b; font: 11px/1.45 ui-monospace, monospace;
+        white-space: pre-wrap; overflow-wrap: anywhere; }
+      .agent-output[hidden] { display: none; }
     </style>
     <button class="launcher" type="button">Lấy review JSON</button>
     <section class="panel" hidden aria-label="Review JSON sản phẩm">
@@ -45,6 +50,8 @@
         <div class="status" role="status">Lấy tối đa 50 review mỗi mức sao; kết quả sẽ là JSON.</div>
         <div class="actions"><button class="copy" type="button" hidden>Copy JSON</button><button class="download" type="button" hidden>Tải JSON</button></div>
         <pre class="json-output" hidden></pre>
+        <div class="agent-title" hidden>Kết quả agent (output + structured)</div>
+        <pre class="agent-output" hidden></pre>
         <div class="results"></div>
       </div>
     </section>`;
@@ -58,6 +65,8 @@
   const copyButton = shadow.querySelector(".copy");
   const downloadButton = shadow.querySelector(".download");
   const jsonOutput = shadow.querySelector(".json-output");
+  const agentTitle = shadow.querySelector(".agent-title");
+  const agentOutput = shadow.querySelector(".agent-output");
   let latestJson = "";
   let activeCrawlId = "";
 
@@ -124,6 +133,8 @@
     runButton.disabled = true;
     results.replaceChildren();
     jsonOutput.hidden = true;
+    agentTitle.hidden = true;
+    agentOutput.hidden = true;
     copyButton.hidden = true;
     downloadButton.hidden = true;
     latestJson = "";
@@ -145,7 +156,23 @@
       copyButton.hidden = false;
       downloadButton.hidden = false;
       const counts = Object.entries(response.data.counts_by_star || {}).map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      status.textContent = `Đã lấy ${response.data.review_count} review (${counts}). JSON đã sẵn sàng.`;
+      status.textContent = `Đã crawl ${response.data.review_count} review (${counts}). Đang gửi JSON cho agent local…`;
+
+      try {
+        const analysis = await chrome.runtime.sendMessage({
+          type: "ANALYZE_SHOPEE_REVIEWS",
+          payload: response.data
+        });
+        if (!analysis?.output || !analysis?.structured) {
+          throw new Error(analysis?.error || "Agent local chưa trả output theo hợp đồng.");
+        }
+        agentOutput.textContent = JSON.stringify(analysis, null, 2);
+        agentTitle.hidden = false;
+        agentOutput.hidden = false;
+        status.textContent = `Agent trả trạng thái ${analysis.structured.status || "không rõ"}; đã xét ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.`;
+      } catch (error) {
+        status.textContent = `Đã crawl xong ${response.data.review_count} review và lưu JSON trong panel, nhưng agent local chưa phân tích được: ${error.message}\nHãy bật python codebase/extension_server.py rồi thử lại.`;
+      }
     } catch (error) {
       status.textContent = `Không lấy được review: ${error.message}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
     } finally {

@@ -44,7 +44,7 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- Sau khi chạy `python run.py`, nhập `SP01`, `SP02`, `SP03` hoặc dán review (mỗi dòng một review) để xem luồng demo xác định. Demo này không gọi model hay dịch vụ crawl.
+- Sau khi chạy `python run.py`, nhập `SP01`, `SP02`, `SP03` hoặc dán review (mỗi dòng một review). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, chế độ giả không sinh kết luận rủi ro.
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
@@ -52,9 +52,9 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 
 | Lệnh | Làm gì |
 |---|---|
-| `python run.py` | Chạy bản chạy thử CP2 (nhập mã sản phẩm/dán review, nhận tối đa 3 nhóm dấu hiệu có trích dẫn) |
+| `python run.py` | Chạy bản thử (nhập mã sản phẩm/dán review, nhận tối đa 3 rủi ro có citation đã hậu kiểm) |
 | `python run.py check` | Kiểm `eval/benchmark.csv` (6 cột, số câu, `kho` / `tu_choi`, mã `source`, ô trống, dòng mẫu) `eval/metric_spec.yaml` (≥3 metric điền đủ) và `TEAMS.md` (đúng format để BTC quét). Chỉ cảnh báo, không sửa file |
-| `python run.py eval --try` | **Thử luồng agent:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`. Bản CP2 không gọi model, nên lượt này chỉ xác nhận luồng I/O và công cụ. Không tính là một lượt |
+| `python run.py eval --try` | **Thử luồng agent:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`; khi `.env` chọn OpenAI, xác nhận model thật và usage token. Không tính là một lượt |
 | `python run.py eval` | Chạy cả bộ qua `codebase/agent.py` → `eval/run-1.csv` (lần sau `run-2.csv`…) + `traces/run-1.jsonl`. Mỗi dòng có run ID, model, số lần gọi model / công cụ, token. Model còn giả → chỉ ghi `run-mock.csv`; mọi câu lỗi → `run-error.csv`; Ctrl+C → `run-stopped.csv` — đều **không** được đánh số |
 | `python run.py eval --fake` | Thử riêng bộ chạy, không gọi agent → `eval/run-fake.csv` |
 | `python run.py score eval/run-1.csv` | Sau khi điền cột `pass` (1 / 0): in % đạt tổng và theo `type`. Còn ô trống → "CHƯA CHẤM XONG", không in % |
@@ -72,25 +72,25 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 | File | Viết gì | Bước guide |
 |---|---|---|
-| `codebase/agent.py` | `answer(text)` — luồng giả xác định CP2, trả `{"output": str, "structured": dict}` | 3.2 |
-| `codebase/tools.py` | Công cụ đọc catalog, chuẩn hóa review dán và lọc nhiễu, mỗi công cụ có `@tool` | 2.2, 3.2 |
-| `codebase/ai.py` | `call_model(system, user)` — chỗ duy nhất gọi model. Chưa điền `.env` thì chạy **chế độ giả** | 3.3 |
+| `codebase/agent.py` | `answer(text)` — lọc, che PII, phát hiện trùng, gọi model theo `.env`, hậu kiểm citations; trả `{"output": str, "structured": dict}` | 3.2 |
+| `codebase/tools.py` | Công cụ đọc catalog, chuẩn hóa review, lọc nhiễu và gắn cờ nội dung trùng; mỗi công cụ có `@tool` | 2.2, 3.2 |
+| `codebase/ai.py` | `call_model(system, user)` — chỗ duy nhất gọi model; chế độ OpenAI hoặc giả | 3.3 |
 
-- **CP2:** `answer(text)` đọc dữ liệu mẫu CP2 hoặc review dán, xử lý theo quy tắc xác định, không gọi model/Apify/Shopee. `python run.py` nhập `SP01` để xem đầu ra mẫu.
-- **Mở rộng sau CP2:** extension backend mới gọi GPT khi cấu hình `.env`. CLI `answer(text)` hiện vẫn là demo giả xác định để không dùng API token trong eval.
+- **CP3:** `answer(text)` đọc dữ liệu mẫu hoặc review dán, che email/số điện thoại, lọc review nhiễu và gửi JSON review sạch tới GPT khi `.env` chọn OpenAI. `eval --try` gọi cùng luồng; chế độ fake không đưa ra kết luận rủi ro.
+- Extension crawl review công khai trong page context, hiển thị JSON và tiến độ, rồi gửi payload tới backend local. Backend dùng cùng bộ lọc, model và hậu kiểm citation.
 - Bộ chạy gửi **nguyên ô `input`** của câu thử vào `answer(text)`. Dữ liệu nền (bài học, thông báo, lịch…) để trong `data/`, đọc qua công cụ.
 
 ### Dữ liệu và luồng mở rộng Shopee
 
-Luồng CLI CP2 dùng bộ review mẫu đã ẩn danh trong `data/products/` hoặc review người dùng dán; không cần `APIFY_TOKEN` và không gọi mạng. `crawl_shopee_reviews` là adapter mở rộng riêng, cần token Apify và không được `answer()` gọi tự động.
+Luồng CLI dùng bộ review mẫu đã ẩn danh trong `data/products/` hoặc review người dùng dán; không tự crawl URL Shopee và không cần `APIFY_TOKEN`. Với `.env` cấu hình OpenAI, agent gửi phần review đã lọc/ẩn danh tới API; không đưa API key vào extension.
 
-Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.md](extension/README.md). Extension thử gọi endpoint review trên Shopee đang mở, gửi dữ liệu đã bỏ tên người đánh giá tới backend Python cục bộ, rồi dùng GPT khi đã cấu hình API. Endpoint đã từng trả HTTP 403; cần tải lại extension và xác minh lần crawl mới trước khi coi là hoạt động. Không nhúng API key vào extension.
+Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.md](extension/README.md). Extension gọi endpoint review trong page context, xuất JSON và gửi dữ liệu đã bỏ tên người đánh giá tới agent backend Python cục bộ; agent lọc nhiễu, xác thực citation, rồi dùng GPT nếu `.env` đã cấu hình. Endpoint từng trả HTTP 403 nên cần xác minh crawl trên listing thật; không nhúng API key vào extension.
 
 ## Phần nào thật, phần nào giả
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
-| Lời gọi AI ở quyết định trung tâm | **Thật** (bắt buộc từ CP3) | Model: ____ |
+| Lời gọi AI ở quyết định trung tâm | **Thật** khi `.env` chọn `openai`; chế độ fake trả tokens 0 và không tạo rủi ro | Model: lấy từ `MODEL_NAME` (đã smoke test `gpt-6-luna`) |
 |  |  |  |
 
 ## Dùng AI vào việc gì

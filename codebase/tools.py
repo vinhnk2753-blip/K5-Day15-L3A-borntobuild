@@ -144,17 +144,24 @@ def parse_review_text(text: str) -> dict:
 
 @tool
 def filter_review_noise(reviews: list) -> dict:
-    """Lọc review trống, khen chung, ngoài chất lượng, hỏi đáp và nội dung lặp.
+    """Lọc review trống, ngắn, khen ship, nhận xu, chưa dùng, hỏi đáp và lặp.
     Input: danh sách review chuẩn hóa có review_id và comment.
     Output: danh sách sạch, danh sách nhiễu, nhãn lý do và tổng từng nhóm.
     Tác động ngoài: không; quy tắc xác định, không sửa dữ liệu nguồn."""
     labels = {"nhieu_trong": 0, "nhieu_khen_chung": 0, "nhieu_hoi_dap_rao_ban": 0,
-              "nhieu_ngoai_chat_luong": 0, "nhieu_lap_bat_thuong": 0}
-    praise = {"tot", "ok", "dep", "hai long", "san pham tot", "sai on", "rat ok"}
-    outside = ("giao hang", "giao nhanh", "ship", "shipper", "dong goi", "van chuyen", "nhan vien",
+              "nhieu_ngoai_chat_luong": 0, "nhieu_lap_bat_thuong": 0,
+              "nhieu_nhan_xu": 0, "nhieu_chua_dung": 0, "nhieu_qua_ngan": 0}
+    praise = {"tot", "ok", "dep", "hai long", "san pham tot", "sai on", "rat ok",
+              "hang tot", "mau dep", "dung tot", "ok nha", "rất tốt"}
+    outside = ("giao hang", "giao nhanh", "giao dung hen", "nhan hang", "nhan duoc hang",
+               "ship", "shipper", "dong goi", "van chuyen", "nhan vien",
                "khuyen mai", "gia ban", "han bao hanh", "le bao hanh", "thieu phu kien", "danh roi")
+    incentive_terms = ("nhan xu", "tang xu", "hoan xu", "nhan diem", "tang diem", "duoc xu")
+    not_used_terms = ("chua dung", "chua su dung", "chua thu", "chua test", "chua mo hop",
+                      "chua trai nghiem", "chua xai")
     product_terms = ("hong", "loi", "nong", "pin", "sac", "am thanh", "chat lieu", "chay", "ri set",
-                     "ro dien", "bung", "phong", "tray xuoc", "mat tieng", "khong hoat dong")
+                     "ro dien", "ro nuoc", "bung", "phong", "tray xuoc", "mat tieng", "khong hoat dong",
+                     "cham", "yeu", "khong ket noi", "khong len nguon", "re", "nut", "tu tat")
     question_terms = ("hoi", "thu cu doi moi", "chinh sach", "huong dan", "cach su dung", "cai dat",
                       "pass lai", "ban lai", "thu lai", "doi sang", "doi mau", "tra hang", "doi tra")
 
@@ -171,14 +178,20 @@ def filter_review_noise(reviews: list) -> dict:
         label = ""
         if not normalized or normalized in {"khong co binh luan", "khong binh luan", "chua co binh luan", "khong nhan xet"}:
             label = "nhieu_trong"
-        elif normalized in praise:
-            label = "nhieu_khen_chung"
         elif normalized in seen:
             label = "nhieu_lap_bat_thuong"
+        elif has_term(normalized, incentive_terms) and not has_term(normalized, product_terms):
+            label = "nhieu_nhan_xu"
+        elif has_term(normalized, not_used_terms) and not has_term(normalized, product_terms):
+            label = "nhieu_chua_dung"
+        elif normalized in praise:
+            label = "nhieu_khen_chung"
         elif has_term(normalized, question_terms) and not has_term(normalized, product_terms):
             label = "nhieu_hoi_dap_rao_ban"
         elif has_term(normalized, outside) and not has_term(normalized, product_terms):
             label = "nhieu_ngoai_chat_luong"
+        elif len(normalized.replace(" ", "")) < 5 or (len(normalized.split()) <= 2 and not has_term(normalized, product_terms)):
+            label = "nhieu_qua_ngan"
         if normalized:
             seen.add(normalized)
         if label:
@@ -187,6 +200,51 @@ def filter_review_noise(reviews: list) -> dict:
         else:
             kept.append(dict(item))
     return {"kept": kept, "noise": noise, "noise_breakdown": labels}
+
+
+@tool
+def flag_review_anomalies(reviews: list) -> dict:
+    """Đếm cụm review trùng để người mua kiểm tra thủ công.
+    Input: danh sách review có review_id và comment.
+    Output: cụm lặp chính xác, số review trùng dư, tỷ lệ và cờ định lượng; không gán nhãn gian lận.
+    Tác động ngoài: không; chỉ tính trên review trong bộ nhớ."""
+    groups = {}
+    total = 0
+    for index, item in enumerate(reviews if isinstance(reviews, list) else []):
+        if not isinstance(item, dict):
+            continue
+        comment = str(item.get("comment", item.get("text", "")) or "").strip()
+        normalized = re.sub(r"[^a-z0-9 ]+", " ", _plain(comment))
+        normalized = " ".join(normalized.split())
+        if len(normalized.replace(" ", "")) < 8:
+            continue
+        total += 1
+        review_id = str(item.get("review_id") or item.get("id") or "R%02d" % (index + 1))
+        groups.setdefault(normalized, []).append(review_id)
+
+    clusters = [{"review_ids": ids, "count": len(ids)}
+                for ids in groups.values() if len(ids) > 1]
+    duplicate_count = sum(cluster["count"] - 1 for cluster in clusters)
+    duplicate_rate = round(duplicate_count / total, 4) if total else 0.0
+    flags = []
+    if duplicate_count:
+        flags.append({
+            "type": "repeated_text",
+            "duplicate_count": duplicate_count,
+            "duplicate_rate": duplicate_rate,
+            "clusters": clusters,
+            "note": "Nội dung trùng cần kiểm tra; đây không phải bằng chứng seeding hay gian lận.",
+        })
+    if total >= 5 and duplicate_rate >= 0.2:
+        flags.append({
+            "type": "high_repeat_ratio",
+            "duplicate_count": duplicate_count,
+            "duplicate_rate": duplicate_rate,
+            "note": "Tỷ lệ review trùng từ 20% trong mẫu; cần đối chiếu thủ công, không kết luận nguyên nhân.",
+        })
+    return {"review_count": total, "duplicate_count": duplicate_count,
+            "duplicate_rate": duplicate_rate, "duplicate_clusters": clusters,
+            "flags": flags}
 
 
 @tool

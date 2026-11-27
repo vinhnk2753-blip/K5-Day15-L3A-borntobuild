@@ -17,12 +17,13 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Lấy 
 
 ## Chạy thử giao diện extension
 
-1. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
-2. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
-3. Bấm **Lấy review JSON** ở góc dưới bên phải, rồi chọn **Crawl review → JSON**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao.
-4. Xem JSON ngay trong panel, bấm **Copy JSON** hoặc **Tải JSON** để lưu file.
+1. Ở thư mục gốc repo, chạy `python codebase/extension_server.py` để bật agent backend local. Backend dùng `.env`; `MODEL_PROVIDER=openai` sẽ gọi GPT, còn `fake` trả trạng thái giả an toàn.
+2. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
+3. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
+4. Bấm **Lấy review JSON** ở góc dưới bên phải, rồi chọn **Crawl review → JSON**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao.
+5. Extension gửi nguyên object JSON crawl sang backend local; agent lọc nhiễu, chỉ nêu rủi ro có citation kiểm được, ghi một review là phản ánh đơn lẻ và trả `{"output": str, "structured": {...}}`. Xem cả JSON crawl lẫn output agent trong panel; **Copy JSON**/**Tải JSON** thao tác trên JSON crawl.
 
-Luồng hiện tại tập trung vào crawl và xuất JSON. Backend agent Python được giữ riêng cho bước phân tích tiếp theo.
+Extension giữ nguyên JSON crawl để người dùng kiểm tra, đồng thời gửi object đó sang agent local. Nếu backend/model lỗi, JSON crawl vẫn còn trong panel để tải hoặc thử phân tích lại sau.
 
 ## Giới hạn
 

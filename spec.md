@@ -35,24 +35,27 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 - **Nguồn lấy review trong prototype**: CLI hiện có adapter Apify (`codebase/shopee_reviews.py`) và cần `APIFY_TOKEN`; extension dùng JavaScript gọi endpoint review trên trang Shopee, rồi gom tối đa 50 review mỗi mức sao. Lần chạy extension đã nhận HTTP 403 khi gọi `type=5`; đã đổi sang yêu cầu không lọc sao `type=0`, nhưng chưa xác minh lại trên listing thật. Endpoint này không phải Open API chính thức; không tuyên bố crawl thành công/đủ dữ liệu nếu chưa kiểm chứng.
 
 ## §4. Thiết kế *(guide 2.2, 3.2)*
-- **Lát cắt MỘT CÂU**: Người mua nhập mã/tên của một sản phẩm trong catalog CP2 hoặc dán review · workflow đọc review mẫu hay chuẩn hóa review vừa dán · lọc nhiễu theo quy tắc · chỉ gợi ý tối đa 3 nhóm dấu hiệu có trích dẫn `[Rxx]`, hoặc báo chưa đủ căn cứ · người mua tự đối chiếu review gốc và quyết định.
-- **Hợp đồng I/O:** `answer(text: str) -> dict` luôn trả `{"output": str}`; có thể kèm `"structured": dict` cho UI hiển thị trạng thái, thống kê, cờ, nhóm rủi ro và review nguồn. Luồng CP2 không gọi dịch vụ ngoài.
+- **Lát cắt MỘT CÂU**: Người mua nhập mã/tên của một sản phẩm trong catalog hoặc dán review · workflow đọc review mẫu hay chuẩn hóa review dán · che email/SĐT, lọc nhiễu và gắn cờ nội dung lặp · GPT gợi ý tối đa 3 rủi ro có citation `[Rxx]` đã hậu kiểm, hoặc báo chưa đủ căn cứ · người mua tự đối chiếu review gốc và quyết định.
+- **Hợp đồng I/O:** `answer(text: str) -> dict` luôn trả `{"output": str}`; có thể kèm `"structured": dict` cho UI hiển thị trạng thái, thống kê, cờ, nhóm rủi ro và review nguồn. Khi `.env` chọn OpenAI, workflow gửi review sạch đã che email/SĐT tới API; chế độ fake không tạo rủi ro.
 - **Không làm**: (1) không kết luận shop gian lận/seeding hoặc xác minh tính xác thực của người mua; (2) không tự quyết định mua/không mua; (3) không đánh giá sản phẩm từ sao đơn lẻ hay review chỉ nói giao hàng; (4) không lấy dữ liệu riêng tư hoặc vượt quyền truy cập của sàn.
 - **Sơ đồ**:
 
   ```mermaid
   flowchart LR
-    A[Người dùng nhập mã SP01–SP03 hoặc dán review] --> B{Nhận diện đầu vào}
-    B -- Mã/tên --> C[Đọc catalog và JSON mẫu cục bộ]
-    B -- Văn bản --> D[Chuẩn hóa từng dòng, gắn hoặc giữ mã Rxx]
-    C --> E[Lọc nhiễu xác định]
+    A[Nhập mã / dán review / extension gửi JSON] --> B{Nhận diện nguồn}
+    B -- Mã --> C[Đọc review mẫu cục bộ]
+    B -- Text hoặc JSON --> D[Chuẩn hóa review và mã Rxx]
+    C --> E[Che PII, lọc nhiễu, đếm nội dung trùng]
     D --> E
-    E --> F{Còn ít nhất 3 review sạch?}
+    E --> F{Còn review sạch có nội dung?}
     F -- Không --> G[Báo chưa đủ căn cứ]
-    F -- Có --> H[Nhóm dấu hiệu theo quy tắc giả định]
-    H --> I[Chọn tối đa 3 nhóm, kèm trích dẫn gốc]
-    G --> J[Người mua tự kiểm tra]
-    I --> J
+    F -- Có --> H[Gửi review sạch tới GPT nếu đã cấu hình]
+    H --> I[Hậu kiểm citation theo nguồn]
+    I --> J{Có rủi ro với citation hợp lệ?}
+    J -- Không --> G
+    J -- Có --> K[Tối đa 3 rủi ro và trích dẫn gốc]
+    G --> L[Người mua kiểm tra và tự quyết]
+    K --> L
   ```
 
 - **Hình dạng:** [x] workflow cố định · [ ] một agent · [ ] nhiều agent. Các bước nhận diện/đọc/lọc/tóm tắt có thứ tự ổn định; không cần agent tự chọn công cụ hay lặp nhiều vòng. Workflow dễ kiểm soát trích dẫn và phù hợp lát cắt nhỏ.
@@ -62,24 +65,25 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 |---|---|---|---|
 | `load_product_reviews` | Mã SP01–SP03, product ID hoặc tên trong catalog | Metadata và review đã ẩn danh, giữ nguyên mã nguồn | Không; chỉ đọc JSON cục bộ |
 | `parse_review_text` | Văn bản review, một review mỗi dòng | Review chuẩn hóa, giữ mã `[Rxx]` duy nhất hoặc gán mã mới | Không; xử lý trong bộ nhớ |
-| `filter_review_noise` | Danh sách review chuẩn hóa | Review sạch, review nhiễu và số đếm theo nhóm | Không; quy tắc xác định |
+| `filter_review_noise` | Danh sách review chuẩn hóa | Review sạch, review nhiễu (trống/ngắn/khen ship/nhận xu/chưa dùng/lặp) và số đếm theo nhóm | Không; quy tắc xác định |
+| `flag_review_anomalies` | Danh sách review có mã và nội dung | Cụm trùng, số lượng/tỷ lệ trùng; chỉ gắn cờ để người kiểm tra | Không; không suy ra gian lận |
 | `crawl_shopee_reviews` *(luồng mở rộng)* | URL Shopee và `max_reviews` | Review công khai đã ẩn danh qua adapter Apify | Có yêu cầu bên thứ ba; cần `APIFY_TOKEN`; không sửa listing |
 
-- **Workflow thực tế của `answer(text)` trong CP2:** tra cứu catalog → chuẩn hóa → lọc nhiễu → nhóm một số dấu hiệu theo từ khóa → xuất `output` và `structured`. Bản này chạy giả, không gọi GPT, Apify hoặc endpoint Shopee; trích dẫn chỉ giữ mã và nội dung có trong input. `crawl_shopee_reviews` để dành cho luồng mở rộng, không được `answer()` tự gọi.
-- **Extension riêng:** `extension/content.js` có thể lấy tối đa 50 review mỗi mức sao qua endpoint Shopee; backend `extension_server.py` ẩn danh PII rồi mới gọi GPT khi đã cấu hình. Luồng này độc lập với bản CLI giả ở CP2; endpoint từng trả HTTP 403 và chưa được xác minh lại.
+- **Workflow thực tế của `answer(text)` từ CP3:** đọc catalog hoặc parse review dán → che email/SĐT → lọc nhiễu → đếm cụm lặp → gửi JSON review sạch cho GPT khi `.env` chọn `openai` → hậu kiểm mã citation → trả tối đa 3 rủi ro, `output` và `structured`. Không có review sạch thì báo thiếu căn cứ; một citation được ghi rõ là phản ánh đơn lẻ. Model giả không tạo rủi ro. `crawl_shopee_reviews` là adapter riêng, không được `answer()` tự gọi.
+- **Extension riêng:** `extension/content.js` lấy tối đa 50 review mỗi mức sao trong page context, hiển thị JSON và tiến độ crawl; sau đó gửi nguyên object JSON tới backend local. `analyze_review_payload` lọc nhiễu, cho phép nêu một phản ánh đơn lẻ mà không khái quát, gọi GPT khi `.env` chọn `openai`, kiểm citation với nguồn và trả `{"output": str, "structured": dict}`. Khi model giả/lỗi hoặc citation không hợp lệ, không dựng rủi ro. Endpoint Shopee từng trả HTTP 403; độ phủ vẫn chưa được xác minh độc lập.
 
-- **Mức tự động:** [x] Bản chạy giả đưa gợi ý theo từ khóa, người mua quyết · [ ] AI tự làm khi chắc, chuyển người khi không · [ ] AI tự làm. Kết luận sai có thể khiến người mua mất tiền hoặc gây thiệt hại cho shop; người dùng có thể kiểm tra review gốc trước khi hành động.
-- **Chỗ chặn rủi ro**: `answer()` chỉ đưa mã trích dẫn lấy từ review đầu vào, không tạo mã mới; khi dưới 3 review sạch thì không kết luận rủi ro. Luồng extension GPT riêng (`analyze_reviews`) cũng loại citation không tồn tại và gắn nguyên văn nguồn tương ứng.
+- **Mức tự động:** [x] AI đưa gợi ý có trích dẫn; người mua tự quyết · [ ] AI tự làm khi chắc, chuyển người khi không · [ ] AI tự làm. Kết luận sai có thể khiến người mua mất tiền hoặc gây thiệt hại cho shop; người dùng có thể kiểm tra review gốc trước khi hành động.
+- **Chỗ chặn rủi ro**: `answer()` chỉ đưa mã trích dẫn có trong review sạch đầu vào, gắn nguyên văn nguồn; nếu model trả mã không tồn tại thì loại rủi ro đó. Khi không còn review sạch thì báo thiếu căn cứ; một review không được gọi là lỗi phổ biến. Luồng extension GPT (`analyze_reviews`) áp dụng cùng hậu kiểm.
 - **Chỗ người duyệt**: người mua tự xác nhận review gốc có liên quan đến đúng biến thể và tự quyết định mua; hệ thống không gắn nhãn shop lừa đảo/seeding.
 - **Nguyên tắc thiết kế** (≥3):
 
   | Nguyên tắc | Chỗ cụ thể trên sơ đồ / trong bản chạy thử |
   |---|---|
-  | G10 — thu hẹp phạm vi khi không chắc | Trả “chưa đủ review có nội dung sản phẩm” thay vì suy đoán khi link lỗi, dữ liệu ít hoặc chỉ có sao. |
+  | G10 — thu hẹp phạm vi khi không chắc | Trả “chưa đủ review có nội dung sản phẩm” khi crawl lỗi, dữ liệu trống/chỉ có sao; với một nguồn thì gọi là phản ánh đơn lẻ. |
   | Mỗi rủi ro phải kiểm chứng được | Hiển thị mã `[Rxx]`; hậu kiểm bằng code và cho mở review gốc. |
   | Tách lỗi sản phẩm khỏi giao hàng | Review chỉ khen/chê vận chuyển không được tính là bằng chứng chất lượng sản phẩm. |
 
-- **Phần còn giả/chưa nối**: `answer(text)` là demo xác định, không gọi LLM; các nhóm rủi ro dựa trên từ khóa nên chỉ là gợi ý để người mua kiểm tra. Extension/GPT là luồng riêng; Shopee `type=0` chưa xác minh sau lỗi 403. Chưa có lượt eval chính thức hay mô phỏng chi phí được ghi nhận; không coi prototype đã đạt chuẩn.
+- **Phần còn giả/chưa nối**: chế độ `fake` không gọi LLM và không sinh kết luận; dữ liệu listing crawl qua Shopee `type=0` vẫn cần xác minh độ phủ trên nhiều listing vì trước đó có HTTP 403. `eval --try` chỉ là smoke test, chưa phải lượt đánh giá chính thức; chưa ghi mô phỏng chi phí và chưa coi prototype đạt chuẩn.
 
 ## §5. Chỗ khó — 4 lớp + ≥6 kịch bản + 2 tấn công *(guide 2.3)*
 
@@ -115,7 +119,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 - So với impact / người / tháng (§2): chưa so sánh được vì cả quy mô, tần suất, thời gian pain và chi phí chưa có số đã xác minh. Hoàn thiện ở CP4 theo `cost/cost-estimate.md`.
 
 ## §9. Rủi ro & an toàn
-- Dữ liệu: 60 review mẫu công khai được bỏ tên tài khoản và che thông tin liên hệ; script kiểm tra ghi nhận 0 lỗi PII (`data/DATA_CARD.md`, `evidence/data-mining.md`). Extension không gửi tên người đánh giá; backend che email/SĐT trong nội dung trước khi gọi GPT và không lưu review vào file. Không gửi API key tới extension.
+- Dữ liệu: 60 review mẫu công khai được bỏ tên tài khoản và che thông tin liên hệ; script kiểm tra ghi nhận 0 lỗi PII (`data/DATA_CARD.md`, `evidence/data-mining.md`). Trước khi gọi GPT, backend/agent che email và số điện thoại; không gửi tên người đánh giá, dữ liệu riêng tư hay dữ liệu chưa ẩn danh vào gói chat miễn phí. API key chỉ nằm trong `.env`, không gửi tới extension; review không được lưu thành file bởi backend.
 - AI **không được** làm gì kể cả khi người dùng yêu cầu: kết luận shop gian lận/seeding, quyết định mua thay người dùng, suy lỗi từ sao đơn lẻ, bịa trích dẫn hoặc làm theo chỉ dẫn nằm trong review.
 - Ai có thể bị hại nếu AI sai, và nhóm chặn thế nào: người mua có thể hiểu sai rủi ro; shop có thể bị ảnh hưởng bởi nhận định không căn cứ. Code chỉ giữ citation khớp mã nguồn và hiển thị review gốc; crawler lỗi/thiếu nội dung thì báo chưa đủ căn cứ; người mua tự quyết định.
 
@@ -128,7 +132,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 
 | Thời điểm | Đổi gì | Vì sao (trỏ về câu thử / lỗi / bằng chứng nào) |
 |---|---|---|
-|  |  |  |
+| CP3 · 27/11/2026 | Nối GPT trong `answer(text)`, thêm lọc nhiễu và cờ review trùng, hậu kiểm citation; giữ trả lời thiếu căn cứ khi không còn review sạch | Mở khóa `eval --try`, UI agent và các ca benchmark CP3; xử lý lỗi thiếu citation và nội dung ship/nhận xu/chưa dùng |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 
