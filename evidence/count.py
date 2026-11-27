@@ -83,7 +83,9 @@ def load_reviews():
 def load_labels():
     rows = []
     with open(LABELS_PATH, encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
+        for lineno, row in enumerate(csv.DictReader(f), start=2):
+            if None in row or any(v is None for v in row.values()):
+                sys.exit(f"Lỗi định dạng CSV tại dòng {lineno} (thừa/thiếu cột — kiểm tra dấu ngoặc kép): {row}")
             rows.append(row)
     return rows
 

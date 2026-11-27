@@ -8,7 +8,7 @@ SP01,sunhouse_shd4035,R06,co_thong_tin,co_thong_tin_rui_ro,Vỏ ngoài nồi t�
 SP01,sunhouse_shd4035,R07,co_thong_tin,co_thong_tin_rui_ro,Bong sơn đáy nồi và có dấu hiệu rỉ sét sau 2 tháng
 SP01,sunhouse_shd4035,R08,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
 SP01,sunhouse_shd4035,R09,co_thong_tin,co_thong_tin_tich_cuc,Nêu trải nghiệm cụ thể: dễ sử dụng và ít hao điện
-SP01,sunhouse_shd4035,R10,nhieu,nhieu_khen_chung,Khen chung chung (rất tốt, ngon, tiện lợi, nên mua) không nêu chi tiết kỹ thuật
+SP01,sunhouse_shd4035,R10,nhieu,nhieu_khen_chung,"Khen chung chung (rất tốt, ngon, tiện lợi, nên mua) không nêu chi tiết kỹ thuật"
 SP01,sunhouse_shd4035,R11,nhieu,nhieu_khen_chung,Chỉ nói giá phải chăng và khen chung rất ok
 SP01,sunhouse_shd4035,R12,co_thong_tin,co_thong_tin_tich_cuc,Nêu thuộc tính vận hành cụ thể: nướng nhanh
 SP01,sunhouse_shd4035,R13,nhieu,nhieu_khen_chung,Khen chung chung về mẫu mã và giá tiền
@@ -25,7 +25,7 @@ SP02,airpods_4_mxp63,R03,nhieu,nhieu_hoi_dap_rao_ban,Hỏi chính sách thu cũ 
 SP02,airpods_4_mxp63,R04,co_thong_tin,co_thong_tin_rui_ro,Hỏng 1 bên tai nghe sau chưa đầy 1 tháng sử dụng
 SP02,airpods_4_mxp63,R05,co_thong_tin,co_thong_tin_rui_ro,Mở âm lượng tối đa bị lọt (leak) âm thanh ra ngoài nhiều
 SP02,airpods_4_mxp63,R06,nhieu,nhieu_ngoai_chat_luong,Phản ánh thái độ nhân viên bóc tem giá làm xấu hộp quà
-SP02,airpods_4_mxp63,R07,co_thong_tin,co_thong_tin_rui_ro,Nắp hộp sạc lỏng không khít, âm lượng nhỏ và rè khi xem YouTube web
+SP02,airpods_4_mxp63,R07,co_thong_tin,co_thong_tin_rui_ro,"Nắp hộp sạc lỏng không khít, âm lượng nhỏ và rè khi xem YouTube web"
 SP02,airpods_4_mxp63,R08,nhieu,nhieu_hoi_dap_rao_ban,Hỏi cửa hàng hỗ trợ thu lại đổi sang bản chống ồn
 SP02,airpods_4_mxp63,R09,nhieu,nhieu_trong,Review trống không có nội dung văn bản (chỉ đính kèm ảnh)
 SP02,airpods_4_mxp63,R10,nhieu,nhieu_hoi_dap_rao_ban,Tin rao pass lại sản phẩm kèm thông tin liên hệ cá nhân
