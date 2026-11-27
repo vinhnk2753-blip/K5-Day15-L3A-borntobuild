@@ -1,0 +1,61 @@
+product_code,product_id,review_id,group,sub_label,reason
+SP01,sunhouse_shd4035,R01,co_thong_tin,co_thong_tin_rui_ro,Hỏng không sử dụng được sau 2 lần dùng
+SP01,sunhouse_shd4035,R02,nhieu,nhieu_ngoai_chat_luong,Người mua tự đánh rơi móp và hỏi bảo hành
+SP01,sunhouse_shd4035,R03,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R04,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R05,co_thong_tin,co_thong_tin_rui_ro,Nướng nhiều lần vẫn còn mùi nhựa
+SP01,sunhouse_shd4035,R06,co_thong_tin,co_thong_tin_rui_ro,Vỏ ngoài nồi tỏa nhiệt rất nóng khi nướng
+SP01,sunhouse_shd4035,R07,co_thong_tin,co_thong_tin_rui_ro,Bong sơn đáy nồi và có dấu hiệu rỉ sét sau 2 tháng
+SP01,sunhouse_shd4035,R08,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R09,co_thong_tin,co_thong_tin_tich_cuc,Nêu trải nghiệm cụ thể: dễ sử dụng và ít hao điện
+SP01,sunhouse_shd4035,R10,nhieu,nhieu_khen_chung,"Khen chung chung (rất tốt, ngon, tiện lợi, nên mua) không nêu chi tiết kỹ thuật"
+SP01,sunhouse_shd4035,R11,nhieu,nhieu_khen_chung,Chỉ nói giá phải chăng và khen chung rất ok
+SP01,sunhouse_shd4035,R12,co_thong_tin,co_thong_tin_tich_cuc,Nêu thuộc tính vận hành cụ thể: nướng nhanh
+SP01,sunhouse_shd4035,R13,nhieu,nhieu_khen_chung,Khen chung chung về mẫu mã và giá tiền
+SP01,sunhouse_shd4035,R14,nhieu,nhieu_khen_chung,Khen siêu ngắn 2 từ không có thông tin cụ thể
+SP01,sunhouse_shd4035,R15,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R16,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R17,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R18,nhieu,nhieu_khen_chung,Khen siêu ngắn 1 từ không có thông tin cụ thể
+SP01,sunhouse_shd4035,R19,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP01,sunhouse_shd4035,R20,co_thong_tin,co_thong_tin_tich_cuc,Nêu trải nghiệm dài hạn cụ thể: chiên nhanh và nướng bánh tốt
+SP02,airpods_4_mxp63,R01,co_thong_tin,co_thong_tin_rui_ro,Thiết kế đeo lỏng lẻo không khít tai và dễ rơi
+SP02,airpods_4_mxp63,R02,co_thong_tin,co_thong_tin_rui_ro,Hỏng sạc không vào và lỗi giữ kết nối Bluetooth khi đặt trong hộp
+SP02,airpods_4_mxp63,R03,nhieu,nhieu_hoi_dap_rao_ban,Hỏi chính sách thu cũ đổi mới để lên đời
+SP02,airpods_4_mxp63,R04,co_thong_tin,co_thong_tin_rui_ro,Hỏng 1 bên tai nghe sau chưa đầy 1 tháng sử dụng
+SP02,airpods_4_mxp63,R05,co_thong_tin,co_thong_tin_rui_ro,Mở âm lượng tối đa bị lọt (leak) âm thanh ra ngoài nhiều
+SP02,airpods_4_mxp63,R06,nhieu,nhieu_ngoai_chat_luong,Phản ánh thái độ nhân viên bóc tem giá làm xấu hộp quà
+SP02,airpods_4_mxp63,R07,co_thong_tin,co_thong_tin_rui_ro,"Nắp hộp sạc lỏng không khít, âm lượng nhỏ và rè khi xem YouTube web"
+SP02,airpods_4_mxp63,R08,nhieu,nhieu_hoi_dap_rao_ban,Hỏi cửa hàng hỗ trợ thu lại đổi sang bản chống ồn
+SP02,airpods_4_mxp63,R09,nhieu,nhieu_trong,Review trống không có nội dung văn bản (chỉ đính kèm ảnh)
+SP02,airpods_4_mxp63,R10,nhieu,nhieu_hoi_dap_rao_ban,Tin rao pass lại sản phẩm kèm thông tin liên hệ cá nhân
+SP02,airpods_4_mxp63,R11,co_thong_tin,co_thong_tin_tich_cuc,Nêu tính năng cụ thể: tự chỉnh âm lượng theo môi trường và chất âm ổn
+SP02,airpods_4_mxp63,R12,co_thong_tin,co_thong_tin_tich_cuc,Nêu trải nghiệm cụ thể: kết nối ổn định và pin dùng lâu
+SP02,airpods_4_mxp63,R13,nhieu,nhieu_hoi_dap_rao_ban,Hỏi chính sách thu lại sản phẩm (nhận xét âm thanh chung chung)
+SP02,airpods_4_mxp63,R14,nhieu,nhieu_hoi_dap_rao_ban,Hỏi hướng dẫn cài đặt giọng đọc tiếng Việt trên tai nghe
+SP02,airpods_4_mxp63,R15,co_thong_tin,co_thong_tin_rui_ro,Hỏng kết nối ngay sau khi hết thời hạn bảo hành
+SP02,airpods_4_mxp63,R16,co_thong_tin,co_thong_tin_rui_ro,Lỗi không sạc vào pin 1 bên tai sau vài tháng và tranh chấp bảo hành
+SP02,airpods_4_mxp63,R17,nhieu,nhieu_ngoai_chat_luong,Thắc mắc lệch ngày hết hạn bảo hành trên hệ thống
+SP02,airpods_4_mxp63,R18,nhieu,nhieu_ngoai_chat_luong,Thắc mắc thời hạn bảo hành hệ thống ngắn hơn ngày mua
+SP02,airpods_4_mxp63,R19,nhieu,nhieu_ngoai_chat_luong,Phàn nàn nhân viên giao hàng đóng gói sơ sài không có túi bọc
+SP02,airpods_4_mxp63,R20,co_thong_tin,co_thong_tin_rui_ro,Âm thanh bị rè và xoẹt khó chịu
+SP03,ava_plus_q7,R01,co_thong_tin,co_thong_tin_rui_ro,Hỏng không sạc vào pin sau vài tháng sử dụng
+SP03,ava_plus_q7,R02,co_thong_tin,co_thong_tin_rui_ro,Dù mới mua nhưng nêu rõ rủi ro vỏ bề mặt rất dễ trầy xước
+SP03,ava_plus_q7,R03,nhieu,nhieu_ngoai_chat_luong,Phàn nàn chương trình khuyến mãi mua 1 tặng 1 và chênh lệch giá
+SP03,ava_plus_q7,R04,co_thong_tin,co_thong_tin_rui_ro,Tốc độ sạc chậm dần sau hơn 2 tháng (từ 2 giờ lên hơn 3 giờ)
+SP03,ava_plus_q7,R05,co_thong_tin,co_thong_tin_rui_ro,Sạc quá chậm ngay ngày đầu sử dụng
+SP03,ava_plus_q7,R06,co_thong_tin,co_thong_tin_rui_ro,Lỗi tương thích: không sạc được iPhone qua dây cổng Lightning
+SP03,ava_plus_q7,R07,co_thong_tin,co_thong_tin_rui_ro,Phồng pin sau gần 9 tháng sử dụng (rủi ro an toàn)
+SP03,ava_plus_q7,R08,co_thong_tin,co_thong_tin_rui_ro,Sạc vào 16 tiếng chưa đầy và xả chỉ được 40% pin điện thoại
+SP03,ava_plus_q7,R09,co_thong_tin,co_thong_tin_rui_ro,Tụt pin ảo đột ngột từ vạch 3 xuống vạch 1
+SP03,ava_plus_q7,R10,nhieu,nhieu_trong,Review trống không có nội dung văn bản (chỉ đính kèm ảnh)
+SP03,ava_plus_q7,R11,nhieu,nhieu_trong,Review trống chỉ chấm sao không có bình luận
+SP03,ava_plus_q7,R12,nhieu,nhieu_ngoai_chat_luong,Chỉ phàn nàn biến động giá bán
+SP03,ava_plus_q7,R13,co_thong_tin,co_thong_tin_rui_ro,Cắm sạc vào hơn 10 tiếng không lên vạch pin
+SP03,ava_plus_q7,R14,co_thong_tin,co_thong_tin_rui_ro,Sạc vào lâu và dung lượng thực tế hụt mạnh (20000mAh sạc chưa tới 7000mAh)
+SP03,ava_plus_q7,R15,co_thong_tin,co_thong_tin_rui_ro,Công suất thấp sạc rất lâu cho iPhone 14 Pro Max
+SP03,ava_plus_q7,R16,co_thong_tin,co_thong_tin_rui_ro,Sạc vào 6 tiếng mới lên vạch 2 (kèm phàn nàn chênh giá)
+SP03,ava_plus_q7,R17,nhieu,nhieu_ngoai_chat_luong,Thắc mắc hộp không kèm dây/củ sạc (theo thông số NSX hộp chỉ có pin)
+SP03,ava_plus_q7,R18,co_thong_tin,co_thong_tin_rui_ro,Lỗi sạc vào tới 2 vạch là ngừng trong tuần đầu tiên
+SP03,ava_plus_q7,R19,co_thong_tin,co_thong_tin_rui_ro,Hỏng không sạc được nữa sau vài tháng
+SP03,ava_plus_q7,R20,co_thong_tin,co_thong_tin_tich_cuc,Đánh giá chi tiết ưu nhược: sạc vào lâu gần 10 tiếng nhưng sạc được ~2.5 lần pin 5000mAh và không nóng

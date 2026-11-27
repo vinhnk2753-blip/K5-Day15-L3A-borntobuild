@@ -1,0 +1,58 @@
+{
+  "version": "cp2-v1",
+  "updated_at": "2026-11-27",
+  "note": "Tập dữ liệu mẫu công khai đã ẩn danh đợt 1 (CP2) gồm 3 sản phẩm phổ biến >= 200.000đ, 20 đánh giá mới nhất/sản phẩm (tổng N=60). Không chứa nhãn gán tay trong file sản phẩm để tránh rò rỉ nhãn vào luồng AI.",
+  "products": [
+    {
+      "product_code": "SP01",
+      "product_id": "sunhouse_shd4035",
+      "product_name": "Nồi chiên không dầu Sunhouse 9 lít SHD4035",
+      "category": "Gia dụng bếp",
+      "platform": "Điện máy XANH",
+      "price_vnd": 2259000,
+      "original_price_vnd": 3670000,
+      "displayed_rating": 4.9,
+      "displayed_five_star_pct": 99.7,
+      "total_reviews_displayed": 371,
+      "sample_review_count": 20,
+      "product_url": "https://www.dienmayxanh.com/noi-chien-khong-dau/sunhouse-shd4035-9-lit",
+      "source_url": "https://www.dienmayxanh.com/noi-chien-khong-dau/sunhouse-shd4035-9-lit/danh-gia",
+      "accessed_date": "2026-11-27",
+      "file": "data/products/sunhouse_shd4035.json"
+    },
+    {
+      "product_code": "SP02",
+      "product_id": "airpods_4_mxp63",
+      "product_name": "Tai nghe Bluetooth Apple AirPods 4 (MXP63)",
+      "category": "Tai nghe không dây",
+      "platform": "Thế Giới Di Động",
+      "price_vnd": 2810000,
+      "original_price_vnd": 3790000,
+      "displayed_rating": 4.9,
+      "displayed_five_star_pct": 99.9,
+      "total_reviews_displayed": 48,
+      "sample_review_count": 20,
+      "product_url": "https://www.thegioididong.com/tai-nghe/airpods-4-mxp63",
+      "source_url": "https://www.thegioididong.com/tai-nghe/airpods-4-mxp63/danh-gia",
+      "accessed_date": "2026-11-27",
+      "file": "data/products/airpods_4_mxp63.json"
+    },
+    {
+      "product_code": "SP03",
+      "product_id": "ava_plus_q7",
+      "product_name": "Pin sạc dự phòng Polymer 20000mAh 10.5W AVA+ Q7",
+      "category": "Phụ kiện sạc dự phòng",
+      "platform": "Thế Giới Di Động",
+      "price_vnd": 350000,
+      "original_price_vnd": 590000,
+      "displayed_rating": 4.9,
+      "displayed_five_star_pct": 99.9,
+      "total_reviews_displayed": 73,
+      "sample_review_count": 20,
+      "product_url": "https://www.thegioididong.com/sac-dtdd/pin-sac-du-phong-polymer-20000mah-10-5w-ava-plus-q7",
+      "source_url": "https://www.thegioididong.com/sac-dtdd/pin-sac-du-phong-polymer-20000mah-10-5w-ava-plus-q7/danh-gia",
+      "accessed_date": "2026-11-27",
+      "file": "data/products/ava_plus_q7.json"
+    }
+  ]
+}
