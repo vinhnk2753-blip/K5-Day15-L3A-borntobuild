@@ -104,7 +104,7 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 Khai báo chung của nhóm ngoài UI: ____ (các thành viên bổ sung phần việc và người kiểm; giữ nguyên khai báo dữ liệu của Vinh trong bảng chi tiết).
 
-Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 23 test Python và 18 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Trang xác nhận chưa tự rà code/fixture; giữ việc xác nhận kiểm tay trước khi nộp. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md) và [xử lý review PR #18](docs/pr-18-review-fixes.md).
+Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 23 test Python và 18 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Ngày 27/11/2026, Trang xác nhận đã kiểm tay code/fixture và đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md) và [xử lý review PR #18](docs/pr-18-review-fixes.md).
 
 ## File mẫu — điền ở bước nào
 

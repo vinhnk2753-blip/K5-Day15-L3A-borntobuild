@@ -4,7 +4,7 @@
     "author": "Codex theo phạm vi nhóm chốt",
     "date": "2026-11-27",
     "method": "Tự dựng bằng nội dung viết tay có AI hỗ trợ; không lấy từ sàn, không lấy ngẫu nhiên nên không có seed.",
-    "human_review": "Chưa ghi nhận người kiểm tay; cần nhóm rà trước khi nộp.",
+    "human_review": "Trang xác nhận đã kiểm tay code và dữ liệu mẫu ngày 27/11/2026 trong trao đổi PR #18.",
     "not_pain_evidence": true
   },
   "cases": [

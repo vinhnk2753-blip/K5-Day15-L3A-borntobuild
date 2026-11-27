@@ -28,11 +28,11 @@ Hợp đồng chi tiết: docs/ui-ai-contract-proposal.md. Một lần phân tí
 - Chưa thử live crawler/OpenAI; không có chi phí hoặc token API thật được ghi nhận.
 - Không ghi/chấm benchmark, không sửa CSV kết quả hoặc trace đã có.
 
-## Phối hợp còn cần Tuyên
+## Trạng thái hợp đồng và phần chưa triển khai
 
-Backend hiện chưa trả thống kê nhiễu/sạch, chưa nhận trực tiếp mã catalog MWG hoặc review không có số sao trong answer(text). Nếu nhóm giữ các yêu cầu đó, cần bổ sung backend/hợp đồng riêng rồi UI hiển thị các trường thật.
+Theo xác nhận của Trang ngày 27/11/2026, nhóm đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Backend hiện chưa trả thống kê nhiễu/sạch, chưa nhận trực tiếp mã catalog MWG hoặc review không có số sao trong answer(text). Các khả năng này vẫn cần triển khai nếu nhóm đưa vào luồng chạy; xác nhận chốt hợp đồng không đồng nghĩa code đã hỗ trợ.
 Mã backend đã được merge từ main nhưng không bị chỉnh trong phần đồng bộ UI này. Dữ liệu và tài liệu của Vinh/Yến giữ nguyên.
 
 ## Review PR #18 và kiểm tay
 
-Đối chiếu từng nhận xét: [pr-18-review-fixes.md](pr-18-review-fixes.md). Trang xác nhận chưa tự rà code và fixture `ui_demo_data.json`; chưa đánh dấu đã kiểm tay. Cần người phụ trách thực hiện trước khi nộp.
+Đối chiếu từng nhận xét: [pr-18-review-fixes.md](pr-18-review-fixes.md). Ngày 27/11/2026, Trang xác nhận đã kiểm tay code và fixture `ui_demo_data.json`, đồng thời đã chốt khác biệt hợp đồng với Tuyên/Vinh. Ghi nhận theo xác nhận của người phụ trách; chưa có kết quả chạy API/crawler live trong phiên kiểm thử này.

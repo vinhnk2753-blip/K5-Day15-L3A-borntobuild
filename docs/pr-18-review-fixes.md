@@ -24,8 +24,8 @@ Review của vinhnk2753-blip trên commit `3984bcf`: [yêu cầu chỉnh sửa](
 
 Kiểm chứng: **23 test Python đạt**, **18 nhóm kiểm tra Chrome đạt**; chạy web qua `python run.py` ở cổng 8001. Test OpenAI/crawler dùng stub; thẻ rủi ro browser dùng response fixture riêng, chưa xác minh dịch vụ live. Không sửa backend, framework, metric, benchmark hay kết quả eval.
 
-## Những điểm còn cần người phụ trách
+## Xác nhận người phụ trách và trạng thái duyệt
 
-- **Kiểm tay code/fixture:** Trang trả lời chưa rà; giữ ghi chú cần xác nhận trong README, khai báo AI, checklist và provenance của `ui_demo_data.json`. Không tự ghi đã kiểm tay.
-- **Chốt hợp đồng nhóm:** backend Shopee hiện có khác `data/CONTRACT.md` của bộ MWG ở catalog SP01–SP03, sao review, thống kê nhiễu và ngưỡng G10. UI đã bỏ ngưỡng riêng, mô tả đúng code đang chạy tại [hợp đồng UI](ui-ai-contract-proposal.md). Chưa có xác nhận thống nhất từ Tuyên/Vinh; chưa đánh dấu hoàn thành yêu cầu này hoặc cờ nhiễu định lượng.
+- **Kiểm tay code/fixture — đã xác nhận:** ngày 27/11/2026, Trang xác nhận đã kiểm tay code và dữ liệu mẫu. Cập nhật README, khai báo AI, checklist và provenance của `ui_demo_data.json` theo xác nhận này.
+- **Chốt hợp đồng nhóm — đã xác nhận:** ngày 27/11/2026, Trang xác nhận đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Backend Shopee hiện có vẫn khác `data/CONTRACT.md` ở catalog SP01–SP03, sao review, thống kê nhiễu và ngưỡng G10; [hợp đồng UI](ui-ai-contract-proposal.md) mô tả đúng code đang chạy. Chưa đánh dấu đã triển khai catalog MWG hoặc cờ nhiễu định lượng.
 - **Duyệt PR:** review đang `CHANGES_REQUESTED`; các commit sửa không thay thế việc reviewer kiểm lại và duyệt. Không tự resolve nhận xét hoặc merge PR.

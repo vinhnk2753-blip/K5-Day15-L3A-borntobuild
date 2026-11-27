@@ -7,7 +7,7 @@ README của nhóm có mục "Dùng AI vào việc gì" (2–3 dòng, bắt bu�
 | Việc | Công cụ AI | AI làm gì | Người kiểm/sửa gì | Ai phụ trách |
 |---|---|---|---|---|
 | Code bản chạy thử | | | | |
-| Code UI issue #4 | Codex | Web trong app.py, ui_backend.py gọi hàm analyze_reviews/crawler của Tuyên, bỏ generator rủi ro riêng; sửa nhận xét PR #18; không sửa backend issue #3 | 23 test Python và 18 nhóm kiểm tra Chrome; API/crawler được stub, chưa xác minh live; Trang xác nhận chưa tự rà code/fixture, cần xác nhận kiểm tay trước khi nộp | Trang |
+| Code UI issue #4 | Codex | Web trong app.py, ui_backend.py gọi hàm analyze_reviews/crawler của Tuyên, bỏ generator rủi ro riêng; sửa nhận xét PR #18; không sửa backend issue #3 | 23 test Python và 18 nhóm kiểm tra Chrome; Trang xác nhận đã kiểm tay code/fixture và đã chốt khác biệt hợp đồng với Tuyên/Vinh ngày 27/11/2026; API/crawler trong test được stub, chưa xác minh live | Trang |
 | Prompt / thiết kế lời gọi mô hình | | | | |
 | Đào data (viết script đếm, gợi ý nhãn) | Coding agent (Antigravity) | Hỗ trợ chuẩn hoá JSON ẩn danh từ review công khai (ĐMX/TGDĐ ngày 27/11/2026), viết script đếm tái lập `evidence/count.py`, gợi ý nhãn sơ bộ 60 dòng trong `evidence/cp2_labels.csv` và khung `data/CONTRACT.md`, `data/DATA_CARD.md` | Cần kiểm tay lại toàn bộ 60/60 nhãn & xác minh trích dẫn gốc trước khi nộp CP2/CP3 (trạng thái hiện tại: mới kiểm tự động toàn vẹn & PII 0 lỗi; chờ người kiểm tay điền số khớp 60 / 60) | Nguyễn Khánh Vinh |
 | Rà câu hỏi phỏng vấn / khảo sát | | Chỉ rà câu dẫn dắt | | |
