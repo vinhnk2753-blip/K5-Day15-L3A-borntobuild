@@ -2,7 +2,7 @@
 
 # Review Copilot: Phỏng vấn pain và tổng hợp evidence
 
-Trạng thái: **Đã phỏng vấn 4 người (27/11/2026), chưa đạt mục tiêu 5 người.** Phần A là kịch bản phỏng vấn. Phần B là bảng evidence. Phần C tổng hợp pain. Phần D là evidence đo từ bộ dữ liệu Tiki. Phần E là kết luận và việc cần làm.
+Trạng thái: **Đã phỏng vấn 4 người (27/11/2026), chưa đạt mục tiêu 5 người.** Phần A là kịch bản phỏng vấn. Phần B là bảng evidence. Phần C tổng hợp pain. Phần D là kết luận và việc cần làm.
 
 > Quy tắc: chỉ ghi những gì người được phỏng vấn **thật sự nói hoặc làm**. Không ghi suy đoán của nhóm vào cột "Câu nói". Chưa phỏng vấn thì để trống, không điền mẫu cho có.
 
