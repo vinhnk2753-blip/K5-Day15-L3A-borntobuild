@@ -12,7 +12,7 @@
 | STT | Họ và tên | Mã học viên | Vai trò | Phần việc chính |
 |---|---|---|---|---|
 | 1 | Nguyễn Khánh Vinh | 2A202603390 | Đội trưởng | Điều phối, nộp CP; đào review công khai, dựng data & DATA_CARD; bảng Impact |
-| 2 | Nguyễn Thị Hải Yến | 2A202603567 | Thành viên | Phỏng vấn/khảo sát pain; bộ câu thử, metric & báo cáo eval; slide demo |
+| 2 | Nguyễn Thị Hải Yến | 2A202603567 | Thành viên | Phỏng vấn pain & tổng hợp evidence/summary.md; bộ câu thử, metric & báo cáo eval; nội dung UX/HAX & slide demo |
 | 3 | Nguyễn Quỳnh Trang | 2A202603477 | Thành viên | Thiết kế & tạo giao diện UI demo; mô phỏng chi phí; tổ chức người dùng thử |
 | 4 | Giáp Mạnh Tuyên | 2A202603648 | Thành viên | Thiết kế kiến trúc; code luồng AI & công cụ lọc/hậu kiểm trích dẫn; đồng chấm eval & video dự phòng |
 
