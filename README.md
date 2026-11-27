@@ -44,9 +44,9 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- UI demo issue #4: `python run.py` mở **http://127.0.0.1:8000**. Chọn **Tai nghe minh họa**, bấm **Kiểm tra rủi ro**, xem cờ x/N, ba rủi ro và bấm `[Rxx]` mở nguyên văn. Ctrl+C để dừng. Không cần cài package ngoài thư viện chuẩn Python.
-- UI gọi `agent.answer(text)` của khung; khi model `fake`, adapter riêng `codebase/ui_demo.py` dựng JSON minh họa cho giao diện và ghi rõ mô phỏng. Adapter không được dùng bởi `eval` hoặc `simulate`; backend `agent.py`, `ai.py`, `tools.py` giữ nguyên.
-- Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'` rồi chạy lại. CLI tùy chọn: `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`; đặt lại `web` để dùng giao diện. CLI có `/sample`, `/quit`, dòng trống để phân tích. Nối model thật thuộc issue #3/#7: [docs/connect-model.md](docs/connect-model.md).
+- UI issue #4: `python run.py` mở **http://127.0.0.1:8000**. Nhập link listing Shopee để lấy review, hoặc chọn **Dán tập review có số sao** rồi nhập mỗi dòng `2 | Nội dung review` cùng URL sản phẩm. Bấm `[Rxx]` mở nguồn do backend trả; Ctrl+C để dừng. Không cần cài package ngoài thư viện chuẩn Python.
+- Web gọi `crawl_shopee_reviews` và `analyze_reviews` của Tuyên như extension, không phân tích hai lần. Giữ nguyên status `risks/no_clear_risk/insufficient` và citations. Fake trả insufficient đúng backend; **không còn bộ tự dựng rủi ro của UI**. Backend chưa trả số nhiễu/sạch nên UI ghi rõ chưa có, không tự tính 0 hoặc áp ngưỡng sạch riêng.
+- Crawl link cần `APIFY_TOKEN`; phân tích OpenAI cần `MODEL_PROVIDER=openai`, `MODEL_NAME`, `API_KEY` trong `.env`. Fixture chỉ dùng chế độ dán, URL minh họa không được crawl. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'` rồi chạy lại. CLI tùy chọn: `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`, nhập link và `/quit` để thoát; đặt lại `web` để dùng giao diện.
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
@@ -95,13 +95,13 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
 | Backend của khung | **Giả** nếu MODEL_PROVIDER=fake | Giữ nguyên nhánh fake, token 0; AI thật thuộc phần việc khác |
-| UI issue #4 | **Web local + adapter mô phỏng** | Dữ liệu tự dựng trong codebase/ui_demo_data.json; guard G10, cờ định lượng, popup nguồn; không đại diện chất lượng AI |
+| UI issue #4 | **Web local nối backend Shopee** | Nhận link/review có sao; fake trả insufficient, không tự sinh rủi ro; nguồn/usage từ backend; chưa thử live API trong phiên đồng bộ |
 
 ## Dùng AI vào việc gì
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, adapter giả, fixture và kiểm thử. Đã kiểm 14 test Python và tương tác Chrome; thành viên cần rà phần có tên mình. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md).
+Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 18 test Python và tương tác Chrome; API/crawler được stub trong test, chưa thử live. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md).
 
 ## File mẫu — điền ở bước nào
 

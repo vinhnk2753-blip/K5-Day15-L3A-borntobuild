@@ -1,7 +1,11 @@
-"""UI web CP2 bằng thư viện chuẩn; REVIEW_LENS_MODE=cli giữ giao diện dòng lệnh."""
+"""Web local dùng trực tiếp backend Shopee của Tuyên; chạy bằng python run.py."""
 import json
 import os
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import urlsplit
 
 for stream in (sys.stdout, sys.stderr, sys.stdin):
     try:
@@ -10,89 +14,44 @@ for stream in (sys.stdout, sys.stderr, sys.stdin):
         pass
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-
-def display(result):
-    print("\n" + result["message"])
-    print("Trạng thái: %s · Review: %d · Gắn cờ: %d" %
-          (result["status"], result["summary"]["total_reviews"], result["summary"]["flagged_reviews"]))
-    for i, risk in enumerate(result["risks"], 1):
-        print("\n%d. %s\n   %s" % (i, risk["title"], risk["description"]))
-        for ev in risk["evidence"]:
-            print("   [%s] %s" % (ev["review_id"], ev["quote"]))
-    for flag in result["review_flags"]:
-        print("Cờ [%s]: %s" % (flag["review_id"], flag["reason"]))
-    print("Chỉ phản ánh review được cung cấp; người mua tự quyết định.\n")
-
-
-def cli_main():
-    import tracing
-    from agent import answer
-    from ui_demo import adapt_answer
-    from ai import MODEL_PROVIDER
-    print("Review Lens — V1 nhập review thủ công")
-    print("Model: %s. CP2 dùng fake; token 0, không phải đánh giá AI thật." % MODEL_PROVIDER)
-    print("Mỗi dòng một review. Dòng trống để phân tích; /sample dùng dữ liệu tự dựng; /quit thoát.")
-    while True:
-        lines, eof = [], False
-        try:
-            while True:
-                try:
-                    line = input("> " if not lines else "… ")
-                except EOFError:
-                    eof = True
-                    break
-                if not lines and line.strip() == "/quit":
-                    return 0
-                if not lines and line.strip() == "/sample":
-                    path = os.path.join(os.path.dirname(__file__), "ui_demo_data.json")
-                    with open(path, encoding="utf-8") as f:
-                        lines = [json.dumps(json.load(f)["cases"][0]["input"], ensure_ascii=False)]
-                    break
-                if not line.strip():
-                    break
-                lines.append(line)
-        except KeyboardInterrupt:
-            print()
-            return 0
-        if not lines:
-            if eof:
-                return 0
-            print("Chưa có review; nhập nội dung rồi để một dòng trống.")
-            continue
-        tracing.begin("app")
-        try:
-            output = adapt_answer("\n".join(lines), answer)
-            display(json.loads(output["output"]))
-        except Exception as exc:
-            print("Không thể hoàn tất: %s. Kiểm tra cấu hình model trong docs/connect-model.md." % type(exc).__name__)
-        finally:
-            summary, _ = tracing.end()
-            print("(model: %s · gọi %d · công cụ %d · token vào %d / ra %d)" %
-                  (", ".join(summary["models"]) or "không gọi", summary["model_calls"], summary["tool_calls"],
-                   summary["tokens_in"], summary["tokens_out"]))
-        if eof:
-            return 0
+import tracing
+from ai import MODEL_NAME, MODEL_PROVIDER
+from ui_backend import MAX_BODY_BYTES, MAX_PER_STAR, MAX_REVIEW_CHARS, MAX_REVIEWS, DEMO_URL, analyze_for_ui, public_error
 
 
 def load_catalog():
-    path = os.path.join(os.path.dirname(__file__), "ui_demo_data.json")
-    with open(path, encoding="utf-8") as stream:
+    """Chỉ nạp fixture UI có nhãn synthetic; không giả làm listing đã crawl."""
+    with Path(__file__).with_name("ui_demo_data.json").open(encoding="utf-8") as stream:
         return json.load(stream)
 
 
-def create_server(port=8000):
-    """Tạo server chỉ tại loopback; không tạo thư viện hoặc dịch vụ ngoài."""
-    import threading
-    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-    from pathlib import Path
-    from urllib.parse import urlsplit
-    import tracing
+def cli_main():
     from agent import answer
-    from ai import MODEL_PROVIDER
-    from ui_demo import MAX_INPUT_CHARS, MAX_REVIEWS, MAX_REVIEW_CHARS, MIN_CLEAN_REVIEWS, adapt_answer
+    print("Backend Shopee — nhập link sản phẩm, /quit để thoát.")
+    while True:
+        try:
+            text = input("> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return 0
+        if text == "/quit":
+            return 0
+        if not text:
+            continue
+        tracing.begin("cli")
+        try:
+            print(answer(text)["output"])
+        except Exception as exc:
+            print(public_error(exc))
+        finally:
+            usage, _ = tracing.end()
+            print("(model: %s · gọi %d · công cụ %d · token %d/%d)" %
+                  (",".join(usage["models"]) or "none", usage["model_calls"], usage["tool_calls"],
+                   usage["tokens_in"], usage["tokens_out"]))
 
+
+def create_server(port=8000):
     catalog = load_catalog()
-    lock = threading.Lock()  # tracing của khung dùng trạng thái toàn cục.
+    lock = threading.Lock()
     static = Path(__file__).with_name("web")
 
     class Handler(BaseHTTPRequestHandler):
@@ -117,15 +76,19 @@ def create_server(port=8000):
             elif path == "/api/products":
                 self.send_data({"products": [{"id": row["id"], "name": row["input"]["product_name"],
                                               "review_count": len(row["input"]["reviews"])} for row in catalog["cases"]],
-                                "synthetic": True, "model_provider": MODEL_PROVIDER,
-                                "limits": {"max_reviews": MAX_REVIEWS, "max_review_chars": MAX_REVIEW_CHARS,
-                                           "max_input_chars": MAX_INPUT_CHARS, "min_clean_reviews": MIN_CLEAN_REVIEWS}})
+                                "synthetic": True, "model_provider": MODEL_PROVIDER, "model_name": MODEL_NAME,
+                                "crawler_configured": bool(os.environ.get("APIFY_TOKEN", "").strip()),
+                                "limits": {"max_reviews": MAX_REVIEWS, "max_per_star": MAX_PER_STAR,
+                                           "max_review_chars": MAX_REVIEW_CHARS}})
             elif path.startswith("/api/products/"):
                 product = next((r for r in catalog["cases"] if r["id"] == path.rsplit("/", 1)[-1]), None)
-                if product:
-                    self.send_data({"input": product["input"], "synthetic": True})
+                if not product:
+                    self.send_data({"message": "Không tìm thấy bộ minh họa."}, 404)
                 else:
-                    self.send_data({"message": "Không tìm thấy sản phẩm mẫu."}, 404)
+                    rows = [{"rating_star": r["rating"], "comment": r["text"]}
+                            for r in product["input"]["reviews"]]
+                    self.send_data({"url": DEMO_URL, "reviews": rows, "synthetic": True,
+                                    "product_name": product["input"]["product_name"]})
             else:
                 self.send_data({"message": "Không tìm thấy trang."}, 404)
 
@@ -140,12 +103,10 @@ def create_server(port=8000):
                 return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= 1024 * 1024:
-                    self.send_data({"message": "Đầu vào rỗng hoặc quá lớn."}, 413)
+                if not 0 < length <= MAX_BODY_BYTES:
+                    self.send_data({"message": "Đầu vào rỗng hoặc vượt giới hạn 2 MB."}, 413)
                     return
                 request = json.loads(self.rfile.read(length).decode("utf-8"))
-                if not isinstance(request, dict) or not isinstance(request.get("input"), str):
-                    raise ValueError("Thiếu input dạng chuỗi.")
             except (ValueError, UnicodeError):
                 self.send_data({"message": "Đầu vào API không hợp lệ."}, 400)
                 return
@@ -153,24 +114,36 @@ def create_server(port=8000):
             with lock:
                 tracing.begin("web")
                 try:
-                    response = adapt_answer(request["input"], answer)
-                    result = json.loads(response["output"])
-                    sources = response.get("sources", [])
-                except Exception:
-                    status = 500
-                    result = {"status": "error", "message": "Chưa thể hoàn tất kiểm tra. Hãy thử lại.",
-                              "risks": [], "review_flags": [], "summary": {"total_reviews": 0, "flagged_reviews": 0}}
-                    sources = []
+                    response = analyze_for_ui(request)
+                except Exception as exc:
+                    status = 400 if isinstance(exc, ValueError) else 502
+                    try:
+                        refused = isinstance(request, dict) and isinstance(request.get("url"), str) and urlsplit(request["url"]).hostname not in {"shopee.vn", None}
+                    except ValueError:
+                        refused = False
+                    state = "refused" if refused else "invalid_input" if status == 400 else "error"
+                    response = {"analysis": {"status": state, "summary": public_error(exc), "risks": []},
+                                "sources": [], "coverage": None, "mock": MODEL_PROVIDER == "fake"}
                 finally:
                     usage, _ = tracing.end()
-            safe_usage = {k: usage[k] for k in ("model_calls", "tool_calls", "tokens_in", "tokens_out", "models")}
+            response["usage"] = {k: usage[k] for k in ("model_calls", "tool_calls", "tokens_in", "tokens_out", "models")}
+            response["origin"] = "backend" if status == 200 else "input_validation" if status == 400 else "runtime_error"
             print("[web] status=%s model=%s calls=%d tools=%d tokens=%d/%d" %
-                  (result["status"], ",".join(safe_usage["models"]) or "none", safe_usage["model_calls"],
-                   safe_usage["tool_calls"], safe_usage["tokens_in"], safe_usage["tokens_out"]), flush=True)
-            self.send_data({"result": result, "sources": sources, "usage": safe_usage,
-                            "mock": MODEL_PROVIDER == "fake"}, status)
+                  (response["analysis"]["status"], ",".join(usage["models"]) or "none", usage["model_calls"],
+                   usage["tool_calls"], usage["tokens_in"], usage["tokens_out"]), flush=True)
+            self.send_data(response, status)
 
-    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    class LocalServer(ThreadingHTTPServer):
+        allow_reuse_address = False
+
+        def server_bind(self):
+            # Windows cho phép hai listener dùng chung cổng nếu SO_REUSEADDR bật.
+            if os.name == "nt":
+                import socket
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            super().server_bind()
+
+    return LocalServer(("127.0.0.1", port), Handler)
 
 
 def main():
@@ -183,8 +156,8 @@ def main():
         print("Không mở được UI: %s. Chọn cổng khác bằng REVIEW_LENS_PORT." % exc)
         return 1
     url = "http://127.0.0.1:%d" % server.server_port
-    print("Review Lens — mở giao diện tại %s" % url, flush=True)
-    print("Dữ liệu chọn sẵn là minh họa, không phải crawl. Ctrl+C để dừng.", flush=True)
+    print("Review Lens — %s · backend Shopee · provider=%s" % (url, MODEL_PROVIDER), flush=True)
+    print("Fake trả insufficient đúng backend; UI không tự sinh rủi ro. Ctrl+C để dừng.", flush=True)
     if os.environ.get("REVIEW_LENS_NO_BROWSER") != "1":
         webbrowser.open(url)
     try:
