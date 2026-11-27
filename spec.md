@@ -35,34 +35,41 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 - **Nguồn lấy review trong prototype**: CLI hiện có adapter Apify (`codebase/shopee_reviews.py`) và cần `APIFY_TOKEN`; extension dùng JavaScript gọi endpoint review trên trang Shopee, rồi gom tối đa 50 review mỗi mức sao. Lần chạy extension đã nhận HTTP 403 khi gọi `type=5`; đã đổi sang yêu cầu không lọc sao `type=0`, nhưng chưa xác minh lại trên listing thật. Endpoint này không phải Open API chính thức; không tuyên bố crawl thành công/đủ dữ liệu nếu chưa kiểm chứng.
 
 ## §4. Thiết kế *(guide 2.2, 3.2)*
-- **Lát cắt MỘT CÂU**: Người mua tại Việt Nam mở một listing Shopee và bấm extension · JavaScript lấy review công khai và chia tối đa 50 review cho mỗi mức sao · GPT gợi ý tối đa 3 rủi ro chất lượng/sử dụng kèm mã `[Rxx]` đã được code đối chiếu với review đầu vào, hoặc báo chưa đủ căn cứ · người mua kiểm tra review gốc và tự quyết định.
+- **Lát cắt MỘT CÂU**: Người mua nhập mã/tên của một sản phẩm trong catalog CP2 hoặc dán review · workflow đọc review mẫu hay chuẩn hóa review vừa dán · lọc nhiễu theo quy tắc · chỉ gợi ý tối đa 3 nhóm dấu hiệu có trích dẫn `[Rxx]`, hoặc báo chưa đủ căn cứ · người mua tự đối chiếu review gốc và quyết định.
+- **Hợp đồng I/O:** `answer(text: str) -> dict` luôn trả `{"output": str}`; có thể kèm `"structured": dict` cho UI hiển thị trạng thái, thống kê, cờ, nhóm rủi ro và review nguồn. Luồng CP2 không gọi dịch vụ ngoài.
 - **Không làm**: (1) không kết luận shop gian lận/seeding hoặc xác minh tính xác thực của người mua; (2) không tự quyết định mua/không mua; (3) không đánh giá sản phẩm từ sao đơn lẻ hay review chỉ nói giao hàng; (4) không lấy dữ liệu riêng tư hoặc vượt quyền truy cập của sàn.
 - **Sơ đồ**:
 
   ```mermaid
   flowchart LR
-    A[Người mua mở listing, bấm extension] --> B[JS đọc endpoint review của trang]
-    B --> C[Chia tối đa 50 review mỗi mức sao]
-    C --> D[Backend ẩn danh email/SĐT và gửi GPT]
-    D --> E{Có review nội dung sản phẩm?}
-    E -- Không hoặc lỗi crawl --> F[Báo chưa đủ căn cứ]
-    E -- Có --> G[GPT nêu tối đa 3 rủi ro]
-    G --> H[Code giữ citation khớp review đầu vào]
-    H --> I[Người mua mở nguồn và tự quyết]
+    A[Người dùng nhập mã SP01–SP03 hoặc dán review] --> B{Nhận diện đầu vào}
+    B -- Mã/tên --> C[Đọc catalog và JSON mẫu cục bộ]
+    B -- Văn bản --> D[Chuẩn hóa từng dòng, gắn hoặc giữ mã Rxx]
+    C --> E[Lọc nhiễu xác định]
+    D --> E
+    E --> F{Còn ít nhất 3 review sạch?}
+    F -- Không --> G[Báo chưa đủ căn cứ]
+    F -- Có --> H[Nhóm dấu hiệu theo quy tắc giả định]
+    H --> I[Chọn tối đa 3 nhóm, kèm trích dẫn gốc]
+    G --> J[Người mua tự kiểm tra]
+    I --> J
   ```
 
-- **Hình dạng:** [x] workflow cố định · [ ] một agent · [ ] nhiều agent. Ba bước lấy/lọc/tóm tắt/hậu kiểm có thứ tự ổn định; không cần agent tự chọn công cụ hay lặp nhiều vòng. Workflow dễ kiểm soát trích dẫn và phù hợp lát cắt nhỏ.
-- **AI dựa vào đâu** — mỗi công cụ (khớp `codebase/tools.py`):
+- **Hình dạng:** [x] workflow cố định · [ ] một agent · [ ] nhiều agent. Các bước nhận diện/đọc/lọc/tóm tắt có thứ tự ổn định; không cần agent tự chọn công cụ hay lặp nhiều vòng. Workflow dễ kiểm soát trích dẫn và phù hợp lát cắt nhỏ.
+- **Công cụ `@tool` trong `codebase/tools.py`**:
 
-  | Công cụ | Input | Output | Tác động ra ngoài? |
-  |---|---|---|---|
-  | Extension `content.js` | Trang sản phẩm Shopee đang mở | Tối đa 50 review/mức sao từ endpoint công khai; gom theo sao và gửi backend | Chỉ đọc; endpoint có thể trả 403 |
-  | Backend `extension_server.py` | URL và review từ extension | Ẩn email/SĐT, gọi `analyze_reviews`, trả kết quả | Gửi review đã lọc tới GPT; không sửa shop |
-  | `analyze_reviews` → `call_model` | Review có mã `[Rxx]` | Tối đa 3 rủi ro; code loại citation không tồn tại và đính kèm văn bản review gốc | Không |
-  | CLI `crawl_shopee_reviews` | URL Shopee và `max_reviews` | Adapter Apify và coverage metadata cho luồng CLI | Dịch vụ bên thứ ba; cần `APIFY_TOKEN` |
+| Công cụ | Input | Output | Tác động ra ngoài? |
+|---|---|---|---|
+| `load_product_reviews` | Mã SP01–SP03, product ID hoặc tên trong catalog | Metadata và review đã ẩn danh, giữ nguyên mã nguồn | Không; chỉ đọc JSON cục bộ |
+| `parse_review_text` | Văn bản review, một review mỗi dòng | Review chuẩn hóa, giữ mã `[Rxx]` duy nhất hoặc gán mã mới | Không; xử lý trong bộ nhớ |
+| `filter_review_noise` | Danh sách review chuẩn hóa | Review sạch, review nhiễu và số đếm theo nhóm | Không; quy tắc xác định |
+| `crawl_shopee_reviews` *(luồng mở rộng)* | URL Shopee và `max_reviews` | Review công khai đã ẩn danh qua adapter Apify | Có yêu cầu bên thứ ba; cần `APIFY_TOKEN`; không sửa listing |
 
-- **Mức tự động:** [x] AI gợi ý, người mua quyết · [ ] AI tự làm khi chắc, chuyển người khi không · [ ] AI tự làm. Kết luận sai có thể khiến người mua mất tiền hoặc gây thiệt hại cho shop; người dùng có thể kiểm tra review gốc trước khi hành động.
-- **Chỗ chặn rủi ro**: `analyze_reviews` chỉ trả citation có mã tồn tại trong review đầu vào và gắn nguyên văn nguồn tương ứng; khi không có review văn bản, trả chưa đủ căn cứ. Nội dung rủi ro vẫn cần người mua đối chiếu với review gốc. Nếu crawler gặp 403 thì dừng, không kết luận.
+- **Workflow thực tế của `answer(text)` trong CP2:** tra cứu catalog → chuẩn hóa → lọc nhiễu → nhóm một số dấu hiệu theo từ khóa → xuất `output` và `structured`. Bản này chạy giả, không gọi GPT, Apify hoặc endpoint Shopee; trích dẫn chỉ giữ mã và nội dung có trong input. `crawl_shopee_reviews` để dành cho luồng mở rộng, không được `answer()` tự gọi.
+- **Extension riêng:** `extension/content.js` có thể lấy tối đa 50 review mỗi mức sao qua endpoint Shopee; backend `extension_server.py` ẩn danh PII rồi mới gọi GPT khi đã cấu hình. Luồng này độc lập với bản CLI giả ở CP2; endpoint từng trả HTTP 403 và chưa được xác minh lại.
+
+- **Mức tự động:** [x] Bản chạy giả đưa gợi ý theo từ khóa, người mua quyết · [ ] AI tự làm khi chắc, chuyển người khi không · [ ] AI tự làm. Kết luận sai có thể khiến người mua mất tiền hoặc gây thiệt hại cho shop; người dùng có thể kiểm tra review gốc trước khi hành động.
+- **Chỗ chặn rủi ro**: `answer()` chỉ đưa mã trích dẫn lấy từ review đầu vào, không tạo mã mới; khi dưới 3 review sạch thì không kết luận rủi ro. Luồng extension GPT riêng (`analyze_reviews`) cũng loại citation không tồn tại và gắn nguyên văn nguồn tương ứng.
 - **Chỗ người duyệt**: người mua tự xác nhận review gốc có liên quan đến đúng biến thể và tự quyết định mua; hệ thống không gắn nhãn shop lừa đảo/seeding.
 - **Nguyên tắc thiết kế** (≥3):
 
@@ -72,7 +79,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
   | Mỗi rủi ro phải kiểm chứng được | Hiển thị mã `[Rxx]`; hậu kiểm bằng code và cho mở review gốc. |
   | Tách lỗi sản phẩm khỏi giao hàng | Review chỉ khen/chê vận chuyển không được tính là bằng chứng chất lượng sản phẩm. |
 
-- **Phần còn giả/chưa nối**: extension/backend đã được viết nhưng luồng `type=0` chưa xác minh sau lỗi 403; GPT cần cấu hình OpenAI API trong `.env`. Luồng CLI vẫn cần `APIFY_TOKEN`. Chưa có lượt eval hay mô phỏng chi phí được ghi nhận; không coi prototype đã đạt chuẩn.
+- **Phần còn giả/chưa nối**: `answer(text)` là demo xác định, không gọi LLM; các nhóm rủi ro dựa trên từ khóa nên chỉ là gợi ý để người mua kiểm tra. Extension/GPT là luồng riêng; Shopee `type=0` chưa xác minh sau lỗi 403. Chưa có lượt eval chính thức hay mô phỏng chi phí được ghi nhận; không coi prototype đã đạt chuẩn.
 
 ## §5. Chỗ khó — 4 lớp + ≥6 kịch bản + 2 tấn công *(guide 2.3)*
 
