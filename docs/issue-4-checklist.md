@@ -22,8 +22,8 @@ Hợp đồng chi tiết: docs/ui-ai-contract-proposal.md. Một lần phân tí
 
 ## Kiểm thử
 
-- 18 test Python: fake đúng trạng thái, backend citations, API schema, source metadata, PII, sao bắt buộc, lỗi cấu hình, luồng link gọi crawler, usage qua OpenAI HTTP stub và không cho server khác dùng chung cổng UI.
-- 15 nhóm kiểm tra browser QA: link/review modes, chọn mẫu, fake không bịa rủi ro, usage, không bịa tỷ lệ nhiễu, popup nguồn và metadata, xử lý lỗi, reset kết quả, desktop/mobile.
+- 23 test Python: fake đúng trạng thái, backend citations, API schema, source metadata, PII, sao bắt buộc, lỗi cấu hình, luồng link gọi crawler, usage qua OpenAI HTTP stub, nội dung có URL/Rxx không kích hoạt crawler, HTTP 400/413, route sản phẩm, log ngoại lệ, cổng sai và không cho server khác dùng chung cổng UI.
+- 18 nhóm kiểm tra browser QA: link/review modes, chọn mẫu, fake không bịa rủi ro, usage, không bịa tỷ lệ nhiễu, popup nguồn và metadata, lỗi mạng, thông báo HTTP 400/403/413/502, cảnh báo dữ liệu cũ và desktop/mobile. Profile tạm được dọn sau kiểm thử.
 - Ba thẻ rủi ro/no_clear_risk trong browser QA dùng response fixture riêng của test. Không báo đó là kết quả OpenAI thật.
 - Chưa thử live crawler/OpenAI; không có chi phí hoặc token API thật được ghi nhận.
 - Không ghi/chấm benchmark, không sửa CSV kết quả hoặc trace đã có.
@@ -32,3 +32,7 @@ Hợp đồng chi tiết: docs/ui-ai-contract-proposal.md. Một lần phân tí
 
 Backend hiện chưa trả thống kê nhiễu/sạch, chưa nhận trực tiếp mã catalog MWG hoặc review không có số sao trong answer(text). Nếu nhóm giữ các yêu cầu đó, cần bổ sung backend/hợp đồng riêng rồi UI hiển thị các trường thật.
 Mã backend đã được merge từ main nhưng không bị chỉnh trong phần đồng bộ UI này. Dữ liệu và tài liệu của Vinh/Yến giữ nguyên.
+
+## Review PR #18 và kiểm tay
+
+Đối chiếu từng nhận xét: [pr-18-review-fixes.md](pr-18-review-fixes.md). Trang xác nhận chưa tự rà code và fixture `ui_demo_data.json`; chưa đánh dấu đã kiểm tay. Cần người phụ trách thực hiện trước khi nộp.

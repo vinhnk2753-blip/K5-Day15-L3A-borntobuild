@@ -70,6 +70,16 @@ class UIBackendTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 prepare_reviews([{"rating_star": rating, "comment": "Nội dung"}])
 
+    def test_review_links_and_source_markers_stay_content_without_crawling(self):
+        rows = [{"rating_star": 2, "comment": "[R01] Shipping nhanh https://example.com"},
+                {"rating_star": 3, "comment": "Flagship https://shopee.vn/product/123/456"}]
+        with patch.object(agent, "crawl_shopee_reviews") as crawl:
+            result = analyze_for_ui({"mode": "reviews", "url": URL, "reviews": rows})
+            crawl.assert_not_called()
+        self.assertEqual(result["analysis"]["review_count"], 2)
+        self.assertNotIn("review_flags", result["analysis"])
+        self.assertEqual(prepare_reviews(rows)[0]["comment"], rows[0]["comment"])
+
     def test_personal_fields_are_not_forwarded_and_contacts_are_masked(self):
         result = prepare_reviews([{"rating_star": 2, "comment": "Liên hệ user@example.com, 0912345678", "username": "private-name", "variant": "user@example.com"}])[0]
         self.assertNotIn("username", result)

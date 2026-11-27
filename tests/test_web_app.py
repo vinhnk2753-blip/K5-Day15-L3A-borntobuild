@@ -1,5 +1,7 @@
 """HTTP UI kiểm với backend hiện tại, không gọi dịch vụ ngoài."""
 import json
+import io
+import http.client
 import os
 import sys
 import threading
@@ -11,7 +13,8 @@ from unittest.mock import patch
 os.environ["MODEL_PROVIDER"] = "fake"
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "codebase"))
 import agent
-from app import create_server
+from app import create_server, main
+from ui_backend import MAX_BODY_BYTES
 
 URL = "https://shopee.vn/product/123/456"
 ROWS = [{"rating_star": 2, "comment": "Tai trái mất kết nối."}]
@@ -112,6 +115,38 @@ class WebTests(unittest.TestCase):
     def test_existing_ui_port_cannot_be_silently_shared(self):
         with self.assertRaises(OSError):
             create_server(self.server.server_port)
+
+    def test_catalog_only_accepts_one_product_path_segment(self):
+        for path in ["/api/products/", "/api/products/foo/bar/DEMO01", "/api/products/DEMO01/"]:
+            with self.subTest(path=path), self.assertRaises(urllib.error.HTTPError) as error:
+                self.get(path)
+            self.assertEqual(error.exception.code, 404)
+
+    def test_empty_and_oversized_http_bodies_return_distinct_messages(self):
+        # Máy chủ phải từ chối Content-Length sai ngay, trước khi đọc body.
+        for length, expected in [(0, 400), (-1, 400), (MAX_BODY_BYTES + 1, 413)]:
+            with self.subTest(length=length):
+                connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
+                try:
+                    connection.request("POST", "/api/analyze", headers={"Content-Length": str(length)})
+                    response = connection.getresponse()
+                    self.assertEqual(response.status, expected)
+                    self.assertTrue(json.load(response)["message"])
+                finally:
+                    connection.close()
+
+    def test_server_logs_exception_type_without_provider_payload(self):
+        with patch.object(agent, "analyze_reviews", side_effect=RuntimeError("secret-provider-payload")), patch("sys.stdout", new_callable=io.StringIO) as log:
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                self.post({"mode": "reviews", "url": URL, "reviews": ROWS})
+            self.assertIn("exception=RuntimeError", log.getvalue())
+            self.assertNotIn("secret-provider-payload", log.getvalue())
+            self.assertNotIn("secret-provider-payload", error.exception.read().decode())
+
+    def test_invalid_port_exits_cleanly(self):
+        for port in ["-1", "65536", "invalid"]:
+            with self.subTest(port=port), patch.dict(os.environ, {"REVIEW_LENS_MODE": "web", "REVIEW_LENS_PORT": port}), patch("sys.stdout", new_callable=io.StringIO):
+                self.assertEqual(main(), 1)
 
 
 if __name__ == "__main__":

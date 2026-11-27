@@ -1,7 +1,7 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const form = $("review-form");
-let busy = false, revision = 0, snapshot = [], lastSourceButton = null;
+let busy = false, revision = 0, snapshot = [], lastSourceButton = null, hasResult = false;
 let limits = { max_reviews: 250, max_per_star: 50, max_review_chars: 3000 };
 const lines = () => $("reviews").value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
 function node(tag, text, cls) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; }
@@ -22,7 +22,7 @@ function preview() {
   $("preview-list").replaceChildren(...rows.slice(0, limits.max_reviews).map(s => node("li", s)));
 }
 function invalidate() {
-  revision++; snapshot = []; $("results").hidden = true; $("empty-state").hidden = false; $("stale-note").hidden = false;
+  revision++; snapshot = []; $("results").hidden = true; $("empty-state").hidden = false; $("stale-note").hidden = !hasResult;
   $("form-error").hidden = true; $("reviews").removeAttribute("aria-invalid"); $("product-url").removeAttribute("aria-invalid"); preview();
 }
 function inputError(message, target = "reviews") {
@@ -34,6 +34,7 @@ function setBusy(value) {
   $("analyze").textContent = value ? "Đang xử lý…" : "Kiểm tra rủi ro";
 }
 function render(data) {
+  hasResult = true; $("stale-note").hidden = true;
   const r = data.analysis; snapshot = data.sources || [];
   const titles = { risks: `Có ${r.risks.length} rủi ro cần cân nhắc`, insufficient: "Chưa đủ căn cứ phân tích", no_clear_risk: "Chưa thấy rủi ro rõ ràng", refused: "Yêu cầu ngoài phạm vi Shopee", invalid_input: "Kiểm tra lại đầu vào", error: "Lần kiểm tra chưa hoàn tất" };
   $("empty-state").hidden = true; $("results").hidden = false;
@@ -81,7 +82,11 @@ form.addEventListener("submit", async event => {
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 480000);
   try {
     const response = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(request), signal: controller.signal });
-    const data = await response.json(); if (!data.analysis || !Array.isArray(data.analysis.risks)) throw new Error("invalid-response");
+    let data = await response.json();
+    if (!response.ok && typeof data.message === "string") {
+      data = { analysis: { status: response.status < 500 ? "invalid_input" : "error", summary: data.message, risks: [] }, sources: [], origin: "http_error" };
+    }
+    if (!data.analysis || !Array.isArray(data.analysis.risks)) throw new Error("invalid-response");
     if (ticket === revision) render(data);
   } catch (_) {
     if (ticket === revision) render({ analysis: { status: "error", summary: "Không thể nhận kết quả. Đầu vào vẫn được giữ; hãy kiểm tra kết nối rồi thử lại.", risks: [] }, sources: [] });

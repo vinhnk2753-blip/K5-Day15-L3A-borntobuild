@@ -54,7 +54,7 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 
 | Lệnh | Làm gì |
 |---|---|
-| `python run.py` | Mở UI demo local, nhập/chọn sản phẩm hoặc dán review, hiển thị kết quả giả và usage từ tracing |
+| `python run.py` | Mở UI local, nhập link Shopee hoặc dán review có sao, hiển thị kết quả backend và usage từ tracing |
 | `python run.py check` | Kiểm `eval/benchmark.csv` (6 cột, số câu, `kho` / `tu_choi`, mã `source`, ô trống, dòng mẫu) `eval/metric_spec.yaml` (≥3 metric điền đủ) và `TEAMS.md` (đúng format để BTC quét). Chỉ cảnh báo, không sửa file |
 | `python run.py eval --try` | **Thử nối model:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`. Thấy "Nối model được" là xong. Không tính là một lượt |
 | `python run.py eval` | Chạy cả bộ qua `codebase/agent.py` → `eval/run-1.csv` (lần sau `run-2.csv`…) + `traces/run-1.jsonl`. Mỗi dòng có run ID, model, số lần gọi model / công cụ, token. Model còn giả → chỉ ghi `run-mock.csv`; mọi câu lỗi → `run-error.csv`; Ctrl+C → `run-stopped.csv` — đều **không** được đánh số |
@@ -84,7 +84,7 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 ### Crawl review Shopee
 
-Đặt `APIFY_TOKEN` trong biến môi trường trước khi chạy `python run.py`, rồi nhập link sản phẩm `https://shopee.vn/...` tại dấu nhắc. Module `codebase/shopee_reviews.py` gọi actor Apify `themineworks/shopee-reviews-scraper` qua HTTP bằng thư viện chuẩn; không cần cài gói Python. Mặc định lấy tối đa 100 review và hiện mã `[R01]`, sao, nội dung, ngày, biến thể và ghi chú độ phủ. Module chỉ giữ các trường review cần cho prototype, không lấy tên người đánh giá.
+Đặt `APIFY_TOKEN` trong biến môi trường trước khi chạy `python run.py`, rồi nhập link sản phẩm `https://shopee.vn/...` vào ô **Link sản phẩm Shopee** trên web. Nếu muốn nhập tại dấu nhắc, đặt `$env:REVIEW_LENS_MODE='cli'` trước khi chạy (PowerShell); đặt lại `web` để mở giao diện. Module `codebase/shopee_reviews.py` gọi actor Apify `themineworks/shopee-reviews-scraper` qua HTTP bằng thư viện chuẩn; không cần cài gói Python. Mặc định lấy tối đa 100 review và hiện mã `[R01]`, sao, nội dung, ngày, biến thể và ghi chú độ phủ. Module chỉ giữ các trường review cần cho prototype, không lấy tên người đánh giá.
 
 Actor là dịch vụ bên thứ ba, có giới hạn và mức phí riêng; kết quả không được mặc định là đầy đủ. Cần cấu hình token hợp lệ và kiểm tra `counts_complete`/`coverage_note` trong metadata trước khi dùng làm căn cứ.
 
@@ -94,6 +94,7 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
+| Lời gọi AI ở quyết định trung tâm | Cần xác minh live từ CP3 | Model và người kiểm: ____; chế độ fake hiện chưa chứng minh chất lượng AI thật |
 | Backend của khung | **Giả** nếu MODEL_PROVIDER=fake | Giữ nguyên nhánh fake, token 0; AI thật thuộc phần việc khác |
 | UI issue #4 | **Web local nối backend Shopee** | Nhận link/review có sao; fake trả insufficient, không tự sinh rủi ro; nguồn/usage từ backend; chưa thử live API trong phiên đồng bộ |
 
@@ -101,7 +102,9 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 18 test Python và tương tác Chrome; API/crawler được stub trong test, chưa thử live. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md).
+Khai báo chung của nhóm ngoài UI: ____ (các thành viên bổ sung phần việc và người kiểm; giữ nguyên khai báo dữ liệu của Vinh trong bảng chi tiết).
+
+Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 23 test Python và 18 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Trang xác nhận chưa tự rà code/fixture; giữ việc xác nhận kiểm tay trước khi nộp. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md) và [xử lý review PR #18](docs/pr-18-review-fixes.md).
 
 ## File mẫu — điền ở bước nào
 

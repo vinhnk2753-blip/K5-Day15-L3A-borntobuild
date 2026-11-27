@@ -9,6 +9,7 @@ const base = process.env.REVIEW_LENS_TEST_URL || 'http://127.0.0.1:8000';
 const chrome = process.env.REVIEW_LENS_CHROME || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const profile = await fs.mkdtemp(path.join(os.tmpdir(), 'review-lens-browser-'));
 const child = spawn(chrome, ['--headless=new', '--disable-gpu', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] });
+const exited = new Promise(resolve => { child.once('exit', resolve); child.once('error', resolve); });
 if (process.env.REVIEW_LENS_BROWSER_DEBUG) child.stderr.on('data', bytes => process.stderr.write(bytes));
 child.on('error', error => { console.error(error.message); process.exitCode = 1; });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -48,9 +49,11 @@ try {
   assert(await evaluate(`!document.getElementById('form-error').hidden && document.activeElement.id==='product-url'`));
   await evaluate(`document.getElementById('input-mode').value='reviews';document.getElementById('input-mode').dispatchEvent(new Event('change'));document.getElementById('product-select').value='DEMO01';document.getElementById('product-select').dispatchEvent(new Event('change'))`);
   await waitFor(`document.getElementById('reviews').value.includes('2 |')`);
+  assert(await evaluate(`document.getElementById('stale-note').hidden`), 'Không báo kết quả cũ trước lần phân tích đầu tiên');
   await evaluate(`document.getElementById('review-form').requestSubmit()`);
   await waitFor(`!document.getElementById('results').hidden && !document.getElementById('analyze').disabled`);
   assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Chưa đủ căn cứ phân tích');
+  assert(await evaluate(`document.getElementById('stale-note').hidden`), 'Ẩn cảnh báo cũ sau khi có kết quả mới');
   assert.equal(await evaluate(`document.querySelectorAll('#risk-list article').length`), 0);
   assert((await evaluate(`document.getElementById('usage-values').textContent`)).includes('Số lần gọi model: 1'));
   assert((await evaluate(`document.getElementById('coverage-section').textContent`)).includes('Chưa có thống kê lọc nhiễu'));
@@ -87,6 +90,16 @@ try {
   assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Chưa thấy rủi ro rõ ràng');
   await evaluate(`document.getElementById('reviews').value+=String.fromCharCode(10)+'4 | Nội dung mới';document.getElementById('reviews').dispatchEvent(new Event('input'))`);
   assert(await evaluate(`document.getElementById('results').hidden && !document.getElementById('stale-note').hidden`));
+  await evaluate(`document.getElementById('reviews').dispatchEvent(new Event('input'))`);
+  assert(await evaluate(`!document.getElementById('stale-note').hidden`), 'Giữ cảnh báo khi sửa nhiều lần');
+  for (const status of [400, 403, 413, 502]) {
+    const message = `Thông báo HTTP ${status} từ máy chủ`;
+    await evaluate(`window.fetch=(url,options)=>url==='/api/analyze'?Promise.resolve(new Response(JSON.stringify({message:${JSON.stringify(message)}}),{status:${status}})):window.originalFetch(url,options);document.getElementById('review-form').requestSubmit()`);
+    await waitFor(`!document.getElementById('results').hidden && !document.getElementById('analyze').disabled`);
+    assert.equal(await evaluate(`document.getElementById('result-message').textContent`), message);
+    assert(await evaluate(`document.getElementById('quantitative').hidden`));
+    assert(await evaluate(`document.getElementById('stale-note').hidden`));
+  }
   await evaluate(`window.fetch=(url,options)=>url==='/api/analyze'?Promise.reject(new Error('test network')):window.originalFetch(url,options);document.getElementById('review-form').requestSubmit()`);
   await waitFor(`!document.getElementById('results').hidden && !document.getElementById('analyze').disabled`);
   assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Lần kiểm tra chưa hoàn tất');
@@ -96,11 +109,18 @@ try {
   await evaluate(`document.getElementById('input-mode').value='link';document.getElementById('input-mode').dispatchEvent(new Event('change'));document.getElementById('product-url').value='https://other.example/product/1/2';document.getElementById('product-url').dispatchEvent(new Event('input'));document.getElementById('review-form').requestSubmit()`);
   assert((await evaluate(`document.getElementById('form-error').textContent`)).includes('shopee.vn'));
   report = { passed:true,checks:['link input mode','URL validation','rated-review mode','sample selection','fake backend insufficient without risks','actual tracing usage','no fabricated noise statistics','desktop/mobile 390/320','missing stars rejected','risk cards from explicit QA response fixture','verbatim source and metadata','no_clear_risk QA fixture','stale result reset','network error','clear'],limitations:'Không gọi crawler hoặc OpenAI thật. Ba thẻ rủi ro/no_clear_risk được kiểm bằng response fixture chèn riêng trong browser QA, không có generator trong app.',screenshots:['.local/ui-home.png','.local/ui-desktop.png','.local/ui-mobile.png'] };
+  report.checks.push('no stale warning before first result', 'stale warning cleared after new result', 'HTTP 400/403/413/502 server messages');
   await fs.writeFile('.local/browser-smoke.json', JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));
 
 } finally {
   if (ws) ws.close();
   child.kill();
-  // Profile ở thư mục tạm của hệ điều hành, không đụng profile trình duyệt người dùng.
+  await exited;
+  // Chỉ xóa đúng thư mục riêng do mkdtemp tạo bên trong temp của hệ điều hành.
+  const resolvedProfile = path.resolve(profile);
+  assert.equal(path.dirname(resolvedProfile), path.resolve(os.tmpdir()));
+  assert(path.basename(resolvedProfile).startsWith('review-lens-browser-'));
+  await fs.rm(resolvedProfile, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
+  assert.equal(await fs.stat(resolvedProfile).then(() => true, () => false), false, 'Đã dọn profile QA');
 }

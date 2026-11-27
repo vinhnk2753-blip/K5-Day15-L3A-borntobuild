@@ -95,4 +95,6 @@ Backend chỉ dẫn rủi ro theo prompt; UI không tuyên bố guard phát hi�
 
 App dùng lock quanh tracing.begin/end vì khung có trạng thái toàn cục; giữ log model/tool/token thật của lần gọi. Chế độ dán thường không gọi tool crawler nên tool_calls có thể là 0; không ép số đếm cho giống bản cũ.
 UI không trả body lỗi nhà cung cấp/key/prompt ra màn hình. Chưa nhận usage thì ghi chưa có, không ước lượng.
-18 test Python và 15 nhóm kiểm tra browser smoke kiểm luồng tích hợp. HTTP OpenAI/crawler được stub trong test; ba thẻ rủi ro trong browser test dùng response fixture ghi rõ là kiểm thử, không phải một lượt AI thật. Chưa xác minh live với credential/nguồn Shopee trong phiên này. App báo lỗi khi cổng đã bị chiếm, không cho hai server dùng chung cổng trên Windows; có thể chọn REVIEW_LENS_PORT=8001 để thử riêng.
+23 test Python và 18 nhóm kiểm tra browser smoke kiểm luồng tích hợp. HTTP OpenAI/crawler được stub trong test; ba thẻ rủi ro trong browser test dùng response fixture ghi rõ là kiểm thử, không phải một lượt AI thật. Chưa xác minh live với credential/nguồn Shopee trong phiên này. App báo lỗi khi cổng đã bị chiếm, không cho hai server dùng chung cổng trên Windows; có thể chọn REVIEW_LENS_PORT=8001 để thử riêng.
+
+Đây là mô tả điểm nối web với backend Shopee hiện có, chưa thay thế `data/CONTRACT.md`. Hợp đồng dữ liệu MWG (SP01–SP03, review không có sao, ngưỡng sạch 3) còn khác backend thực thi. UI chưa nối catalog MWG, không tự gán sao hoặc đổi URL nguồn MWG thành Shopee. Cần Tuyên/Vinh chốt phần khác biệt đó; không coi tài liệu này là xác nhận họ đã đồng ý.

@@ -81,7 +81,8 @@ def create_server(port=8000):
                                 "limits": {"max_reviews": MAX_REVIEWS, "max_per_star": MAX_PER_STAR,
                                            "max_review_chars": MAX_REVIEW_CHARS}})
             elif path.startswith("/api/products/"):
-                product = next((r for r in catalog["cases"] if r["id"] == path.rsplit("/", 1)[-1]), None)
+                product_id = path[len("/api/products/"):]
+                product = next((r for r in catalog["cases"] if r["id"] == product_id), None) if "/" not in product_id else None
                 if not product:
                     self.send_data({"message": "Không tìm thấy bộ minh họa."}, 404)
                 else:
@@ -103,8 +104,11 @@ def create_server(port=8000):
                 return
             try:
                 length = int(self.headers.get("Content-Length", "0"))
-                if not 0 < length <= MAX_BODY_BYTES:
-                    self.send_data({"message": "Đầu vào rỗng hoặc vượt giới hạn 2 MB."}, 413)
+                if length <= 0:
+                    self.send_data({"message": "Đầu vào rỗng hoặc Content-Length không hợp lệ."}, 400)
+                    return
+                if length > MAX_BODY_BYTES:
+                    self.send_data({"message": "Đầu vào vượt giới hạn 2 MB."}, 413)
                     return
                 request = json.loads(self.rfile.read(length).decode("utf-8"))
             except (ValueError, UnicodeError):
@@ -116,6 +120,7 @@ def create_server(port=8000):
                 try:
                     response = analyze_for_ui(request)
                 except Exception as exc:
+                    print("[web] exception=%s" % type(exc).__name__, flush=True)
                     status = 400 if isinstance(exc, ValueError) else 502
                     try:
                         refused = isinstance(request, dict) and isinstance(request.get("url"), str) and urlsplit(request["url"]).hostname not in {"shopee.vn", None}
@@ -152,7 +157,7 @@ def main():
     import webbrowser
     try:
         server = create_server(int(os.environ.get("REVIEW_LENS_PORT", "8000")))
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, OverflowError) as exc:
         print("Không mở được UI: %s. Chọn cổng khác bằng REVIEW_LENS_PORT." % exc)
         return 1
     url = "http://127.0.0.1:%d" % server.server_port
