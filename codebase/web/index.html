@@ -20,7 +20,7 @@
     <section class="intro">
       <p class="eyebrow">ĐỌC KỸ HƠN. MUA CÓ CÂN NHẮC.</p>
       <h1>Đọc review sản phẩm,<br>nhìn rõ rủi ro.</h1>
-      <p class="lead">Nhập link sản phẩm Shopee hoặc gửi tập review có số sao. Đọc các phản ánh rủi ro và đối chiếu nguồn trước khi quyết định.</p>
+      <p class="lead">Chọn sản phẩm có sẵn hoặc dán tập review. Đọc các phản ánh rủi ro và đối chiếu nguồn trước khi quyết định.</p>
       <p id="mode" class="mode">Đang tải cấu hình bản thử nghiệm…</p>
     </section>
     <div class="workspace">
@@ -28,25 +28,21 @@
         <div class="section-head"><h2 id="input-heading">Đánh giá bạn muốn kiểm tra</h2><span class="step-label">Đầu vào</span></div>
         <form id="review-form" novalidate>
           <label for="input-mode">Nguồn đánh giá</label>
-          <select id="input-mode"><option value="link">Lấy review từ link Shopee</option><option value="reviews">Dán tập review có số sao</option></select>
-          <p class="hint" id="crawl-note">Lấy review từ link dùng crawler của backend và cần cấu hình Apify trên máy này.</p>
-          <label for="product-url">Link sản phẩm Shopee</label>
-          <input id="product-url" type="url" placeholder="https://shopee.vn/...-i.123.456" autocomplete="off" aria-describedby="url-hint form-error">
-          <p id="url-hint" class="hint">Chỉ nhận sản phẩm trên shopee.vn. Review dán cũng cần link để xác định đúng sản phẩm.</p>
-          <div id="manual-fields" hidden>
-          <label for="product-select">Chọn bộ minh họa <span>(không bắt buộc)</span></label>
-          <select id="product-select"><option value="">Tự nhập sản phẩm / dán review</option></select>
-          <p class="hint" id="catalog-note">Bộ dữ liệu và link tự dựng chỉ để thử thao tác dán review, không phải đánh giá thu thập từ sàn.</p>
-          <label for="reviews">Nội dung đánh giá</label>
-          <p class="hint" id="review-hint">Mỗi dòng theo dạng: số sao | nội dung. Ví dụ: 2 | Pin nhanh hết. Không tự suy đoán số sao. Bỏ thông tin cá nhân trước khi dán.</p>
-          <textarea id="reviews" rows="8" aria-describedby="review-hint input-count form-error" placeholder="2 | Pin nhanh hết sau khi dùng.&#10;4 | Kết nối ổn khi nghe nhạc."></textarea>
-          <div class="input-meta"><span id="input-count">0 review · Chưa có nội dung</span><button class="text-button" id="clear" type="button">Xóa nội dung</button></div>
+          <select id="input-mode"><option value="catalog">Chọn sản phẩm / bộ minh họa</option><option value="reviews">Dán tập review văn bản</option></select>
+          <div id="catalog-fields">
+            <label for="product-select">Sản phẩm</label>
+            <select id="product-select"><option value="">Chọn sản phẩm hoặc bộ minh họa</option></select>
+            <p class="hint" id="catalog-note">SP01–SP03 là dữ liệu công khai có sẵn. DEMO là nội dung synthetic để thử giao diện.</p>
           </div>
+          <label for="reviews">Nội dung đánh giá</label>
+          <p class="hint" id="review-hint">Mỗi review một dòng, có thể giữ mã [R01]. Không bắt buộc số sao hoặc URL. Bỏ thông tin cá nhân trước khi dán.</p>
+          <textarea id="reviews" rows="8" readonly aria-describedby="review-hint input-count form-error" placeholder="[R01] Pin nhanh hết sau khi dùng.&#10;[R02] Tai trái thường mất kết nối."></textarea>
+          <div class="input-meta"><span id="input-count">0 dòng</span><button class="text-button" id="clear" type="button">Xóa nội dung</button></div>
           <p class="form-error" id="form-error" role="alert" hidden></p>
           <button id="analyze" class="primary" type="submit">Kiểm tra rủi ro</button>
           <p class="hint" id="limit-note"></p>
         </form>
-        <details id="input-preview" hidden><summary>Xem trước đánh giá đã nhập</summary><ol id="preview-list" class="review-list"></ol></details>
+        <details id="input-preview"><summary>Xem trước đánh giá đã nhập</summary><ol id="preview-list" class="review-list"></ol></details>
       </section>
       <section id="result-region" aria-labelledby="result-heading" aria-busy="false">
         <div id="empty-state" class="panel empty-state">
@@ -56,24 +52,24 @@
           <ul class="benefits"><li>Thông tin số review và độ phủ nguồn</li><li>Tối đa 3 rủi ro, kèm review gốc</li><li>Chưa đủ căn cứ thì chưa đưa ra kết luận</li></ul>
           <p id="stale-note" class="hint" hidden>Đầu vào đã thay đổi. Kiểm tra lại để xem kết quả của dữ liệu mới.</p>
         </div>
-        <div id="loading" class="panel state-panel" role="status" hidden><div class="progress"></div><h2>Đang xử lý đánh giá của bạn…</h2><p>Lấy review từ link có thể mất vài phút. Không cần gửi lại yêu cầu.</p></div>
+        <div id="loading" class="panel state-panel" role="status" hidden><div class="progress"></div><h2>Đang xử lý đánh giá của bạn…</h2><p>Không cần gửi lại yêu cầu khi đang xử lý.</p></div>
         <div id="results" hidden>
           <p id="result-kind" class="eyebrow"></p>
           <h2 id="result-heading" tabindex="-1"></h2>
           <p id="result-message" class="result-message" aria-live="polite"></p>
           <div id="quantitative" class="stats" aria-label="Tổng quan dữ liệu"></div>
-          <section id="signals-section" class="panel" aria-labelledby="signals-heading" hidden><h3 id="signals-heading">Lọc nhiễu và dấu hiệu bất thường</h3><p id="signals-summary"></p><ul id="signal-counts" class="signal-counts"></ul><p id="anomalies"></p><div id="flag-list"></div><p class="hint">Đếm theo quy tắc prototype trên tập review nhận được. “Giữ lại” không có nghĩa đã xác minh đáng tin; dấu hiệu lặp không đủ để kết luận gian lận/seeding.</p></section>
+          <section id="signals-section" class="panel" aria-labelledby="signals-heading" hidden><h3 id="signals-heading">Lọc nhiễu và dấu hiệu bất thường</h3><p id="signals-summary"></p><ul id="signal-counts" class="signal-counts"></ul><p id="anomalies"></p><p id="duplicate-summary" class="hint"></p><div id="flag-list"></div><p class="hint">Đếm theo quy tắc prototype trên tập review nhận được. “Giữ lại” không có nghĩa đã xác minh đáng tin; dấu hiệu lặp không đủ để kết luận gian lận/seeding.</p></section>
           <section id="coverage-section" class="panel" aria-labelledby="coverage-heading"><h3 id="coverage-heading">Độ phủ và giới hạn</h3><p id="coverage-note"></p><p class="hint">Kết quả chỉ phản ánh mẫu nhận được, không đại diện toàn bộ người mua.</p></section>
-          <div id="risk-list"></div>
+          <div id="risk-list"></div><details id="sources-section" hidden><summary>Xem tất cả review gốc</summary><ol id="all-sources" class="review-list"></ol></details>
           <div id="state-action" class="state-action" hidden><button id="edit" class="secondary" type="button">Bổ sung / sửa đánh giá</button><button id="retry" class="primary" type="button" hidden>Thử lại</button></div>
           <p class="result-footnote">Kết quả chỉ phản ánh tập đánh giá bạn cung cấp. Đọc review gốc và tự cân nhắc trước khi mua.</p>
           <details id="usage"><summary>Thông tin lượt chạy</summary><p id="usage-values"></p><p class="hint" id="usage-mode"></p></details>
         </div>
       </section>
     </div>
-    <section id="how" class="how"><h2>Ba bước để kiểm tra review</h2><div class="how-grid"><div><h3>Nhập link Shopee</h3><p>Chọn lấy review từ link, hoặc dán review có số sao cùng link sản phẩm.</p></div><div><h3>Đọc các phản ánh rủi ro</h3><p>Chưa đủ căn cứ thì chưa đưa ra kết luận. Không tìm thấy rủi ro không bảo đảm sản phẩm an toàn.</p></div><div><h3>Đối chiếu nguồn</h3><p>Bấm mã [Rxx] để mở review gốc cùng số sao, ngày và biến thể nếu có.</p></div></div></section>
+    <section id="how" class="how"><h2>Ba bước để kiểm tra review</h2><div class="how-grid"><div><h3>Chọn sản phẩm hoặc dán review</h3><p>Dùng catalog thật SP01–SP03 hoặc dán tập review, không cần URL.</p></div><div><h3>Đọc các phản ánh rủi ro</h3><p>Chưa đủ căn cứ thì chưa đưa ra kết luận. Không tìm thấy rủi ro không bảo đảm sản phẩm an toàn.</p></div><div><h3>Đối chiếu nguồn</h3><p>Bấm mã [Rxx] để mở review gốc cùng số sao, ngày và biến thể nếu có.</p></div></div></section>
   </main>
-  <footer class="wrap footer">Review Lens · Nhóm borntobuild <span>Phiên bản thử nghiệm · Review sản phẩm Shopee</span></footer>
+  <footer class="wrap footer">Review Lens · Nhóm borntobuild <span>Phiên bản thử nghiệm · Nhận diện rủi ro từ review</span></footer>
   <dialog id="source-dialog" aria-labelledby="source-title"><div class="dialog-top"><h2 id="source-title">Review gốc</h2><button id="close-source" class="secondary" type="button">Đóng</button></div><p id="source-context" class="hint"></p><blockquote id="source-content"></blockquote><p class="hint">Văn bản nguồn do backend đính kèm, đã che email/SĐT trước khi phân tích. Mã Rxx do backend gán trong từng lượt, không phải danh tính người mua.</p></dialog>
   <noscript>Cần bật JavaScript để nhập review và hiển thị kết quả tương tác.</noscript>
 </body>

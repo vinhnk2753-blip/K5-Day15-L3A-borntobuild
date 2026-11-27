@@ -1,4 +1,4 @@
-"""Web local dùng trực tiếp backend Shopee của Tuyên; chạy bằng python run.py."""
+"""Web local dùng backend main thống nhất; chạy bằng python run.py."""
 import json
 import os
 import sys
@@ -15,8 +15,8 @@ for stream in (sys.stdout, sys.stderr, sys.stdin):
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import tracing
-from ai import MODEL_NAME, MODEL_PROVIDER
-from ui_backend import MAX_BODY_BYTES, MAX_PER_STAR, MAX_REVIEW_CHARS, MAX_REVIEWS, DEMO_URL, analyze_for_ui, public_error
+import ai
+from ui_backend import ROOT, MAX_BODY_BYTES, MAX_REVIEW_CHARS, MAX_REVIEWS, analyze_for_ui, public_error, catalog_products
 
 
 def load_catalog():
@@ -27,7 +27,7 @@ def load_catalog():
 
 def cli_main():
     from agent import answer
-    print("Backend Shopee — nhập link sản phẩm, /quit để thoát.")
+    print("Nhập SP01–SP03 hoặc review văn bản, /quit để thoát.")
     while True:
         try:
             text = input("> ").strip()
@@ -74,22 +74,26 @@ def create_server(port=8000):
                 name, content_type = assets[path]
                 self.send_data((static / name).read_bytes(), content_type=content_type)
             elif path == "/api/products":
-                self.send_data({"products": [{"id": row["id"], "name": row["input"]["product_name"],
-                                              "review_count": len(row["input"]["reviews"])} for row in catalog["cases"]],
-                                "synthetic": True, "model_provider": MODEL_PROVIDER, "model_name": MODEL_NAME,
-                                "crawler_configured": bool(os.environ.get("APIFY_TOKEN", "").strip()),
-                                "limits": {"max_reviews": MAX_REVIEWS, "max_per_star": MAX_PER_STAR,
-                                           "max_review_chars": MAX_REVIEW_CHARS}})
+                products = [{"id": row["product_code"], "name": row["product_name"],
+                             "review_count": row["sample_review_count"], "synthetic": False} for row in catalog_products()]
+                products += [{"id": row["id"], "name": row["input"]["product_name"],
+                              "review_count": len(row["input"]["reviews"]), "synthetic": True} for row in catalog["cases"]]
+                self.send_data({"products": products, "model_provider": ai.MODEL_PROVIDER, "model_name": ai.MODEL_NAME,
+                                "limits": {"max_reviews": MAX_REVIEWS, "max_review_chars": MAX_REVIEW_CHARS}})
             elif path.startswith("/api/products/"):
                 product_id = path[len("/api/products/"):]
-                product = next((r for r in catalog["cases"] if r["id"] == product_id), None) if "/" not in product_id else None
-                if not product:
-                    self.send_data({"message": "Không tìm thấy bộ minh họa."}, 404)
+                real = next((p for p in catalog_products() if p["product_code"] == product_id), None)
+                demo = next((p for p in catalog["cases"] if p["id"] == product_id), None)
+                if "/" in product_id or not (real or demo):
+                    self.send_data({"message": "Không tìm thấy sản phẩm."}, 404)
                 else:
-                    rows = [{"rating_star": r["rating"], "comment": r["text"]}
-                            for r in product["input"]["reviews"]]
-                    self.send_data({"url": DEMO_URL, "reviews": rows, "synthetic": True,
-                                    "product_name": product["input"]["product_name"]})
+                    if real:
+                        with (ROOT / real["file"]).open(encoding="utf-8") as stream:
+                            rows = json.load(stream)["reviews"]
+                    else:
+                        rows = demo["input"]["reviews"]
+                    text = "\n".join("[%s] %s" % (row["id"], row["text"]) for row in rows)
+                    self.send_data({"id": product_id, "text": text, "synthetic": bool(demo)})
             else:
                 self.send_data({"message": "Không tìm thấy trang."}, 404)
 
@@ -123,12 +127,15 @@ def create_server(port=8000):
                     print("[web] exception=%s" % type(exc).__name__, flush=True)
                     status = 400 if isinstance(exc, ValueError) else 502
                     try:
-                        refused = isinstance(request, dict) and isinstance(request.get("url"), str) and urlsplit(request["url"]).hostname not in {"shopee.vn", None}
+                        payload = request.get("payload") if isinstance(request, dict) else None
+                        product = payload.get("product", {}) if isinstance(payload, dict) else {}
+                        url = (payload.get("url") or product.get("url")) if isinstance(payload, dict) and isinstance(product, dict) else None
+                        refused = isinstance(url, str) and urlsplit(url).hostname not in {"shopee.vn", None}
                     except ValueError:
                         refused = False
                     state = "refused" if refused else "invalid_input" if status == 400 else "error"
                     response = {"analysis": {"status": state, "summary": public_error(exc), "risks": []},
-                                "sources": [], "coverage": None, "mock": MODEL_PROVIDER == "fake"}
+                                "sources": [], "coverage": None, "mock": ai.MODEL_PROVIDER == "fake"}
                 finally:
                     usage, _ = tracing.end()
             response["usage"] = {k: usage[k] for k in ("model_calls", "tool_calls", "tokens_in", "tokens_out", "models")}
@@ -161,8 +168,8 @@ def main():
         print("Không mở được UI: %s. Chọn cổng khác bằng REVIEW_LENS_PORT." % exc)
         return 1
     url = "http://127.0.0.1:%d" % server.server_port
-    print("Review Lens — %s · backend Shopee · provider=%s" % (url, MODEL_PROVIDER), flush=True)
-    print("Web gọi answer(text); fake minh họa theo quy tắc, token 0. Ctrl+C để dừng.", flush=True)
+    print("Review Lens — %s · backend main · provider=%s" % (url, ai.MODEL_PROVIDER), flush=True)
+    print("Web dùng backend main; fake trả insufficient, không tự sinh rủi ro. Ctrl+C để dừng.", flush=True)
     if os.environ.get("REVIEW_LENS_NO_BROWSER") != "1":
         webbrowser.open(url)
     try:

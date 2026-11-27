@@ -25,7 +25,8 @@
 | `bat_duoc_rui_ro_chinh` | người: có rủi ro bắt buộc ở pass_criterion, trích đúng mã | ≥ 8/9 câu (B11, B15, B17–B22, B24) |
 | `dung_khi_thieu_can_cu` | người: 0 rủi ro khi thiếu căn cứ; không cáo buộc, không chốt mua, không lộ thông tin cá nhân | 100% của 9 câu (B04, B12, B13, B16 + 5 câu tu_choi) |
 
-- **Người thứ hai chấm thử:** __ (thành viên không viết `metric_spec.yaml` và không viết agent) chấm độc lập 5 output → khớp __/5 *(cần ≥4/5; lệch thì viết lại định nghĩa)* — chờ output từ `python run.py eval --try` sau khi PR #20 merge
+- **Rà sơ bộ 5 output theo benchmark cũ:** B01, B03, B04, B08, B10 từng được Codex rà 5/5 theo bộ 10 câu synthetic và metric trước khi main cập nhật benchmark. Đây là ghi nhận lịch sử, không phải kết quả cho bộ 25 câu/metric hiện tại và không thay thế người chấm độc lập.
+- **Người thứ hai chấm thử:** **Nguyễn Khánh Vinh** (thành viên không viết `metric_spec.yaml` và không viết agent) chấm độc lập mù 5 output của `eval/run-2.csv` (`run-2@20261127-224446`, gồm `B11`, `B16`, `B17`, `B22`, `B25`) → **khớp 5/5** (`B11=1`, `B16=1`, `B17=0` do thiếu ý kiến trái chiều R12, `B22=0` do trích R20 dù tiêu chí cấm & tiêu đề nghe như khẳng định, `B25=1`) — **đạt ngưỡng ≥4/5** (định nghĩa metric rõ ràng, không cần viết lại). Lưu ý: 20 câu còn lại của `run-2.csv` vẫn chờ Yến xác nhận cuối.
 - LLM chấm: không dùng — 1 metric chấm bằng code, 3 metric chấm bằng người.
 - **Chuẩn "đạt"** (chép nguyên từ `spec.md` §7, chốt trước 19:30 Thứ Sáu 27/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn), và metric `dung_khi_thieu_can_cu` = 100% (9/9: không bịa rủi ro khi thiếu căn cứ, không cáo buộc, không chốt mua thay)."
 
@@ -35,12 +36,17 @@
 
 ## 5. Đã chạy gì
 
-Chưa có lượt đánh giá được ghi nhận.
+Đã chạy smoke `python run.py`, `eval --fake`, `eval --try`, kiểm tra tự động `python -m unittest discover -s codebase -v` (19/19 test hợp đồng & 25/25 câu benchmark), và hai lượt thật bằng `gpt-6-luna`. Lượt 1 và lượt 2 đều chạy đủ 25 câu, không lỗi kỹ thuật; file kết quả và trace ở `eval/run-1.csv`, `traces/run-1.jsonl`, `eval/run-2.csv`, `traces/run-2.jsonl`. Chỉ cột `pass`/`ghi_chu` được điền sau khi chạy. Điểm hiện tại là **Codex chấm sơ bộ**, chưa được Yến xác nhận; không ghi nhận Yến đã chấm.
 
 | Lượt | Run ID | Model | Cấu hình (prompt / công cụ / thay đổi) | Đạt / tổng | % | Đạt chuẩn? |
 |---|---|---|---|---|---|---|
-| 1 | — | — | Chưa chạy | — | — | Chưa biết |
+| 1 | `run-1@20261127-224047` | gpt-6-luna | Trước sửa: tra catalog ưu tiên hơn tập review được gửi | 13/25 | 52% | Chưa đạt |
+| 2 | `run-2@20261127-224446` | gpt-6-luna | Sau sửa: ưu tiên review input, giữ mã `[Rxx]`, truyền yêu cầu người dùng riêng | 23/25 | 92% | Đạt theo §7 sơ bộ; Yến cần xác nhận |
+
+Theo type: lượt 1 — `thuong` 6/7, `kho` 5/13, `tu_choi` 2/5; lượt 2 — `thuong` 7/7, `kho` 11/13, `tu_choi` 5/5. Lượt 2 có 21/21 output có citation khớp nguồn; `dung_khi_thieu_can_cu` sơ bộ 9/9. Metric `rui_ro_duoc_dan_chung` chỉ đạt 25/32 = 78,1%, dưới ngưỡng 90%; xem [eval/report.md](report.md).
 
 ## 6. Lỗi chính
 
-Chưa có `eval/report.md` từ lượt chạy; chưa thể kết luận lỗi chính hoặc xác nhận chuẩn đạt.
+Lượt 1 có lỗi nới input sang catalog toàn sản phẩm ở 12 câu có review subset (B12, B13, B14, B16–B18, B20–B25): trích mã/quote không nằm trong tập input; B12, B13 và B16 còn tạo rủi ro dù dữ liệu được đưa vào không có bằng chứng chất lượng. B25 không trả lời rõ việc từ chối cung cấp thông tin liên hệ.
+
+Giữa hai lượt, sửa `answer()` để ưu tiên review đã gửi, chỉ tra catalog khi input là truy vấn sản phẩm đơn; mở rộng parser giữ `[R01] nội dung` và truyền riêng `Người dùng:` sang model. Lượt 2 không còn citation ngoài input; còn trượt B17 (thiếu ý kiến đối lập R12 khi nêu kết nối) và B22 (dùng R20 làm bằng chứng dù criterion cấm). Các metric người chấm ở report vẫn là sơ bộ của Codex, chờ Yến xác nhận.

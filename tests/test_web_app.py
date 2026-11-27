@@ -1,7 +1,7 @@
-"""HTTP UI kiểm với backend hiện tại, không gọi dịch vụ ngoài."""
-import json
-import io
+"""HTTP UI nối backend main PR #20; chỉ kiểm local, không gọi API thật."""
 import http.client
+import io
+import json
 import os
 import sys
 import threading
@@ -12,14 +12,10 @@ from unittest.mock import patch
 
 os.environ["MODEL_PROVIDER"] = "fake"
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "codebase"))
+import ai
 import agent
 from app import create_server, main
 from ui_backend import MAX_BODY_BYTES
-
-URL = "https://shopee.vn/product/123/456"
-ROWS = [{"rating_star": 2, "comment": "Tai trái mất kết nối."},
-        {"rating_star": 4, "comment": "Âm thanh nghe rõ khi gọi điện."},
-        {"rating_star": 5, "comment": "Pin đủ dùng cho buổi học."}]
 
 
 class WebTests(unittest.TestCase):
@@ -42,115 +38,87 @@ class WebTests(unittest.TestCase):
 
     def post(self, payload, origin=None):
         headers = {"Content-Type": "application/json"}
-        if origin:
-            headers["Origin"] = origin
+        if origin: headers["Origin"] = origin
         req = urllib.request.Request(self.base + "/api/analyze", json.dumps(payload).encode("utf-8"), headers)
-        with urllib.request.urlopen(req, timeout=5) as response:
-            return json.load(response)
+        with urllib.request.urlopen(req, timeout=5) as response: return json.load(response)
 
-    def test_page_and_assets_without_external_dependencies(self):
-        html = self.get("/")
-        for marker in ['id="input-mode"', 'id="product-url"', 'id="source-dialog"', 'lang="vi"']:
-            self.assertIn(marker, html)
-        self.assertNotIn('src="https://', html)
-        self.assertIn("data.analysis", self.get("/app.js"))
-        self.assertIn("@media", self.get("/style.css"))
-
-    def test_catalog_sample_follows_real_fake_backend(self):
+    def test_page_assets_and_real_catalog(self):
+        self.assertIn('id="reviews"', self.get("/"))
+        self.assertNotIn('id="product-url"', self.get("/"))
         catalog = json.loads(self.get("/api/products"))
-        self.assertTrue(catalog["synthetic"])
-        self.assertNotIn("min_clean_reviews", catalog["limits"])
-        sample = json.loads(self.get("/api/products/" + catalog["products"][0]["id"]))
-        with patch.object(agent, "crawl_shopee_reviews") as crawl:
-            response = self.post({"mode": "reviews", "url": sample["url"], "reviews": sample["reviews"]})
-            crawl.assert_not_called()
-        self.assertEqual(response["origin"], "backend")
-        self.assertEqual(response["analysis"]["status"], "risks")
-        self.assertEqual(response["analysis"]["model"], "fake")
-        self.assertEqual(len(response["analysis"]["risks"]), 3)
-        self.assertEqual(response["analysis"]["stats"]["filtered_noise"], 1)
-        self.assertEqual(response["analysis"]["stats"]["noise_pct"], 25)
-        self.assertEqual(response["usage"]["model_calls"], 1)
-        self.assertEqual(response["usage"]["tool_calls"], 1)
-        self.assertEqual(response["usage"]["tokens_in"], 0)
-        self.assertNotIn("flagged_percent", response)
+        self.assertEqual({p["id"] for p in catalog["products"] if not p["synthetic"]}, {"SP01", "SP02", "SP03"})
+        self.assertIn("input[aria-invalid=true]", self.get("/style.css"))
+        self.assertNotIn("min_clean_reviews", self.get("/app.js"))
 
-    def test_citation_from_backend_is_exposed_verbatim(self):
-        content = {"status": "risks", "summary": "Có phản ánh kết nối.", "risks": [
-            {"title": "Kết nối", "summary": "Có phản ánh tai trái.", "citations": ["R01"], "severity": "medium"}]}
-        with patch.object(agent, "call_model", return_value={"text": json.dumps(content), "model": "test-only-model"}):
-            response = self.post({"mode": "reviews", "url": URL, "reviews": ROWS})
-        self.assertEqual(response["analysis"]["status"], "risks")
-        self.assertEqual(response["sources"][0]["text"], ROWS[0]["comment"])
-        self.assertEqual(response["sources"][0]["rating"], 2)
+    def test_real_catalog_code_goes_to_answer(self):
+        with patch.object(agent, "answer", wraps=agent.answer) as answer:
+            data = self.post({"mode": "catalog", "product_id": "SP02"})
+        answer.assert_called_once_with("SP02")
+        self.assertEqual(data["analysis"]["stats"]["total"], 20)
+        self.assertEqual(data["analysis"]["status"], "insufficient")
+        self.assertEqual(data["usage"]["models"], ["fake"])
 
-    def test_missing_crawler_configuration_is_clear_and_does_not_invent_results(self):
-        with patch.object(agent, "crawl_shopee_reviews", side_effect=RuntimeError("Chưa cấu hình APIFY_TOKEN")):
-            with self.assertRaises(urllib.error.HTTPError) as error:
-                self.post({"mode": "link", "url": URL})
-        self.assertEqual(error.exception.code, 502)
-        body = json.load(error.exception)
-        self.assertEqual(body["analysis"]["status"], "error")
-        self.assertFalse(body["analysis"]["risks"])
+    def test_all_demo_inputs_and_demo03_has_three_reviews(self):
+        for code, count in (("DEMO01", 4), ("DEMO02", 2), ("DEMO03", 3)):
+            fixture = json.loads(self.get("/api/products/" + code))
+            self.assertTrue(fixture["synthetic"])
+            self.assertEqual(len(fixture["text"].splitlines()), count)
+            data = self.post({"mode": "reviews", "text": fixture["text"]})
+            self.assertEqual(data["analysis"]["stats"]["total"], count)
+            self.assertEqual(data["analysis"]["status"], "insufficient")
+            self.assertEqual(data["analysis"]["risks"], [])
+        self.assertGreater(data["analysis"]["stats"]["kept_clean"], 0)
 
-    def test_errors_and_outside_platform_are_json_and_do_not_call_model(self):
-        for payload, status in [({"mode": "reviews", "url": URL, "reviews": [{"comment": "Missing stars"}]}, "invalid_input"),
-                                ({"mode": "link", "url": "https://other.example/product/1/2"}, "refused"),
-                                ({"mode": "link", "url": "http://["}, "invalid_input")]:
-            with patch.object(agent, "call_model") as model:
-                with self.assertRaises(urllib.error.HTTPError) as error:
-                    self.post(payload)
-                model.assert_not_called()
-            self.assertEqual(error.exception.code, 400)
-            self.assertEqual(json.load(error.exception)["analysis"]["status"], status)
+    def test_module_provider_and_name_update_without_reimport(self):
+        with patch.multiple(ai, MODEL_PROVIDER="openai", MODEL_NAME="changed-model"):
+            cfg = json.loads(self.get("/api/products"))
+        self.assertEqual((cfg["model_provider"], cfg["model_name"]), ("openai", "changed-model"))
 
-    def test_backend_empty_input_never_calls_model(self):
-        response = self.post({"mode": "reviews", "url": URL, "reviews": []})
-        self.assertEqual(response["analysis"]["status"], "insufficient")
-        self.assertEqual(response["usage"]["model_calls"], 0)
-
-    def test_arbitrary_path_and_cross_origin_are_rejected(self):
+    def test_payload_and_sources_with_no_url_required_for_text(self):
+        data = self.post({"mode": "reviews", "text": "[R01] Pin nhanh hết sau một giờ dùng."})
+        self.assertIn("R01", data["analysis"]["reviews_by_id"])
+        payload = {"product": {"url": "https://shopee.vn/product/123/456"},
+                   "reviews": [{"rating_star": 2, "comment": "Pin nhanh hết sau một giờ dùng."}]}
+        data = self.post({"mode": "payload", "payload": payload})
+        self.assertEqual(data["analysis"]["stats"]["total"], 1)
         with self.assertRaises(urllib.error.HTTPError) as error:
-            self.get("/../.env")
-        self.assertEqual(error.exception.code, 404)
-        with self.assertRaises(urllib.error.HTTPError) as error:
-            self.post({"mode": "reviews", "url": URL, "reviews": ROWS}, "https://other.example")
-        self.assertEqual(error.exception.code, 403)
+            self.post({"mode": "payload", "payload": {**payload, "url": "https://outside.example/product/1/1"}})
+        self.assertEqual(json.load(error.exception)["analysis"]["status"], "refused")
 
-    def test_existing_ui_port_cannot_be_silently_shared(self):
-        with self.assertRaises(OSError):
-            create_server(self.server.server_port)
-
-    def test_catalog_only_accepts_one_product_path_segment(self):
-        for path in ["/api/products/", "/api/products/foo/bar/DEMO01", "/api/products/DEMO01/"]:
-            with self.subTest(path=path), self.assertRaises(urllib.error.HTTPError) as error:
-                self.get(path)
+    def test_invalid_routes_origin_and_schema(self):
+        for path in ("/../.env", "/api/products/", "/api/products/foo/SP01", "/api/products/DEMO01/"):
+            with self.assertRaises(urllib.error.HTTPError) as error: self.get(path)
             self.assertEqual(error.exception.code, 404)
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.post({"mode": "catalog", "product_id": "SP01"}, "https://outside.example")
+        self.assertEqual(error.exception.code, 403)
+        with self.assertRaises(urllib.error.HTTPError) as error: self.post({"mode": "invalid"})
+        self.assertEqual(error.exception.code, 400)
 
-    def test_empty_and_oversized_http_bodies_return_distinct_messages(self):
-        # Máy chủ phải từ chối Content-Length sai ngay, trước khi đọc body.
-        for length, expected in [(0, 400), (-1, 400), (MAX_BODY_BYTES + 1, 413)]:
-            with self.subTest(length=length):
-                connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
-                try:
-                    connection.request("POST", "/api/analyze", headers={"Content-Length": str(length)})
-                    response = connection.getresponse()
-                    self.assertEqual(response.status, expected)
-                    self.assertTrue(json.load(response)["message"])
-                finally:
-                    connection.close()
+    def test_empty_and_oversized_http_headers(self):
+        for length, code in ((0, 400), (-1, 400), (MAX_BODY_BYTES + 1, 413)):
+            connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=5)
+            try:
+                connection.request("POST", "/api/analyze", headers={"Content-Length": str(length)})
+                response = connection.getresponse()
+                self.assertEqual(response.status, code)
+                self.assertTrue(json.load(response)["message"])
+            finally: connection.close()
 
-    def test_server_logs_exception_type_without_provider_payload(self):
-        with patch.object(agent, "analyze_reviews", side_effect=RuntimeError("secret-provider-payload")), patch("sys.stdout", new_callable=io.StringIO) as log:
-            with self.assertRaises(urllib.error.HTTPError) as error:
-                self.post({"mode": "reviews", "url": URL, "reviews": ROWS})
-            self.assertIn("exception=RuntimeError", log.getvalue())
-            self.assertNotIn("secret-provider-payload", log.getvalue())
-            self.assertNotIn("secret-provider-payload", error.exception.read().decode())
+    def test_runtime_error_hides_sources_stats_and_secret(self):
+        with patch.object(agent, "answer", side_effect=RuntimeError("secret-provider-body")), patch("sys.stdout", new_callable=io.StringIO) as log:
+            with self.assertRaises(urllib.error.HTTPError) as error: self.post({"mode": "catalog", "product_id": "SP01"})
+            data = json.load(error.exception)
+        self.assertEqual(data["analysis"]["status"], "error")
+        self.assertNotIn("stats", data["analysis"])
+        self.assertNotIn("secret-provider-body", json.dumps(data))
+        self.assertIn("RuntimeError", log.getvalue())
+        self.assertNotIn("secret-provider-body", log.getvalue())
 
-    def test_invalid_port_exits_cleanly(self):
-        for port in ["-1", "65536", "invalid"]:
-            with self.subTest(port=port), patch.dict(os.environ, {"REVIEW_LENS_MODE": "web", "REVIEW_LENS_PORT": port}), patch("sys.stdout", new_callable=io.StringIO):
+    def test_busy_port_and_invalid_ports(self):
+        with self.assertRaises(OSError): create_server(self.server.server_port)
+        for port in ("-1", "65536", "invalid"):
+            with patch.dict(os.environ, {"REVIEW_LENS_MODE": "web", "REVIEW_LENS_PORT": port}), patch("sys.stdout", new_callable=io.StringIO):
                 self.assertEqual(main(), 1)
 
 

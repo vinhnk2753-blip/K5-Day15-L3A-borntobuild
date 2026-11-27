@@ -88,6 +88,8 @@ label span {
   outline-offset:4px
 }
 
+input[aria-invalid=true],
+select[aria-invalid=true],
 textarea[aria-invalid=true] {
   border:2px solid var(--error)
 }

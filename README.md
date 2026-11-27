@@ -44,10 +44,9 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- UI issue #4: `python run.py` mở **http://127.0.0.1:8000**. Nhập link listing Shopee để lấy review, hoặc chọn **Dán tập review có số sao** rồi nhập mỗi dòng `2 | Nội dung review` cùng URL sản phẩm. Bấm `[Rxx]` mở nguồn do backend trả; Ctrl+C để dừng. Không cần cài package ngoài thư viện chuẩn Python.
-- Web gọi **`answer(text)` một lần**, truyền JSON `{mode, url, reviews?}`. Backend trả `output` dạng chuỗi và `structured` để web dựng thẻ. `analyze_reviews` vẫn dùng chung với extension. Công cụ định lượng đếm review trống, lặp, nhận thưởng, chưa dùng, chỉ nói giao hàng/dịch vụ và khen chung; hiện số bị loại, tỷ lệ, số giữ lại và nguồn cờ. Dưới 3 review giữ lại → chưa đủ dữ liệu, không gọi model.
-- Demo CP2: chọn **Dán tập review có số sao → Tai nghe minh họa → Kiểm tra rủi ro**. Với `MODEL_PROVIDER=fake`, 4 review được xét, loại 1 (25%), giữ 3 và hiển thị 3 rủi ro giả lập kèm `[R01]`, `[R03]`, `[R04]`. Bấm mã để đối chiếu nguyên văn. Có nhãn giả lập rõ ràng; không dùng làm bằng chứng chất lượng AI thật. Mẫu chỉ nói chưa dùng/nhận xu trả chưa đủ dữ liệu; input tích cực không bị ép sinh 3 rủi ro.
-- Crawl link cần `APIFY_TOKEN`; phân tích OpenAI cần `MODEL_PROVIDER=openai`, `MODEL_NAME`, `API_KEY` trong `.env`. Fixture chỉ dùng chế độ dán, URL minh họa không được crawl. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'` rồi chạy lại. CLI tùy chọn: `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`, nhập link và `/quit` để thoát; đặt lại `web` để dùng giao diện.
+- Sau khi chạy `python run.py`, mở web local **http://127.0.0.1:8000**, chọn sản phẩm `SP01`, `SP02`, `SP03` hoặc chuyển sang **Dán tập review văn bản** (mỗi review một dòng, không bắt buộc URL hay số sao). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, fake trả `insufficient` và không sinh rủi ro. Bấm `[Rxx]` để đối chiếu nguồn đã che PII; Ctrl+C để dừng.
+- Web gọi `agent.answer(text)` cho mã catalog hoặc raw review, dùng nguyên `structured` của backend main PR #20. Chế độ payload Shopee ở API `/api/analyze` gọi `agent.analyze_review_payload(payload)`, không gọi crawler Apify. Không còn `review_input.py`/`review_signals.py` hoặc bộ fake riêng tại UI.
+- CLI tùy chọn: PowerShell đặt `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`; nhập mã catalog hoặc review và `/quit` để thoát. Đặt lại `web` để mở giao diện. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'`. Không thêm dependency ngoài Python stdlib.
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
@@ -55,9 +54,9 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 
 | Lệnh | Làm gì |
 |---|---|
-| `python run.py` | Mở UI local, nhập link Shopee hoặc dán review có sao, hiển thị kết quả backend và usage từ tracing |
+| `python run.py` | Chạy bản thử (nhập mã sản phẩm/dán review, nhận tối đa 3 rủi ro có citation đã hậu kiểm) |
 | `python run.py check` | Kiểm `eval/benchmark.csv` (6 cột, số câu, `kho` / `tu_choi`, mã `source`, ô trống, dòng mẫu) `eval/metric_spec.yaml` (≥3 metric điền đủ) và `TEAMS.md` (đúng format để BTC quét). Chỉ cảnh báo, không sửa file |
-| `python run.py eval --try` | **Thử nối model:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`. Thấy "Nối model được" là xong. Không tính là một lượt |
+| `python run.py eval --try` | **Thử luồng agent:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`; khi `.env` chọn OpenAI, xác nhận model thật và usage token. Không tính là một lượt |
 | `python run.py eval` | Chạy cả bộ qua `codebase/agent.py` → `eval/run-1.csv` (lần sau `run-2.csv`…) + `traces/run-1.jsonl`. Mỗi dòng có run ID, model, số lần gọi model / công cụ, token. Model còn giả → chỉ ghi `run-mock.csv`; mọi câu lỗi → `run-error.csv`; Ctrl+C → `run-stopped.csv` — đều **không** được đánh số |
 | `python run.py eval --fake` | Thử riêng bộ chạy, không gọi agent → `eval/run-fake.csv` |
 | `python run.py score eval/run-1.csv` | Sau khi điền cột `pass` (1 / 0): in % đạt tổng và theo `type`. Còn ô trống → "CHƯA CHẤM XONG", không in % |
@@ -75,38 +74,35 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 | File | Viết gì | Bước guide |
 |---|---|---|
-| `codebase/agent.py` | `answer(text)` — luồng chính, đúng hình dạng ở `spec.md` §4. Khung có sẵn một workflow 2 bước *ví dụ* | 3.2 |
-| `codebase/tools.py` | Công cụ của bài toán, mỗi công cụ một hàm có `@tool` | 2.2, 3.2 |
-| `codebase/ai.py` | `call_model(system, user)` — chỗ duy nhất gọi model. Chưa điền `.env` thì chạy **chế độ giả** | 3.3 |
+| `codebase/agent.py` | `answer(text)` — lọc, che PII, phát hiện trùng, gọi model theo `.env`, hậu kiểm citations; trả `{"output": str, "structured": dict}` | 3.2 |
+| `codebase/tools.py` | Công cụ đọc catalog, chuẩn hóa review, lọc nhiễu và gắn cờ nội dung trùng; mỗi công cụ có `@tool` | 2.2, 3.2 |
+| `codebase/ai.py` | `call_model(system, user)` — chỗ duy nhất gọi model; chế độ OpenAI hoặc giả | 3.3 |
 
-- **Trước CP2:** để chế độ giả, công cụ trả dữ liệu giả — `python run.py` đi hết luồng là đủ.
-- **Trước CP3:** nối model thật theo [docs/connect-model.md](docs/connect-model.md), `eval --try` thấy token > 0 rồi mới `eval`.
+- **CP3:** `answer(text)` đọc dữ liệu mẫu hoặc review dán, che email/số điện thoại, lọc review nhiễu và gửi JSON review sạch tới GPT khi `.env` chọn OpenAI. `eval --try` gọi cùng luồng; chế độ fake không đưa ra kết luận rủi ro.
+- Extension crawl review công khai trong page context, hiển thị JSON và tiến độ, rồi gửi payload tới backend local. Backend dùng cùng bộ lọc, model và hậu kiểm citation.
 - Bộ chạy gửi **nguyên ô `input`** của câu thử vào `answer(text)`. Dữ liệu nền (bài học, thông báo, lịch…) để trong `data/`, đọc qua công cụ.
 
-### Crawl review Shopee
+### Dữ liệu và luồng mở rộng Shopee
 
-Đặt `APIFY_TOKEN` trong biến môi trường trước khi chạy `python run.py`, rồi nhập link sản phẩm `https://shopee.vn/...` vào ô **Link sản phẩm Shopee** trên web. Nếu muốn nhập tại dấu nhắc, đặt `$env:REVIEW_LENS_MODE='cli'` trước khi chạy (PowerShell); đặt lại `web` để mở giao diện. Module `codebase/shopee_reviews.py` gọi actor Apify `themineworks/shopee-reviews-scraper` qua HTTP bằng thư viện chuẩn; không cần cài gói Python. Mặc định lấy tối đa 100 review và hiện mã `[R01]`, sao, nội dung, ngày, biến thể và ghi chú độ phủ. Module chỉ giữ các trường review cần cho prototype, không lấy tên người đánh giá.
+Luồng CLI dùng bộ review mẫu đã ẩn danh trong `data/products/` hoặc review người dùng dán; không tự crawl URL Shopee và không cần `APIFY_TOKEN`. Với `.env` cấu hình OpenAI, agent gửi phần review đã lọc/ẩn danh tới API; không đưa API key vào extension.
 
-Actor là dịch vụ bên thứ ba, có giới hạn và mức phí riêng; kết quả không được mặc định là đầy đủ. Cần cấu hình token hợp lệ và kiểm tra `counts_complete`/`coverage_note` trong metadata trước khi dùng làm căn cứ.
-
-Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.md](extension/README.md). Extension crawl tối đa 50 review cho mỗi mức sao trên trang Shopee đang mở, gửi dữ liệu đã bỏ tên người đánh giá tới backend Python cục bộ, rồi dùng GPT để rút tối đa 3 rủi ro có trích dẫn. Backend dùng `MODEL_PROVIDER=openai`, `MODEL_NAME` và `API_KEY` trong `.env`; không nhúng API key vào extension.
+Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.md](extension/README.md). Extension gọi endpoint review trong page context, xuất JSON và gửi dữ liệu đã bỏ tên người đánh giá tới agent backend Python cục bộ; agent lọc nhiễu, xác thực citation, rồi dùng GPT nếu `.env` đã cấu hình. Endpoint từng trả HTTP 403 nên cần xác minh crawl trên listing thật; không nhúng API key vào extension.
 
 ## Phần nào thật, phần nào giả
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
-| Lời gọi AI ở quyết định trung tâm | Cần xác minh live từ CP3 | Model và người kiểm: ____; chế độ fake hiện chưa chứng minh chất lượng AI thật |
-| Backend phân tích | **Giả** nếu MODEL_PROVIDER=fake | Lời gọi model được tracing ghi model=fake, token 0; rủi ro minh họa theo cụm từ có trong review, không phải AI thật |
-| Thống kê nhiễu | **Tính từ input theo quy tắc prototype** | Một lần gọi tool; có nguồn cho từng cờ; không xác minh review thật/giả, không kết luận seeding |
-| UI issue #4 | **Web local gọi answer(text)** | Nhận link/review có sao; hiển thị structured/nguồn/usage của backend; demo mặc định không cần API key khi dùng chế độ dán |
+| Lời gọi AI ở quyết định trung tâm | **Thật** khi `.env` chọn `openai`; chế độ fake trả tokens 0 và không tạo rủi ro | Model: lấy từ `MODEL_NAME` (đã smoke test `gpt-6-luna`) |
+| Web UI issue #4 | Hiển thị kết quả backend main | Catalog thật và raw review; fake trả insufficient; test UI dùng stub cho nhánh rủi ro, chưa xác minh live API trong lượt đồng bộ PR #18 |
+|  |  |  |
 
 ## Dùng AI vào việc gì
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-Khai báo chung của nhóm ngoài UI: ____ (các thành viên bổ sung phần việc và người kiểm; giữ nguyên khai báo dữ liệu của Vinh trong bảng chi tiết).
+Nhóm dùng Codex và Antigravity/Claude Code để hỗ trợ viết/rà code bản chạy thử (`codebase/`, `extension/`), dựng script xử lý data ẩn danh và soạn nháp bộ câu thử; bản chạy thử gọi OpenAI GPT qua `.env` trên nội dung review đã lọc/ẩn danh. Nhóm tự kiểm tra code, nhãn evidence, output và citation bằng unit test + chấm tay trước demo; không dùng AI để bịa phỏng vấn hay sửa kết quả chạy thật.
 
-Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, nối `answer(text)`, bổ sung công cụ định lượng và fake dùng chung ở backend theo yêu cầu hoàn thiện CP2. Đã kiểm 34 test Python và 21 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Ngày 27/11/2026, Trang xác nhận đã kiểm tay bản trước và chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh; thay đổi bổ sung CP2 hiện ghi riêng trong [checklist](docs/issue-4-checklist.md). Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [xử lý review PR #18](docs/pr-18-review-fixes.md).
+UI PR #18 được đồng bộ theo backend PR #20, không sửa backend chính thức hoặc file eval/trace đã có. Báo cáo thay đổi: [docs/pr-18-review-fixes.md](docs/pr-18-review-fixes.md); hướng dẫn/schema UI: [docs/ui-ai-contract-proposal.md](docs/ui-ai-contract-proposal.md).
 
 ## File mẫu — điền ở bước nào
 

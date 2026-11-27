@@ -4,7 +4,7 @@
     "author": "Codex theo phạm vi nhóm chốt",
     "date": "2026-11-27",
     "method": "Tự dựng bằng nội dung viết tay có AI hỗ trợ; không lấy từ sàn, không lấy ngẫu nhiên nên không có seed.",
-    "human_review": "Trang xác nhận đã kiểm tay code và dữ liệu mẫu ngày 27/11/2026 trong trao đổi PR #18.",
+    "human_review": "Trang xác nhận kiểm tay bản cũ ngày 27/11/2026; bản đồng bộ PR #20 bổ sung DEMO03 cần người phụ trách kiểm lại.",
     "not_pain_evidence": true
   },
   "cases": [
@@ -68,6 +68,11 @@
             "id": "R02",
             "text": "Vải thoải mái khi sử dụng hằng ngày.",
             "rating": 5
+          },
+          {
+            "id": "R03",
+            "text": "Đường may ở cổ áo vẫn chắc sau một tháng mặc và giặt.",
+            "rating": 4
           }
         ]
       }

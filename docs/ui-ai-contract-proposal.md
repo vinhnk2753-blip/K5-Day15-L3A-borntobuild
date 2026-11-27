@@ -1,99 +1,55 @@
-# Hợp đồng UI / answer(text) — bản hoàn thiện CP2
+# Hợp đồng UI với backend main PR #20
 
-Web, CLI và backend dùng chung luồng; không có bộ sinh kết quả riêng ở UI.
+Cập nhật 28/11/2026 theo main commit 266e007. Đây là mô tả adapter hiển thị, không định nghĩa một workflow AI khác.
 
-## 1. Đầu vào
+## Điểm vào
 
-Web POST /api/analyze với một trong hai object:
+Web POST /api/analyze:
+- {"mode":"catalog","product_id":"SP01"} → agent.answer("SP01"). SP01–SP03 lấy từ data/catalog.json.
+- {"mode":"reviews","text":"[R01] Nội dung review...\n[R02] Nội dung khác..."} → agent.answer(text) nguyên văn. Không bắt buộc URL hoặc số sao.
+- {"mode":"payload","payload":{"product":{"url":"https://shopee.vn/product/123/456"},"reviews":[{"rating_star":2,"comment":"Pin yếu sau khi dùng."}]}} → agent.analyze_review_payload(payload). API dành cho payload đã có, không crawl link.
 
-~~~json
-{"mode":"link","url":"https://shopee.vn/product/123/456"}
-~~~
+UI có hai chế độ catalog/dán review; chọn DEMO01–DEMO03 nạp văn bản synthetic rồi gọi answer(text).
+Giới hạn nhập UI: tối đa 250 dòng, 3.000 ký tự/dòng và body 2 MB. Không tự gán số sao, không gán URL Shopee cho review MWG.
+Bare URL nhận đúng thông báo chưa hỗ trợ crawl từ backend, không tự gọi Apify.
 
-~~~json
-{"mode":"reviews","url":"https://shopee.vn/product/123/456","reviews":[
-  {"rating_star":2,"comment":"Tai trái mất kết nối."},
-  {"rating_star":2,"comment":"Pin nhanh hết."},
-  {"rating_star":3,"comment":"Đeo đau tai."}
-]}
-~~~
+## Đầu ra
 
-Adapter serialize object sang chuỗi JSON và gọi agent.answer(text) đúng một lần.
-answer cũng tiếp tục nhận URL trong văn bản để CLI/eval gọi; không tìm URL bên trong nội dung JSON review rồi tự crawl.
+Backend trả {"output": str, "structured": dict}. UI không parse output như JSON.
+Khi backend chỉ trả output hướng dẫn (không có structured), UI hiện invalid_input cùng nguyên thông báo; không tạo rủi ro.
 
-- Chỉ URL listing trên shopee.vn; URL ngoài phạm vi bị từ chối.
-- Mode reviews không crawl; mode link gọi crawler một lần rồi phân tích.
-- Tối đa 250 review, mỗi comment 3.000 ký tự; số sao nguyên 1–5 bắt buộc, không tự gán.
-- Mỗi mức sao xét tối đa 50; số ngoài giới hạn được báo riêng, không coi là nhiễu.
-- Web dán dạng mỗi dòng: số sao | nội dung. Ký hiệu [R01] trong nội dung được giữ, không bị đoán là JSON.
-- Chỉ chuyển các trường sao/nội dung/ngày/biến thể, che email/SĐT trước phân tích.
-- URL https://shopee.vn/product/1/1 là minh họa synthetic; chỉ dùng mode reviews, không crawl.
+Các trường structured được giữ nguyên:
+- status: risks | no_clear_risk | insufficient; summary, product_name, product_url, model.
+- stats: total, filtered_noise, noise_pct, kept_clean, noise_breakdown, pii_redacted_review_count; có thêm alias/source của backend.
+- flags: list[str] ghi chú anomaly.
+- anomalies: dict có review_count, duplicate_count, duplicate_rate, duplicate_clusters, flags.
+- reviews_by_id: {Rxx: nguyên văn đã che PII}, gồm cả review bị lọc.
+- risks: tối đa 3 object có title, summary, severity, citations là source object; backend hậu kiểm ID.
 
-## 2. Điểm nối và đầu ra
+UI không cần input_total, excluded_limit hoặc min_clean_reviews; không tự áp ngưỡng 3.
+Theo code main hiện tại: khi không còn review sạch, dừng trước model; các trường hợp thiếu căn cứ khác theo quyết định/hậu kiểm backend.
 
-~~~python
-answer(text) -> {
-    "output": str,
-    "structured": analysis,
-    "coverage": dict,
-    "input_review_count": int,
-}
-~~~
+Adapter bọc analysis, sources, mock; sources được gom từ reviews_by_id và lấy metadata nếu citation có rating/date/variant.
+Popup luôn dùng text từ reviews_by_id, không suy mã từ preview và không tự sinh quote. Nguồn không có rating được ghi rõ, không hiện null sao.
+Cờ lặp lấy ID từ anomalies.duplicate_clusters; tỷ lệ duplicate_rate là phân số, đổi thành phần trăm khi hiển thị; noise_pct đã là phần trăm.
+PII count lấy từ stats.pii_redacted_review_count; UI không tự lọc lại nguồn.
 
-output luôn là str cho khung eval/simulate. structured là khóa bổ sung; không parse output như JSON, không phân tích hai lần.
-analyze_reviews(url, reviews, coverage) tiếp tục tồn tại cho extension và được answer gọi nội bộ.
+## Chế độ giả và tracing
 
-analysis có:
-- status: risks | no_clear_risk | insufficient.
-- summary, model, mock, review_count, product_url.
-- stats: input_total, total, excluded_limit, filtered_noise, kept_clean, noise_pct, noise_breakdown, min_clean_reviews, method.
-- flags: danh sách {kind, label, citations: [source]}, duplicate_of nếu là nội dung lặp.
-- anomalies: chuỗi trung lập kèm số đếm trên mẫu nhận được.
-- risks: tối đa 3 object {title, summary, severity, citations: [source]}.
+Đọc ai.MODEL_PROVIDER/ai.MODEL_NAME qua module ai tại thời điểm sử dụng.
+MODEL_PROVIDER=fake: backend trả insufficient, không có rủi ro; UI giữ nguyên, không tạo 3 thẻ giả.
+Review có nội dung sạch có thể gọi model fake (usage token 0); review chỉ nhiễu không gọi model.
+Tracing begin/end được khóa ở web; model/tool/token đọc từ khung. Theo backend main, đường catalog/raw review thường có 3 tool, payload có 2 tool; không ép theo số đếm bản cũ.
 
-source có id, rating, text, date, variant, url. ID gán theo thứ tự các review được xét, trước khi loại nhiễu, nên có thể có khoảng trống giữa các nguồn rủi ro.
-Text là nội dung đã che liên hệ và nằm trong giới hạn, không phải cam kết giữ mọi dữ liệu từ trang nguồn. UI hiển thị nguyên văn text này.
+## UX và lỗi
 
-Response web bọc analysis, sources (gom từ cả risks và flags), coverage, input_review_count, mock, usage và origin.
-usage lấy từ tracing: model_calls, tool_calls, tokens_in, tokens_out, models; không tự ước lượng token.
+Không coi error/invalid_input/refused là kết quả thành công để bật cảnh báo stale. Clear reset hasResult; edit focus textarea ở chế độ dán và selector ở chế độ catalog.
+HTTP 400/403/413/502 giữ message máy chủ; lỗi runtime không hiện thống kê/rủi ro sơ bộ và vẫn giữ input.
+URL ngoài Shopee ở payload được từ chối; review văn bản không bị buộc thuộc Shopee.
+CSS invalid áp dụng input, select và textarea. Không thêm dependency ngoài stdlib.
 
-## 3. Quy tắc định lượng
+## Kiểm chứng
 
-Một lần gọi @tool quantify_review_signals trên nguồn được xét. Mỗi review bị loại thuộc tối đa một loại, theo thứ tự:
-1. Trống/chỉ dấu câu.
-2. Trùng nội dung sau chuẩn hóa Unicode, chữ thường, dấu câu và khoảng trắng (giữ bản đầu).
-3. Nói nhận xu/nhận thưởng.
-4. Nói chưa dùng/chưa sử dụng/chưa trải nghiệm.
-5. Chỉ nói giao hàng/dịch vụ, không có cụm từ thuộc tính sản phẩm.
-6. Khen chung theo mẫu ngắn.
-
-So khớp cụm từ có ranh giới từ để tránh pin trong shipping, ship trong flagship; lời xin lỗi không được coi là lỗi sản phẩm.
-Review không khớp quy tắc được giữ, chưa có nghĩa là đáng tin hoặc đã xác minh có giá trị ngữ nghĩa. Đây là quy tắc prototype, có thể nhận nhầm; flags có nguồn để người dùng đối chiếu.
-total = filtered_noise + kept_clean; input_total = total + excluded_limit.
-noise_pct = filtered_noise / total * 100, làm tròn 1 chữ số; mẫu rỗng trả 0 kèm trạng thái insufficient.
-Nội dung lặp là dấu hiệu trên mẫu, không đủ để kết luận seeding/gian lận. Không dùng điểm sao để tự suy ra rủi ro.
-
-## 4. G10 và chế độ giả
-
-Dưới 3 review giữ lại → insufficient, risks rỗng, không gọi model, nhưng có thống kê/nguồn cờ.
-Đủ dữ liệu → call_model đúng một lần. Nếu model=fake, backend dựng tối đa 3 rủi ro minh họa theo cụm từ phản ánh vấn đề trong chính input, có kiểm phủ định đơn giản.
-Không tra cứu nguyên input của benchmark, không ép mọi input thành 3 rủi ro, không dùng dữ liệu mẫu làm bằng chứng pain thật.
-Input tích cực không có cụm từ vấn đề → no_clear_risk. Đây không phải bảo đảm an toàn.
-
-Demo tai nghe synthetic: 4 review → loại 1 (25%), giữ 3 → 3 rủi ro có nguồn R01/R03/R04.
-Tracing: 1 model fake, 1 tool định lượng, token 0. Mẫu thiếu dữ liệu: 0 model, 1 tool.
-Mode link có thêm 1 tool crawler; fake model không đồng nghĩa crawler giả, vì vậy demo không cần mạng dùng mode reviews.
-Giao diện ghi rõ giả lập, chưa gọi AI thật. Token 0 không dùng để dự báo chi phí hoặc chất lượng model thật.
-
-## 5. Trạng thái và lỗi
-
-- risks: tối đa 3 rủi ro và nguồn đối chiếu.
-- no_clear_risk: chưa thấy rủi ro theo dữ liệu/quy tắc hiện tại.
-- insufficient: chưa đủ 3 review giữ lại hoặc không xác thực được model.
-- refused: validation web nhận URL ngoài Shopee.
-- invalid_input: số sao/schema/URL/giới hạn sai; HTTP 400/403/413 giữ thông báo máy chủ.
-- error: runtime/mạng/cấu hình; giữ input, không gắn thống kê/cờ hoặc rủi ro sơ bộ vào kết quả lỗi.
-
-34 test Python và 21 nhóm browser QA kiểm luồng qua answer, quy tắc, G10, rủi ro giả có nguồn, positive input, usage, lỗi và responsive.
-OpenAI/crawler trong kiểm thử dùng stub, chưa xác minh live. Không sửa chuẩn đạt, benchmark hoặc metric.
-Bộ MWG trong data/CONTRACT.md vẫn chưa được nối catalog vào backend Shopee; ngưỡng G10 mới thống nhất là 3. Xác nhận nhóm chốt hợp đồng đã được Trang cung cấp ngày 27/11/2026.
+22 test UI/adapter/HTTP và 19 test backend main đạt; 20 nhóm Chrome QA đạt; python run.py check đạt.
+Rủi ro/no_clear_risk kiểm qua model/HTTP stub và response fixture trong QA, không phải lượt API thật.
+Backend agent.py/tools.py/ai.py và dữ liệu/metric/eval/trace hiện có giữ nguyên main; đã xóa review_input.py/review_signals.py và các test riêng cho workflow cũ.

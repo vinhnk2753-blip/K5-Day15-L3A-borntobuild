@@ -1,114 +1,73 @@
-# Báo cáo thay đổi issue #4 — PR #18
+# Báo cáo cập nhật PR #18 theo main PR #20
 
-**Người phụ trách:** Nguyễn Quỳnh Trang (`NguyenTrang005`).
+**Phụ trách:** Nguyễn Quỳnh Trang (@NguyenTrang005). **Ngày:** 28/11/2026.
+**Base:** origin/main 266e007 — đã merge PR #20 của Tuyên.
+[PR #18](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/pull/18) · [Issue #4](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/issues/4).
 
-**Phạm vi:** UI demo CP2, xử lý nhận xét review và ba mục bổ sung để đáp ứng DoD.
+## 1. Trạng thái cuối
 
-**Bản báo cáo:** commit `e2fc08f0858d4bc8b508ed89968be8550b9c5e21`, đối chiếu base main `4a799d3`.
+PR chỉ bổ sung UI và điểm nối hiển thị. Backend codebase/agent.py, tools.py, ai.py giữ nguyên main; không có workflow lọc/G10/fake khác.
+Các mô tả ở commit e2fc08f/76c8ede về backend riêng và demo fake 3 rủi ro là lịch sử, đã được thay thế ở vòng này.
 
-**Ngày kiểm tra:** 27/11/2026.
+## 2. Xử lý review mới
 
-[Issue #4](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/issues/4) · [PR #18](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/pull/18) · [Review yêu cầu sửa](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/pull/18#pullrequestreview-6087817796).
-
-## 1. Kết quả cuối của phần việc
-
-Chạy `python run.py` mở giao diện local. Người dùng nhập link Shopee hoặc dán review có số sao, xem số liệu/cờ nhiễu, tối đa 3 rủi ro và bấm mã [Rxx] để đọc nguồn nguyên văn đã được backend giữ và che thông tin liên hệ.
-
-Web gọi `answer(text)` một lần với JSON đầu vào; nhận `output: str` cùng `structured`. Bản giả minh họa được 3 rủi ro từ mẫu tai nghe, có nhãn giả lập rõ ràng. Dưới 3 review giữ lại sau lọc theo quy tắc thì dừng trước model, báo chưa đủ dữ liệu.
-
-Đây là kết quả triển khai CP2, chưa phải xác nhận chất lượng hoặc khả năng chạy API thật của CP3.
-
-## 2. Đã sửa những phần nào
-
-| Nhóm thay đổi | File chính | Nội dung hiện tại |
+| Yêu cầu | Đã sửa | File/kiểm chứng |
 |---|---|---|
-| Giao diện nhập và xem kết quả | `codebase/app.py`, `codebase/web/index.html`, `app.js`, `style.css` | Web stdlib, hai chế độ link/dán review có sao, chọn mẫu synthetic; hiển thị số liệu, cờ và tối đa 3 thẻ rủi ro; responsive 1440/390/320px. |
-| Đối chiếu nguồn | `codebase/web/app.js`, `codebase/ui_backend.py` | Gom nguồn từ cả rủi ro và cờ; popup nội dung, sao, ngày/biến thể nếu có; mã do backend gán, không suy từ preview. |
-| Điểm nối theo issue | `codebase/agent.py`, `codebase/ui_backend.py` | Web serialize request sang chuỗi JSON rồi gọi `answer(text)` đúng một lần. Giữ hợp đồng `output: str`, bổ sung structured/coverage; CLI vẫn nhận link văn bản. Không parse output dạng văn bản như JSON hoặc phân tích hai lần. |
-| Kiểm và chuẩn hóa đầu vào | `codebase/review_input.py` | Tối đa 250 review, 3.000 ký tự/comment; sao nguyên 1–5 bắt buộc; giữ trường cần thiết, che email/SĐT, không tự gán sao. Mode dán không kích hoạt crawler từ URL bên trong review. |
-| Định lượng nhiễu/bất thường | `codebase/review_signals.py`, `codebase/tools.py` | Tool `quantify_review_signals` chạy một lần: đếm trống, lặp, nhận thưởng, chưa dùng, chỉ giao hàng/dịch vụ và khen chung. Hiện tổng xét, số loại, tỷ lệ, số giữ và nguồn cờ; số ngoài giới hạn 50/mức sao được báo riêng. |
-| Trạng thái biên G10 | `codebase/agent.py`, web/API | Dưới 3 review giữ lại → insufficient, không gọi model. URL ngoài Shopee bị chặn; input/schema sai, thiếu cấu hình và lỗi mạng có thông báo, giữ dữ liệu nhập. |
-| Demo giả đáp ứng DoD | `codebase/agent.py`, `codebase/review_signals.py`, `ui_demo_data.json` | Fake dựng minh họa theo cụm từ có trong chính input, tối đa 3 rủi ro và nguồn tồn tại. Không ép input tích cực thành rủi ro. Đã bỏ `ui_demo.py`/bộ fake riêng tại UI; fake và định lượng nằm trong luồng backend dùng chung. |
-| Tracing và hậu kiểm nguồn | `agent.py`, `tools.py`, `app.py` | Giữ decorator model/tool; lock quanh begin/end của web. Loại citation không tồn tại hoặc nguồn đã lọc khỏi tập gửi model. Không sửa khung tracing, không ước lượng token. |
-| Sửa lỗi API/UX và vệ sinh kiểm thử | `app.py`, `web/app.js`, `web/style.css`, `tests/browser_smoke.mjs` | Chi tiết tại bảng review bên dưới. |
-| Tài liệu và khai báo AI | `README.md`, `docs/ai-usage.md`, `docs/issue-4-checklist.md`, `docs/ui-ai-contract-proposal.md`, báo cáo này | Cập nhật hướng dẫn web/CLI, schema, phần thật/giả, checklist và xác nhận kiểm tay; giữ các dòng khai báo chung của thành viên khác. |
-| Dữ liệu và kiểm thử | `codebase/ui_demo_data.json`, `tests/test_review_signals.py`, `test_ui_backend.py`, `test_web_app.py`, `browser_smoke.mjs` | Fixture ghi synthetic, không coi là dữ liệu thu thập thật; có kiểm nguồn, G10, số đếm, lỗi và tracing. `.gitignore` bỏ qua thư mục QA `.local/`. |
+| Merge main mới, thu gọn UI | Giải quyết xung đột agent/README/ai-usage; chọn backend main nguyên trạng. | git diff origin/main cho agent.py/tools.py/ai.py rỗng. |
+| Bỏ helper trùng backend | Xóa review_input.py/review_signals.py và test_review_signals.py; không giữ quantify_review_signals/fake riêng. | Không còn import helper đã xóa; 19 test backend main đạt. |
+| Chọn catalog thật | Dropdown SP01–SP03 lấy metadata data/catalog.json; gọi agent.answer(code) đúng một lần. | app.py, ui_backend.py; test code và 20 review/case. |
+| Dán review không sao/URL | Truyền text nguyên văn tới agent.answer(text); giữ [Rxx], không biến review MWG thành payload Shopee. | ui_backend.py/web; test và Chrome raw review. |
+| Payload Shopee | API mode=payload gọi analyze_review_payload(payload); bỏ mode lấy link/crawl tự động trên web. | Test spy một lần gọi, không gọi answer/crawler ở đường này. |
+| Stats schema main | Render total/filtered_noise/noise_pct/kept_clean/noise_breakdown/pii_redacted_review_count. Bỏ input_total/excluded_limit/min_clean_reviews và ngưỡng riêng. | app.js; test shape và render không có undefined. |
+| flags/anomalies đúng kiểu | flags list[str]; anomalies dict. Hiện duplicate_count/duplicate_rate và nhóm ID lặp. | app.js; test clusters R01/R04, Chrome popup nguồn cờ. |
+| Popup đúng nguồn | reviews_by_id là nguồn text chuẩn, có danh sách mọi review. Metadata rating/date/variant chỉ hiện nếu có. | ui_backend.py/app.js; test PII và quote, Chrome nguồn không sao. |
+| Fake không sinh rủi ro | Giữ insufficient/risks=[] của backend main; bỏ tuyên bố fake luôn có 3 rủi ro. | Test fake và browser; nhánh 3 thẻ rủi ro chỉ kiểm bằng fixture QA có nhãn. |
+| Đọc ai động | import ai, dùng ai.MODEL_PROVIDER/ai.MODEL_NAME lúc xử lý. | Test thay provider/name sau import vẫn cập nhật API/mock. |
+| DEMO03 đủ dữ liệu minh họa | Thêm review về đường may, tổng 3; giữ nhãn synthetic và trạng thái kiểm tay đúng. | ui_demo_data.json; test catalog và Chrome 3 dòng. |
+| Viền lỗi input | Thêm input[aria-invalid=true] và select cạnh textarea. | style.css và test asset. |
+| hasResult / clear / edit | Lỗi không bật hasResult; clear reset false; edit focus reviews khi dán, selector khi chọn mẫu. | app.js; Chrome kiểm cả error, clear và edit. |
+| README và mô tả PR | Lấy README main làm nền, giữ khai báo backend/extension của PR #20; bổ sung hướng dẫn web/CLI, báo cáo UI. Mô tả PR được thay bằng phạm vi mới. | README, nội dung PR cập nhật cùng lượt push. |
+| Xác nhận kiểm tay | Ghi theo lời Trang: đã rà bản trước và sẽ rà thêm phần đồng bộ mới; không ghi đã tự rà bản cuối khi chưa có xác nhận. | docs/ai-usage.md, checklist, provenance fixture. |
 
-**Phần trưởng nhóm cần chú ý khi review:** PR cuối có sửa `agent.py` và `tools.py` theo yêu cầu bổ sung ba mục CP2, không chỉ thay giao diện. `analyze_reviews` dùng chung với extension nên quy tắc lọc/G10/fake cũng áp dụng ở đường gọi đó. Không đổi chữ ký `answer(text)` hoặc khóa output bắt buộc.
+## 3. Các lỗi vòng trước vẫn được giữ
 
-## 3. Đối chiếu nhận xét của reviewer
+- Route sản phẩm chỉ nhận một segment; chặn path traversal, origin ngoài local.
+- Body rỗng trả 400, quá lớn 413; thông báo HTTP được giữ, runtime không lộ body provider/key.
+- Log chỉ tên loại ngoại lệ, xử lý cổng sai/bận, lock quanh tracing.
+- Cảnh báo stale đúng thời điểm; profile Chrome QA được dọn; CSS nhiều dòng và không thêm dependency.
+- Giữ các dòng khai báo AI chung và nội dung của Tuyên/Vinh/Yến.
 
-| Nhận xét trên PR | Cách xử lý ở bản cuối | Kiểm chứng |
-|---|---|---|
-| Blocker không tương thích backend main, fake không gọi model, output text bị parse JSON | Nhận main; dùng điểm vào `answer(JSON)` trả output + structured. Fake chỉ gọi model khi đủ dữ liệu. | Test UI gọi answer và analyze đúng một lần; kiểm fake và HTTP OpenAI stub. |
-| Từ khóa pin khớp shipping, ship khớp flagship, lỗi khớp xin lỗi; hai danh sách từ không nhất quán | Bỏ bộ heuristic cũ; helper dùng chung so khớp có ranh giới từ, xử lý xin lỗi, không có nhánh useful riêng của UI. | Test shipping/flagship/xin lỗi và review có thuộc tính sản phẩm. |
-| [R01] bị nhận nhầm JSON | Web có schema tường minh; chỉ parse object JSON ở điểm vào answer, nội dung [Rxx] trong review được giữ. Raw text không sao của hợp đồng MWG chưa được hỗ trợ. | Test nội dung nguồn có [R01] và URL không gọi crawler. |
-| Tool định lượng bị gọi hai lần; gắn cờ sơ bộ khi lỗi | Gọi tool một lần trong analyze_reviews; UI chỉ render kết quả. API lỗi không kèm thống kê/cờ/rủi ro sơ bộ. | Kiểm tool_calls và tên sự kiện tool; test lỗi backend. |
-| Route sản phẩm nhận đường dẫn lồng | Chỉ nhận đúng một segment ID sau /api/products/. | Đường dẫn lồng, rỗng hoặc dấu / cuối trả 404. |
-| Body rỗng trả 413 | Content-Length rỗng/không hợp lệ trả 400; vượt giới hạn trả 413. | Test từ chối ở header. |
-| Không có log loại ngoại lệ | Ghi tên loại lỗi tại server, không ghi body lỗi nhà cung cấp. | Test log và response không chứa payload lỗi nhạy cảm. |
-| Cảnh báo kết quả cũ hiện trước lần phân tích đầu | Chỉ báo sau khi đã có kết quả rồi sửa input; giữ qua nhiều lần sửa và ẩn sau kết quả mới. | Chrome QA kiểm các trạng thái. |
-| HTTP 400/403/413 mất thông báo máy chủ | Ưu tiên message từ response lỗi; không thay tất cả thành lỗi mạng chung. | Chrome QA kiểm 400/403/413/502. |
-| Ghi đè dòng khai báo AI chung | Khôi phục Code bản chạy thử và Slide, văn bản; thêm dòng riêng của UI, giữ nội dung của Vinh/Yến. | Đối chiếu diff docs/ai-usage.md với main. |
-| README hướng dẫn web/CLI mâu thuẫn | Mặc định mở web; dấu nhắc CLI chỉ dùng khi REVIEW_LENS_MODE=cli. | README và code cùng cách chạy. |
-| Cổng âm/ngoài giới hạn gây lỗi | Bắt OverflowError, thoát gọn với thông báo. | Test -1, 65536 và chuỗi sai. |
-| CSS khó đọc | Định dạng nhiều dòng, giữ nội dung quy tắc CSS ngoài khoảng trắng. | Kiểm responsive và đối chiếu trước/sau format. |
-| Profile Chrome QA không được dọn | Chờ Chrome thoát, xác minh thư mục temp riêng rồi xóa và kiểm tra đã xóa. | Browser smoke hoàn tất, có kiểm cleanup. |
+## 4. Kiểm chứng
 
-## 4. Kiểm thử và minh họa kết quả
-
-- **34 test Python của issue #4 đạt**, đã chạy kiểm tra lại khi lập báo cáo này; không cộng các test mới của issue #8.
-- **21 nhóm Chrome QA đã đạt** ở lượt kiểm giao diện trước đó: nguồn rủi ro/cờ, fake, G10, positive input, HTTP/network, stale state, responsive. Không coi kết quả này là lượt chạy API thật.
-- Thử OpenAI trong test dùng HTTP stub; token của stub không phải token thực đo từ dịch vụ.
-- Chạy demo bằng `python run.py`, chọn **Dán tập review có số sao → Tai nghe minh họa → Kiểm tra rủi ro**.
-
-| Chỉ tiêu demo synthetic | Kết quả |
+| Lệnh/phần | Kết quả |
 |---|---|
-| Review được xét | 4 |
-| Loại theo quy tắc | 1 review chưa dùng, 25% |
-| Review giữ lại | 3 |
-| Rủi ro giả lập | 3: kết nối, pin, cảm giác đeo |
-| Nguồn rủi ro / nguồn cờ | R01, R03, R04 / R02 |
-| Tracing | model=fake, model_calls=1, tool_calls=1, token vào/ra=0 |
-| Mẫu chỉ chưa dùng/nhận xu | insufficient, không có rủi ro, model_calls=0 |
+| python -m unittest discover -s tests -q | 22 test UI/HTTP/adapter đạt |
+| python -m unittest discover -s codebase -q | 19 test backend main đạt |
+| node tests/browser_smoke.mjs | 20 nhóm kiểm tra đạt |
+| python run.py check | 25 câu, 4 metric; không thấy vấn đề |
+| python run.py, MODEL_PROVIDER=fake | Web catalog/review chạy ở local; fake insufficient, stats/nguồn từ main |
+| git diff origin/main -- backend/framework/eval/cost/spec | Không có chỉnh sửa so với main trong các file được bảo vệ |
 
-## 5. Phần không thay đổi và giới hạn
+Mẫu SP01 ở chế độ fake: total=20, filtered_noise=13, noise_pct=65, kept_clean=7; không có rủi ro, popup đọc 20 nguồn từ reviews_by_id.
+Review toàn nhiễu: không gọi model. Không tự áp ngưỡng 3 vì code main quyết định điều kiện thiếu dữ liệu.
+Rủi ro/no_clear_risk và usage API trong test dùng stub/fixture, không phải token API thật. Không sửa hoặc chạy đè eval/run-1.csv, run-2.csv hay trace đã có.
 
-- Không sửa framework `run.py`, `codebase/tracing.py`, `eval/run_eval.py`, `cost/simulate.py` hoặc adapter API `codebase/ai.py` trong phần issue #4.
-- Không sửa chuẩn đạt, metric, benchmark hay file kết quả để làm output đạt. Thay đổi eval/spec xuất hiện từ merge main là commit của thành viên khác, không phải phần sửa issue #4.
-- Không đưa `cost/personas.yaml`, `cost/check_personas.py`, checklist/test mới của issue #8 vào phạm vi báo cáo hoặc PR #18.
-- Chưa xác minh crawler/OpenAI live trong phần CP2. Catalog MWG SP01–SP03 và raw review không có sao chưa được nối vào backend Shopee.
-- Thống kê là quy tắc prototype, không xác minh review thật/giả. Fake chỉ minh họa luồng, không dùng để báo chất lượng AI hoặc kết luận shop gian lận.
-- Trang đã xác nhận kiểm tay bản trước và chốt khác biệt hợp đồng với Tuyên/Vinh. Không gán xác nhận kiểm tay cũ cho phần backend bổ sung sau đó.
+## 5. Phạm vi còn lại
 
-## 6. Commit và trạng thái bàn giao
+- Cần Trang rà lại phần đồng bộ cuối như đã xác nhận sẽ làm, rồi trưởng nhóm approve/merge PR.
+- Không xác minh API live ở vòng UI này; không kết luận hoàn thành issue #8.
+- Các thay đổi personas/checklist/test issue #8 đang ở nhánh làm việc riêng, không được đưa vào PR #18.
 
-| Commit | Nội dung |
-|---|---|
-| `3984bcf` | UI demo CP2 bản đầu. |
-| `ee8ce30` | Đồng bộ schema và điểm nối với backend Shopee sau khi nhận main. |
-| `40c56c1` | Sửa lỗi UX/API và các nhận xét review; giữ khai báo AI chung. |
-| `a1105c1` | Ghi nhận xác nhận kiểm tay/chốt hợp đồng do Trang cung cấp. |
-| `e2fc08f` | Hoàn thiện ba mục còn thiếu: định lượng, fake 3 rủi ro, web gọi answer(text). |
-
-Tại lần kiểm tra GitHub để lập báo cáo: PR #18 vẫn open, chưa merge; review CHANGES_REQUESTED đang trỏ tới bản đầu `3984bcf`. Cần trưởng nhóm review lại bản cuối `e2fc08f`; báo cáo không thay thế việc duyệt.
-
-## 7. Đoạn tóm tắt để cập nhật mô tả PR
-
-Dán đoạn dưới vào phần mô tả PR #18; báo cáo chi tiết nên giữ ở file này và dẫn link tương đối để reviewer đọc cùng diff. Có thể phản hồi ngắn ở các review thread tương ứng khi người phụ trách cập nhật GitHub.
+## 6. Tóm tắt cho mô tả PR
 
 ~~~markdown
-Đã cập nhật issue #4 đến commit e2fc08f:
-
-- Web gọi answer(text) đúng một lần, giữ output: str và nhận structured để hiển thị.
-- Bổ sung tool định lượng, số loại/tỷ lệ/nguồn cờ; G10 dưới 3 review giữ lại dừng trước model.
-- Demo giả hiển thị 3 rủi ro từ review synthetic, đối chiếu nguyên văn [R01]/[R03]/[R04].
-- Sửa lỗi stale state, thông báo HTTP, route sản phẩm, body rỗng, log ngoại lệ, cổng và cleanup Chrome.
-- Giữ các dòng khai báo AI chung; cập nhật hợp đồng và hướng dẫn chạy.
-- Validation: 34 test Python và 21 nhóm Chrome QA đạt. API/crawler live chưa được xác minh.
-
-Lưu ý phạm vi: có bổ sung agent.py/tools.py và helper dùng chung backend;
-không sửa framework, chuẩn đạt, metric, benchmark hoặc file kết quả.
-Báo cáo chi tiết: [docs/pr-18-review-fixes.md](docs/pr-18-review-fixes.md).
+Đồng bộ UI issue #4 theo main sau PR #20:
+- Giữ nguyên agent.py/tools.py/ai.py; xóa helper và workflow fake/lọc riêng.
+- Chọn catalog SP01–SP03 hoặc dán raw review qua answer(text), không cần URL/sao.
+- Payload Shopee qua analyze_review_payload; không tự crawl Apify.
+- Render đúng stats, flags list[str], anomalies dict, reviews_by_id và fake insufficient.
+- Sửa hasResult/clear/edit, viền lỗi input, bổ sung DEMO03 và giữ README main.
+Validation: 22 test UI + 19 test backend + 20 nhóm Chrome QA và run.py check đạt.
+Báo cáo: docs/pr-18-review-fixes.md. Test API dùng stub, chưa xác minh live ở lượt sửa UI.
 Refs #4.
 ~~~

@@ -1,6 +1,6 @@
 # Shopee Review Risk Agent
 
-Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân tích review** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao, gửi dữ liệu đã bỏ tên người đánh giá tới backend Python cục bộ, rồi hiển thị tối đa ba rủi ro có trích dẫn.
+Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân tích review** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao ngay trong ngữ cảnh trang Shopee, hiển thị thẻ rủi ro có trích dẫn `[Rxx]` từ backend local, đồng thời giữ JSON crawl để copy, tải xuống hoặc bấm **Phân tích lại** mà không cần crawl lại.
 
 ## Cấu hình GPT
 
@@ -17,15 +17,16 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân 
 
 ## Chạy thử giao diện extension
 
-1. Mở PowerShell ở thư mục gốc repo và chạy `python codebase/extension_server.py`.
+1. Ở thư mục gốc repo, chạy `python codebase/extension_server.py` để bật agent backend local. Backend dùng `.env`; `MODEL_PROVIDER=openai` sẽ gọi GPT, còn `fake` trả trạng thái giả an toàn.
 2. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
-3. Mở hoặc tải lại một trang sản phẩm `shopee.vn`, rồi bấm nút **Phân tích review** ở góc dưới bên phải.
-4. Server dừng bằng `Ctrl+C`.
+3. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
+4. Bấm **Phân tích review** ở góc dưới bên phải, rồi chọn **Crawl & phân tích trang này**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao (kết quả crawl được gửi về panel qua `window.postMessage` nên không bị timeout service worker MV3).
+5. Extension gửi nguyên object JSON crawl sang backend local; agent lọc nhiễu, gắn cờ lặp, hậu kiểm citation `[Rxx]`, giữ ghi chú phản ánh đơn lẻ và trả `{"output": str, "structured": {...}}`. Panel hiển thị thẻ rủi ro + trích dẫn nguồn và thu gọn JSON crawl / output agent trong mục mở rộng; **Phân tích lại**, **Copy JSON** và **Tải JSON** thao tác trực tiếp trên JSON đã crawl mà không cần crawl lại.
 
-Backend chỉ bind vào `127.0.0.1:8765`, không lưu review vào file, giới hạn dữ liệu gửi tối đa 2 MB, và xác thực mã trích dẫn với review đầu vào trước khi trả kết quả.
+Extension giữ nguyên JSON crawl để người dùng kiểm tra, đồng thời gửi object đó sang agent local. Nếu backend/model lỗi, JSON crawl vẫn còn trong panel để tải hoặc bấm **Phân tích lại** sau khi bật server.
 
 ## Giới hạn
 
-- Review được lấy từ endpoint hiển thị công khai của Shopee; endpoint này không phải Open API chính thức và có thể đổi hoặc chặn yêu cầu.
+- Review được lấy từ endpoint ratings hiển thị công khai của Shopee; endpoint này không phải Open API chính thức và có thể đổi hoặc chặn yêu cầu. Request chạy trong page context để dùng đúng phiên Shopee của tab, tương tự fetch từ DevTools Console.
 - Tối đa 50 review mỗi mức sao, 250 tổng cộng; độ phủ không được xem là đầy đủ nếu Shopee không xác nhận.
 - Muốn phân tích bằng GPT cần OpenAI API key và quyền sử dụng model đã chọn. Không có cấu hình thì agent chạy chế độ giả an toàn, không tự tạo rủi ro.
