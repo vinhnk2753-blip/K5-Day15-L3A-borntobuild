@@ -99,7 +99,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 
 ## §7. Đánh giá & chuẩn "đạt" *(guide 2.4, 4.1)*
 - Data card: `data/DATA_CARD.md` · bộ câu thử: `eval/benchmark.csv` — 25 câu (thuong 7 · kho 13 · tu_choi 5); 15/25 câu từ 60 review thật đã ẩn danh (SP01–SP03), 10 câu synthetic · metric: `eval/metric_spec.yaml` (4 metric)
-- **Chuẩn "đạt"** (chốt **trước 19:30 Thứ Sáu 27/11**, giữ nguyên đến 23:59 Thứ Bảy 28/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn)."
+- **Chuẩn "đạt"** (chốt **trước 19:30 Thứ Sáu 27/11**, giữ nguyên đến 23:59 Thứ Bảy 28/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn), và metric `dung_khi_thieu_can_cu` = 100% (9/9: không bịa rủi ro khi thiếu căn cứ, không cáo buộc, không chốt mua thay)."
 - Kết quả: chưa có lượt eval được ghi nhận; chưa thể kết luận đạt/trượt. Chi tiết và lệnh chạy: `eval/README.md`.
 
 ## §8. Chi phí khi dùng thật *(guide 4.2)*
