@@ -83,7 +83,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
   | Mỗi rủi ro phải kiểm chứng được | Hiển thị mã `[Rxx]: "..."`; hậu kiểm bằng code và cho mở review gốc. |
   | Tách lỗi sản phẩm khỏi giao hàng | Review chỉ khen/chê vận chuyển, giá bán, khuyến mãi, đóng gói hoặc tự đánh rơi bị lọc khỏi bằng chứng chất lượng sản phẩm. |
 
-- **Phần còn giả/chưa nối**: chế độ `fake` (khi không có `.env`) không gọi LLM và không sinh kết luận; dữ liệu listing crawl qua Shopee `type=0` vẫn cần xác minh độ phủ trên nhiều listing vì trước đó có HTTP 403. Hai lượt eval thật (`run-1`, `run-2`) mới do Codex chấm sơ bộ, cần người trong nhóm xác nhận độc lập và chấm thử 5 output; chưa chạy mô phỏng chi phí `simulate`.
+- **Phần còn giả/chưa nối**: chế độ `fake` (khi không có `.env`) không gọi LLM và không sinh kết luận; dữ liệu listing crawl qua Shopee `type=0` vẫn cần xác minh độ phủ trên nhiều listing vì trước đó có HTTP 403. Hai lượt eval thật (`run-1`, `run-2`) đã có người thứ hai chấm thử độc lập 5 output khớp 5/5 (Nguyễn Khánh Vinh, `eval/README.md` mục 3), còn 20 câu còn lại chờ Yến xác nhận cuối; chưa chạy mô phỏng chi phí `simulate`.
 
 ## §5. Chỗ khó — 4 lớp + ≥6 kịch bản + 2 tấn công *(guide 2.3)*
 
