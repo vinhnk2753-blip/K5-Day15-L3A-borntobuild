@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kiểm tra rủi ro sản phẩm từ review | Review Lens</title>
+  <meta name="description" content="Dán đánh giá sản phẩm, xem cờ nhiễu và tối đa 3 rủi ro có trích dẫn để tự kiểm chứng trước khi mua.">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Bỏ qua điều hướng</a>
+  <header class="header wrap">
+    <a class="brand" href="/" aria-label="Review Lens, trang đầu">review<span>lens</span><small> / borntobuild</small></a>
+    <a class="help-link" href="#how">Cách sử dụng</a>
+  </header>
+  <main id="main" class="wrap">
+    <section class="intro">
+      <p class="eyebrow">ĐỌC KỸ HƠN. MUA CÓ CÂN NHẮC.</p>
+      <h1>Đọc review sản phẩm,<br>nhìn rõ rủi ro.</h1>
+      <p class="lead">Chọn dữ liệu mẫu hoặc dán đánh giá của một sản phẩm. Xem nội dung ít thông tin, rồi đọc lại nguồn trước khi quyết định.</p>
+      <p id="mode" class="mode">Đang tải cấu hình bản thử nghiệm…</p>
+    </section>
+    <div class="workspace">
+      <section class="panel input-panel" aria-labelledby="input-heading">
+        <div class="section-head"><h2 id="input-heading">Đánh giá bạn muốn kiểm tra</h2><span class="step-label">Đầu vào</span></div>
+        <form id="review-form" novalidate>
+          <label for="product-select">Chọn sản phẩm mẫu <span>(không bắt buộc)</span></label>
+          <select id="product-select"><option value="">Tự nhập sản phẩm / dán review</option></select>
+          <p class="hint" id="catalog-note">Dữ liệu chọn sẵn được tự dựng để thử luồng, không phải review thu thập từ sàn.</p>
+          <label for="product-name">Tên sản phẩm <span>(không bắt buộc)</span></label>
+          <input id="product-name" type="text" placeholder="Ví dụ: Tai nghe Bluetooth X" maxlength="200" autocomplete="off">
+          <label for="reviews">Nội dung đánh giá</label>
+          <p class="hint" id="review-hint">Mỗi dòng một review của cùng sản phẩm. Bỏ tên, số điện thoại và thông tin cá nhân trước khi dán.</p>
+          <textarea id="reviews" rows="9" aria-describedby="review-hint input-count form-error" placeholder="Dán review ở đây, mỗi dòng một đánh giá…"></textarea>
+          <div class="input-meta"><span id="input-count">0 review · Chưa có nội dung</span><button class="text-button" id="clear" type="button">Xóa nội dung</button></div>
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+          <button id="analyze" class="primary" type="submit">Kiểm tra rủi ro</button>
+          <p class="hint" id="limit-note"></p>
+        </form>
+        <details id="input-preview"><summary>Xem trước mã review</summary><ol id="preview-list" class="review-list"></ol></details>
+      </section>
+      <section id="result-region" aria-labelledby="result-heading" aria-busy="false">
+        <div id="empty-state" class="panel empty-state">
+          <p class="eyebrow">BẠN LÀ NGƯỜI QUYẾT ĐỊNH</p>
+          <h2>Điều cần biết,<br>có nguồn để kiểm chứng.</h2>
+          <p>Kết quả sẽ tập trung vào phản ánh về sản phẩm, thay vì chỉ những lời khen giao hàng.</p>
+          <ul class="benefits"><li>Cờ nhiễu với số lượng và mẫu số rõ ràng</li><li>Tối đa 3 rủi ro, kèm nguyên văn review</li><li>Báo chưa đủ dữ liệu thay vì cố tạo kết luận</li></ul>
+          <p id="stale-note" class="hint" hidden>Đầu vào đã thay đổi. Kiểm tra lại để xem kết quả của dữ liệu mới.</p>
+        </div>
+        <div id="loading" class="panel state-panel" role="status" hidden><div class="progress"></div><h2>Đang đọc đánh giá của bạn…</h2><p>Đang kiểm tra nội dung và đối chiếu nguồn. Không cần nhập lại.</p></div>
+        <div id="results" hidden>
+          <p id="result-kind" class="eyebrow"></p>
+          <h2 id="result-heading" tabindex="-1"></h2>
+          <p id="result-message" class="result-message" aria-live="polite"></p>
+          <div id="quantitative" class="stats" aria-label="Tổng quan dữ liệu"></div>
+          <section id="flags-section" class="panel" aria-labelledby="flags-heading"><h3 id="flags-heading">Cờ nhiễu / bất thường</h3><p id="flag-rule" class="hint"></p><ul id="signal-counts" class="signal-counts"></ul><div id="flags-list"></div><p class="hint">Đây là dấu hiệu theo quy tắc bản demo, không phải kết luận review giả. Một review không gắn cờ chưa chắc đáng tin.</p></section>
+          <p id="ordering" class="hint" hidden>Sắp theo số nội dung nguồn khác nhau được trích dẫn; không phải thang đo mức nguy hiểm hay tỷ lệ lỗi sản phẩm.</p>
+          <div id="risk-list"></div>
+          <div id="state-action" class="state-action" hidden><button id="edit" class="secondary" type="button">Bổ sung / sửa đánh giá</button><button id="retry" class="primary" type="button" hidden>Thử lại</button></div>
+          <p class="result-footnote">Kết quả chỉ phản ánh tập đánh giá bạn cung cấp. Đọc review gốc và tự cân nhắc trước khi mua.</p>
+          <details id="usage"><summary>Thông tin lượt chạy</summary><p id="usage-values"></p><p class="hint" id="usage-mode"></p></details>
+        </div>
+      </section>
+    </div>
+    <section id="how" class="how"><h2>Ba bước để kiểm tra review</h2><div class="how-grid"><div><h3>Dán đánh giá</h3><p>Mỗi dòng một review của cùng sản phẩm. Hoặc chọn bộ dữ liệu minh họa để thử.</p></div><div><h3>Đọc cờ và rủi ro</h3><p>Các số đếm có mẫu số. Quá ít review sạch sẽ được báo “chưa đủ dữ liệu”.</p></div><div><h3>Đối chiếu nguồn</h3><p>Bấm mã [Rxx] để mở nguyên văn. Công cụ không mua hàng hoặc kết tội người bán.</p></div></div></section>
+  </main>
+  <footer class="wrap footer">Review Lens · Nhóm borntobuild <span>Phiên bản thử nghiệm, nhập review thủ công</span></footer>
+  <dialog id="source-dialog" aria-labelledby="source-title"><div class="dialog-top"><h2 id="source-title">Review gốc</h2><button id="close-source" class="secondary" type="button">Đóng</button></div><p id="source-context" class="hint"></p><blockquote id="source-content"></blockquote><p class="hint">Nội dung giữ nguyên từ đầu vào của lần kiểm tra này. Mã review không phải tên hoặc tài khoản người mua.</p></dialog>
+  <noscript>Cần bật JavaScript để nhập review và hiển thị kết quả tương tác.</noscript>
+</body>
+</html>

@@ -44,7 +44,9 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- `python run.py` in ra "[câu trả lời giả — chưa nối model] …" là khung chạy đúng. Nối model thật: [docs/connect-model.md](docs/connect-model.md).
+- UI demo issue #4: `python run.py` mở **http://127.0.0.1:8000**. Chọn **Tai nghe minh họa**, bấm **Kiểm tra rủi ro**, xem cờ x/N, ba rủi ro và bấm `[Rxx]` mở nguyên văn. Ctrl+C để dừng. Không cần cài package ngoài thư viện chuẩn Python.
+- UI gọi `agent.answer(text)` của khung; khi model `fake`, adapter riêng `codebase/ui_demo.py` dựng JSON minh họa cho giao diện và ghi rõ mô phỏng. Adapter không được dùng bởi `eval` hoặc `simulate`; backend `agent.py`, `ai.py`, `tools.py` giữ nguyên.
+- Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'` rồi chạy lại. CLI tùy chọn: `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`; đặt lại `web` để dùng giao diện. CLI có `/sample`, `/quit`, dòng trống để phân tích. Nối model thật thuộc issue #3/#7: [docs/connect-model.md](docs/connect-model.md).
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
@@ -52,7 +54,7 @@ Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay
 
 | Lệnh | Làm gì |
 |---|---|
-| `python run.py` | Chạy bản chạy thử (gõ đầu vào, nhận kết quả, kèm số lần gọi model / token) |
+| `python run.py` | Mở UI demo local, nhập/chọn sản phẩm hoặc dán review, hiển thị kết quả giả và usage từ tracing |
 | `python run.py check` | Kiểm `eval/benchmark.csv` (6 cột, số câu, `kho` / `tu_choi`, mã `source`, ô trống, dòng mẫu) `eval/metric_spec.yaml` (≥3 metric điền đủ) và `TEAMS.md` (đúng format để BTC quét). Chỉ cảnh báo, không sửa file |
 | `python run.py eval --try` | **Thử nối model:** chạy 3 câu đầu (`--try 5` = 5 câu) → `eval/run-try.csv`. Thấy "Nối model được" là xong. Không tính là một lượt |
 | `python run.py eval` | Chạy cả bộ qua `codebase/agent.py` → `eval/run-1.csv` (lần sau `run-2.csv`…) + `traces/run-1.jsonl`. Mỗi dòng có run ID, model, số lần gọi model / công cụ, token. Model còn giả → chỉ ghi `run-mock.csv`; mọi câu lỗi → `run-error.csv`; Ctrl+C → `run-stopped.csv` — đều **không** được đánh số |
@@ -84,14 +86,14 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
-| Lời gọi AI ở quyết định trung tâm | **Thật** (bắt buộc từ CP3) | Model: ____ |
-|  |  |  |
+| Backend của khung | **Giả** nếu MODEL_PROVIDER=fake | Giữ nguyên nhánh fake, token 0; AI thật thuộc phần việc khác |
+| UI issue #4 | **Web local + adapter mô phỏng** | Dữ liệu tự dựng trong codebase/ui_demo_data.json; guard G10, cờ định lượng, popup nguồn; không đại diện chất lượng AI |
 
 ## Dùng AI vào việc gì
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-____
+Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, adapter giả, fixture và kiểm thử. Đã kiểm 14 test Python và tương tác Chrome; thành viên cần rà phần có tên mình. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md).
 
 ## File mẫu — điền ở bước nào
 

@@ -1,0 +1,76 @@
+{
+  "provenance": {
+    "kind": "synthetic",
+    "author": "Codex theo phạm vi nhóm chốt",
+    "date": "2026-11-27",
+    "method": "Tự dựng bằng nội dung viết tay có AI hỗ trợ; không lấy từ sàn, không lấy ngẫu nhiên nên không có seed.",
+    "human_review": "Chưa ghi nhận người kiểm tay; cần nhóm rà trước khi nộp.",
+    "not_pain_evidence": true
+  },
+  "cases": [
+    {
+      "id": "DEMO01",
+      "input": {
+        "product_name": "Tai nghe minh họa",
+        "reviews": [
+          {
+            "id": "R01",
+            "text": "Sau một tuần dùng, tai trái hay mất kết nối.",
+            "rating": 2
+          },
+          {
+            "id": "R02",
+            "text": "Giao nhanh, chưa dùng thử nên chưa biết chất lượng.",
+            "rating": 5
+          },
+          {
+            "id": "R03",
+            "text": "Dùng liên tục thì pin yếu và phải sạc lại.",
+            "rating": 2
+          },
+          {
+            "id": "R04",
+            "text": "Đeo khoảng nửa giờ thì đau tai.",
+            "rating": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "DEMO02",
+      "input": {
+        "product_name": "Sản phẩm chưa dùng",
+        "reviews": [
+          {
+            "id": "R01",
+            "text": "Giao hàng nhanh, chưa sử dụng.",
+            "rating": 5
+          },
+          {
+            "id": "R02",
+            "text": "Đánh giá để nhận xu.",
+            "rating": 5
+          }
+        ]
+      }
+    },
+    {
+      "id": "DEMO03",
+      "input": {
+        "product_name": "Áo minh họa",
+        "reviews": [
+          {
+            "id": "R01",
+            "text": "Dùng một tháng, chất liệu ổn và chưa thấy lỗi.",
+            "rating": 4
+          },
+          {
+            "id": "R02",
+            "text": "Vải thoải mái khi sử dụng hằng ngày.",
+            "rating": 5
+          }
+        ]
+      }
+    }
+  ]
+}
