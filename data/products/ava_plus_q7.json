@@ -1,0 +1,179 @@
+{
+  "product_code": "SP03",
+  "product_id": "ava_plus_q7",
+  "product_name": "Pin sạc dự phòng Polymer 20000mAh 10.5W AVA+ Q7",
+  "category": "Phụ kiện sạc dự phòng",
+  "platform": "Thế Giới Di Động",
+  "price_vnd": 350000,
+  "original_price_vnd": 590000,
+  "displayed_rating": 4.9,
+  "displayed_five_star_pct": 99.9,
+  "satisfied_customers_text": "597.3k khách hài lòng",
+  "total_reviews_displayed": 73,
+  "product_url": "https://www.thegioididong.com/sac-dtdd/pin-sac-du-phong-polymer-20000mah-10-5w-ava-plus-q7",
+  "source_url": "https://www.thegioididong.com/sac-dtdd/pin-sac-du-phong-polymer-20000mah-10-5w-ava-plus-q7/danh-gia",
+  "accessed_date": "2026-11-27",
+  "sampling_rule": "20 đánh giá đầu tiên (trang 1, 'Mới nhất'), không chọn lọc; đã ẩn danh hoàn toàn và chuẩn hoá gọn, giữ nguyên sự kiện và số liệu từ bài gốc.",
+  "reviews": [
+    {
+      "id": "R01",
+      "text": "Mua từ 22/5 nay sạc không vào pin, hỏi còn trong thời gian bảo hành không.",
+      "usage_duration": "Đã dùng khoảng 6 tháng",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R02",
+      "text": "Vừa mới mua nên chưa đánh giá được độ bền, ngoại hình đẹp nhưng bề mặt rất dễ trầy xước.",
+      "usage_duration": "Đã dùng khoảng 2 tháng",
+      "helpful_count": 1,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R03",
+      "text": "Phàn nàn chương trình mua 1 tặng 1 giá 590k tại cửa hàng trong khi giá lẻ trực tuyến khoảng 295k/cái.",
+      "usage_duration": "Đã dùng khoảng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R04",
+      "text": "Lúc mới mua sạc đầy điện thoại trung bình 2 tiếng, dùng hơn 2 tháng tăng lên hơn 3 tiếng mới đầy.",
+      "usage_duration": "Đã dùng khoảng 7 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R05",
+      "text": "Mới mua 1 ngày nhưng sạc quá chậm, hỏi có được đổi loại khác hoặc trả hàng không.",
+      "usage_duration": "Đã dùng khoảng 6 tháng",
+      "helpful_count": 13,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R06",
+      "text": "Cắm dây cổng Lightning không sạc được cho iPhone dù trước đó nhân viên tư vấn là sạc được.",
+      "usage_duration": "Đã dùng khoảng 6 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R07",
+      "text": "Dùng mới gần 9 tháng pin dự phòng đã bị phồng nhẹ, không dám dùng tiếp.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R08",
+      "text": "Ít dùng mới khoảng 2-3 lần nhưng cắm sạc 16 tiếng đèn vẫn chớp chưa đầy, sạc điện thoại chỉ được 40% đã hết pin.",
+      "usage_duration": "Đã dùng khoảng 7 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R09",
+      "text": "Đang sạc tới vạch pin thứ 3 thì tụt thẳng xuống vạch số 1, yêu cầu hỗ trợ kiểm tra.",
+      "usage_duration": "Đã dùng khoảng 8 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R10",
+      "text": "",
+      "usage_duration": "Đã dùng khoảng 8 tháng",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R11",
+      "text": "",
+      "usage_duration": "Đã dùng khoảng 9 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R12",
+      "text": "Phàn nàn giá biến động mạnh: trước mua hơn 100k mà nay tăng lên 300k.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R13",
+      "text": "Cắm sạc vào hơn 10 tiếng nhưng đèn báo không lên thêm mức pin nào.",
+      "usage_duration": "Đã dùng khoảng 9 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R14",
+      "text": "Mới mua 4 ngày muốn đổi sản phẩm khác: sạc vào rất lâu, dung lượng 20000mAh nhưng sạc 2 máy chưa tới 7000mAh đã hết.",
+      "usage_duration": "Đã dùng khoảng 11 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R15",
+      "text": "Mua chưa tới 1 tuần nhưng sạc cho iPhone 14 Pro Max rất lâu, hỏi có hỗ trợ đổi mẫu khác không.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R16",
+      "text": "Giá bán chênh lệch giữa website và cửa hàng; mang về sạc 6 tiếng mới lên vạch thứ 2 nên bỏ không dùng.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R17",
+      "text": "Thắc mắc mua pin sạc dự phòng nhưng trong hộp chỉ có pin, không kèm dây/củ sạc.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 2,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R18",
+      "text": "Mới mua chưa được 1 tuần nhưng sạc vào tới 2 vạch là ngừng, hỏi có được đổi mới không.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R19",
+      "text": "Mua từ tháng 4 đến nay đã hỏng, không sạc được nữa.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 1,
+      "has_images": false,
+      "support_replied": true
+    },
+    {
+      "id": "R20",
+      "text": "Được tư vấn trước là sạc thường công suất thấp; thực tế đèn còn 2 vạch sạc gần 10 tiếng chưa đầy nhưng sạc được 2,5 lần cho pin 5000mAh và sạc 10 giờ liên tục vẫn mát, không nóng.",
+      "usage_duration": "Đã dùng khoảng 1 năm",
+      "helpful_count": 2,
+      "has_images": false,
+      "support_replied": false
+    }
+  ]
+}
