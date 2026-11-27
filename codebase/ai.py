@@ -1,4 +1,4 @@
-"""Nối model — chỗ DUY NHẤT trong bản chạy thử gọi model AI. NHÓM VIẾT phần gọi model thật.
+"""Nối model — chỗ DUY NHẤT trong bản chạy thử gọi model AI.
 
 Hợp đồng (giữ nguyên để khung đo được token):
     call_model(system: str, user: str) -> dict với 4 khoá
@@ -14,8 +14,8 @@ Chế độ giả (mặc định khi .env chưa có MODEL_PROVIDER, hoặc MODEL
     trả một câu giả cố định, model "fake", token 0 — để luồng chạy hết từ trước CP2 (guide bước 3.2).
     Lượt `run.py eval` / `run.py simulate` chạy bằng model giả KHÔNG được tính.
 
-Nối model thật: điền .env (chép từ .env.example), rồi viết nhánh gọi API ở dưới theo docs/connect-model.md
-(có ví dụ OpenAI, Claude, model chạy trên máy, và cách nối nhà cung cấp khác). Không dán API key vào file này.
+Nối model thật: đặt MODEL_PROVIDER=openai, MODEL_NAME và API_KEY trong .env (chép từ .env.example).
+Nhánh OpenAI bên dưới gửi request dạng JSON và lấy token trực tiếp từ usage; không dán API key vào file này.
 """
 import json
 import os
@@ -53,7 +53,7 @@ def call_model(system: str, user: str) -> dict:
         last = (user.strip().splitlines() or [""])[-1]
         return {"text": "[câu trả lời giả — chưa nối model] " + last[:60], "model": "fake", "tokens_in": 0, "tokens_out": 0}
     if MODEL_PROVIDER != "openai":
-        raise RuntimeError("Extension hiện hỗ trợ MODEL_PROVIDER=openai hoặc fake.")
+        raise RuntimeError("Bản chạy thử hiện hỗ trợ MODEL_PROVIDER=openai hoặc fake.")
     if not API_KEY:
         raise RuntimeError("Chưa cấu hình API_KEY trong .env.")
     if not MODEL_NAME:
