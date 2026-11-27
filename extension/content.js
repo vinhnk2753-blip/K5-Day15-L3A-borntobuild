@@ -2,6 +2,9 @@
   if (document.getElementById("born-to-build-shopee-review-agent")) return;
 
   const MAX_PER_STAR = 50;
+  const PROGRESS_SOURCE = "born-to-build-shopee-review-progress";
+  const RESULT_SOURCE = "born-to-build-shopee-review-result";
+
   const host = document.createElement("div");
   host.id = "born-to-build-shopee-review-agent";
   document.documentElement.appendChild(host);
@@ -15,7 +18,7 @@
         color: white; font: 600 14px/1.2 system-ui, sans-serif; cursor: pointer;
         box-shadow: 0 4px 18px #0003; }
       .panel { position: fixed; z-index: 2147483647; right: 18px; bottom: 140px;
-        width: min(390px, calc(100vw - 32px)); max-height: min(78vh, 760px);
+        width: min(410px, calc(100vw - 32px)); max-height: min(78vh, 760px);
         display: flex; flex-direction: column; color: #17231e; background: #fff;
         border: 1px solid #dce5df; border-radius: 14px; box-shadow: 0 10px 36px #0003;
         font: 14px/1.45 system-ui, sans-serif; overflow: hidden; }
@@ -27,32 +30,52 @@
       .body { padding: 14px 15px; overflow: auto; }
       .run { width: 100%; border: 0; border-radius: 8px; padding: 11px; margin-bottom: 11px;
         color: #fff; background: #176b55; font: 600 14px system-ui, sans-serif; cursor: pointer; }
-      .run:disabled { opacity: .6; cursor: wait; }
+      .run:disabled, .actions button:disabled { opacity: .6; cursor: wait; }
       .status { color: #52615a; white-space: pre-wrap; margin: 4px 0 12px; }
-      .actions { display: flex; gap: 8px; margin-bottom: 10px; }
-      .actions button { border: 1px solid #b9ccc1; border-radius: 7px; padding: 8px 10px;
+      .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+      .actions button { border: 1px solid #b9ccc1; border-radius: 7px; padding: 7px 10px;
         background: #f3f8f5; color: #176b55; font: 600 12px system-ui, sans-serif; cursor: pointer; }
-      .actions button[hidden], .json-output[hidden] { display: none; }
-      .json-output { max-height: 48vh; overflow: auto; padding: 10px; margin: 0;
-        border-radius: 8px; background: #f5f7f6; color: #24332b; font: 11px/1.45 ui-monospace, monospace;
-        white-space: pre; }
-      .agent-title { margin: 14px 0 6px; font-weight: 700; }
-      .agent-output { max-height: 42vh; overflow: auto; padding: 10px; margin: 0;
+      .actions button[hidden], details[hidden] { display: none; }
+      .summary { padding: 10px; border-radius: 8px; background: #f3f8f5; margin: 8px 0 12px; }
+      .risk { border-top: 1px solid #e4e9e6; padding: 12px 0; }
+      .risk h3 { font-size: 14px; margin: 0 0 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .risk p { margin: 4px 0; }
+      .sev { font-size: 11px; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; font-weight: 700; }
+      .sev-high { background: #fdecec; color: #b42318; }
+      .sev-medium { background: #fef6e7; color: #b54708; }
+      .sev-low { background: #eef4f0; color: #176b55; }
+      .badge { color: #176b55; font-weight: 700; }
+      .source { margin-top: 8px; padding: 9px; border-left: 3px solid #8db9a6; background: #fafcfb; }
+      .source small { color: #53635b; }
+      .source-text { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .product-link { color: #176b55; display: inline-block; margin-top: 8px; }
+      .meta { color: #69766f; font-size: 12px; margin-top: 8px; }
+      details { margin-top: 10px; border: 1px solid #e4e9e6; border-radius: 8px; padding: 8px 10px; }
+      details summary { cursor: pointer; font-weight: 600; font-size: 12px; color: #24332b; }
+      .json-output, .agent-output { max-height: 36vh; overflow: auto; padding: 10px; margin: 8px 0 0;
         border-radius: 8px; background: #f5f7f6; color: #24332b; font: 11px/1.45 ui-monospace, monospace;
         white-space: pre-wrap; overflow-wrap: anywhere; }
-      .agent-output[hidden] { display: none; }
     </style>
-    <button class="launcher" type="button">Lấy review JSON</button>
-    <section class="panel" hidden aria-label="Review JSON sản phẩm">
-      <header><strong>Review JSON Shopee</strong><button class="close" type="button" aria-label="Đóng">×</button></header>
+    <button class="launcher" type="button">Phân tích review</button>
+    <section class="panel" hidden aria-label="Phân tích review sản phẩm">
+      <header><strong>Rủi ro từ review Shopee</strong><button class="close" type="button" aria-label="Đóng">×</button></header>
       <div class="body">
-        <button class="run" type="button">Crawl review → JSON</button>
-        <div class="status" role="status">Lấy tối đa 50 review mỗi mức sao; kết quả sẽ là JSON.</div>
-        <div class="actions"><button class="copy" type="button" hidden>Copy JSON</button><button class="download" type="button" hidden>Tải JSON</button></div>
-        <pre class="json-output" hidden></pre>
-        <div class="agent-title" hidden>Kết quả agent (output + structured)</div>
-        <pre class="agent-output" hidden></pre>
+        <button class="run" type="button">Crawl &amp; phân tích trang này</button>
+        <div class="status" role="status">Lấy tối đa 50 review mỗi mức sao, lọc nhiễu và rút tối đa 3 rủi ro có trích dẫn.</div>
+        <div class="actions">
+          <button class="retry" type="button" hidden>Phân tích lại</button>
+          <button class="copy" type="button" hidden>Copy JSON</button>
+          <button class="download" type="button" hidden>Tải JSON</button>
+        </div>
         <div class="results"></div>
+        <details class="json-details" hidden>
+          <summary>Xem JSON review đã crawl</summary>
+          <pre class="json-output"></pre>
+        </details>
+        <details class="agent-details" hidden>
+          <summary>Xem JSON kết quả agent (output + structured)</summary>
+          <pre class="agent-output"></pre>
+        </details>
       </div>
     </section>`;
 
@@ -60,27 +83,44 @@
   const panel = shadow.querySelector(".panel");
   const closeButton = shadow.querySelector(".close");
   const runButton = shadow.querySelector(".run");
+  const retryButton = shadow.querySelector(".retry");
   const status = shadow.querySelector(".status");
   const results = shadow.querySelector(".results");
   const copyButton = shadow.querySelector(".copy");
   const downloadButton = shadow.querySelector(".download");
+  const jsonDetails = shadow.querySelector(".json-details");
   const jsonOutput = shadow.querySelector(".json-output");
-  const agentTitle = shadow.querySelector(".agent-title");
+  const agentDetails = shadow.querySelector(".agent-details");
   const agentOutput = shadow.querySelector(".agent-output");
+
+  let latestCrawlData = null;
   let latestJson = "";
+  let currentItemId = "";
   let activeCrawlId = "";
+  let pendingCrawl = null;
 
   window.addEventListener("message", event => {
-    const progress = event.data;
-    if (event.source !== window
-      || progress?.source !== "born-to-build-shopee-review-progress"
-      || !activeCrawlId
-      || progress.requestId !== activeCrawlId) return;
+    if (event.origin !== location.origin || event.source !== window) return;
+    const msg = event.data;
+    if (!msg || !activeCrawlId || msg.requestId !== activeCrawlId) return;
 
-    const counts = Object.entries(progress.counts_by_star || {})
-      .map(([star, count]) => `${star}★ ${count}`).join(" · ");
-    const action = progress.stage === "requesting" ? "Đang tải" : "Đã xử lý";
-    status.textContent = `${action} trang ${progress.page}: đã quét ${progress.scanned} review, đã lấy ${progress.collected} (${counts}).`;
+    if (msg.source === PROGRESS_SOURCE) {
+      const counts = Object.entries(msg.counts_by_star || {})
+        .map(([star, count]) => `${star}★ ${count}`).join(" · ");
+      const action = msg.stage === "requesting" ? "Đang tải" : "Đã xử lý";
+      status.textContent = `${action} trang ${msg.page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
+      return;
+    }
+
+    if (msg.source === RESULT_SOURCE && pendingCrawl) {
+      const { resolve, reject } = pendingCrawl;
+      pendingCrawl = null;
+      if (msg.ok && msg.data) {
+        resolve(msg.data);
+      } else {
+        reject(new Error(msg.error || "Extension không nhận được JSON review."));
+      }
+    }
   });
 
   launcher.addEventListener("click", () => { panel.hidden = !panel.hidden; });
@@ -90,7 +130,7 @@
       await navigator.clipboard.writeText(latestJson);
       status.textContent = "Đã copy JSON vào clipboard.";
     } catch {
-      status.textContent = "Không copy được; hãy chọn và copy JSON trong khung bên dưới.";
+      status.textContent = "Không copy được; hãy mở mục JSON bên dưới để copy thủ công.";
     }
   });
   downloadButton.addEventListener("click", () => {
@@ -104,7 +144,63 @@
     link.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
   });
-  let currentItemId = "";
+
+  function addText(parent, tag, text, className) {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    if (className) node.className = className;
+    parent.appendChild(node);
+    return node;
+  }
+
+  function renderResult(structured, productUrl) {
+    results.replaceChildren();
+    addText(results, "div", structured.summary || "", "summary");
+
+    for (const risk of structured.risks || []) {
+      const card = document.createElement("article");
+      card.className = "risk";
+      const heading = document.createElement("h3");
+      heading.appendChild(document.createTextNode(risk.title || "Rủi ro cần kiểm tra"));
+      const sev = risk.severity || "medium";
+      addText(heading, "span", sev, `sev sev-${sev}`);
+      card.appendChild(heading);
+      addText(card, "p", risk.summary || "");
+
+      for (const source of risk.citations || []) {
+        const box = document.createElement("div");
+        box.className = "source";
+        const ratingLabel = source.rating != null ? `${source.rating} sao` : "không rõ sao";
+        addText(box, "small", `[${source.id}] ${ratingLabel}${source.variant ? ` · ${source.variant}` : ""}`, "badge");
+        addText(box, "div", source.text || "", "source-text");
+        card.appendChild(box);
+      }
+      results.appendChild(card);
+    }
+
+    const stats = structured.stats || {};
+    addText(
+      results,
+      "div",
+      `Đầu vào: ${stats.input_review_count ?? 0} · lọc nhiễu: ${stats.filtered_noise_count ?? 0} · review sạch: ${structured.review_count ?? 0} · model: ${structured.model || "không rõ"}`,
+      "meta"
+    );
+    if (structured.anomalies?.duplicate_count) {
+      addText(
+        results,
+        "div",
+        `Cờ mẫu: ${structured.anomalies.duplicate_count}/${structured.anomalies.review_count} review có nội dung trùng (không phải bằng chứng seeding/gian lận).`,
+        "meta"
+      );
+    }
+    const link = document.createElement("a");
+    link.className = "product-link";
+    link.href = productUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Mở trang sản phẩm để kiểm tra review gốc";
+    results.appendChild(link);
+  }
 
   function readProductIds() {
     const candidates = [location.href, location.pathname];
@@ -129,14 +225,49 @@
     throw new Error("Không nhận diện được mã sản phẩm từ URL hiện tại.");
   }
 
+  async function analyzePayload(crawlData) {
+    retryButton.disabled = true;
+    results.replaceChildren();
+    agentDetails.hidden = true;
+    try {
+      const analysis = await chrome.runtime.sendMessage({
+        type: "ANALYZE_SHOPEE_REVIEWS",
+        payload: crawlData
+      });
+      if (!analysis?.output || !analysis?.structured) {
+        throw new Error(analysis?.error || "Agent local chưa trả output theo hợp đồng.");
+      }
+      renderResult(analysis.structured, crawlData.product?.url || location.href);
+      agentOutput.textContent = JSON.stringify(analysis, null, 2);
+      agentDetails.hidden = false;
+      status.textContent = `Phân tích xong (${analysis.structured.status || "không rõ"}): ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.`;
+    } catch (error) {
+      status.textContent = `Đã giữ JSON (${crawlData.review_count} review), nhưng agent local chưa phân tích được: ${error.message}\nHãy bật python codebase/extension_server.py rồi bấm "Phân tích lại".`;
+    } finally {
+      retryButton.disabled = false;
+    }
+  }
+
+  retryButton.addEventListener("click", async () => {
+    if (!latestCrawlData) return;
+    runButton.disabled = true;
+    status.textContent = `Đang gửi lại ${latestCrawlData.review_count} review cho agent local…`;
+    try {
+      await analyzePayload(latestCrawlData);
+    } finally {
+      runButton.disabled = false;
+    }
+  });
+
   runButton.addEventListener("click", async () => {
     runButton.disabled = true;
+    retryButton.hidden = true;
     results.replaceChildren();
-    jsonOutput.hidden = true;
-    agentTitle.hidden = true;
-    agentOutput.hidden = true;
+    jsonDetails.hidden = true;
+    agentDetails.hidden = true;
     copyButton.hidden = true;
     downloadButton.hidden = true;
+    latestCrawlData = null;
     latestJson = "";
 
     try {
@@ -144,38 +275,36 @@
       currentItemId = ids.itemid;
       activeCrawlId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid}…`;
-      const response = await chrome.runtime.sendMessage({
+
+      const crawlPromise = new Promise((resolve, reject) => {
+        pendingCrawl = { resolve, reject };
+      });
+
+      const startResponse = await chrome.runtime.sendMessage({
         type: "CRAWL_SHOPEE_REVIEWS",
         payload: { ids, maxPerStar: MAX_PER_STAR, requestId: activeCrawlId }
       });
-      if (!response?.ok || !response.data) throw new Error(response?.error || "Extension không nhận được JSON review.");
+      if (!startResponse?.ok) {
+        pendingCrawl = null;
+        throw new Error(startResponse?.error || "Không khởi động được tiến trình crawl trên tab hiện tại.");
+      }
 
-      latestJson = JSON.stringify(response.data, null, 2);
+      const crawlData = await crawlPromise;
+      latestCrawlData = crawlData;
+      latestJson = JSON.stringify(crawlData, null, 2);
       jsonOutput.textContent = latestJson;
-      jsonOutput.hidden = false;
+      jsonDetails.hidden = false;
+      retryButton.hidden = false;
       copyButton.hidden = false;
       downloadButton.hidden = false;
-      const counts = Object.entries(response.data.counts_by_star || {}).map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      status.textContent = `Đã crawl ${response.data.review_count} review (${counts}). Đang gửi JSON cho agent local…`;
 
-      try {
-        const analysis = await chrome.runtime.sendMessage({
-          type: "ANALYZE_SHOPEE_REVIEWS",
-          payload: response.data
-        });
-        if (!analysis?.output || !analysis?.structured) {
-          throw new Error(analysis?.error || "Agent local chưa trả output theo hợp đồng.");
-        }
-        agentOutput.textContent = JSON.stringify(analysis, null, 2);
-        agentTitle.hidden = false;
-        agentOutput.hidden = false;
-        status.textContent = `Agent trả trạng thái ${analysis.structured.status || "không rõ"}; đã xét ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.`;
-      } catch (error) {
-        status.textContent = `Đã crawl xong ${response.data.review_count} review và lưu JSON trong panel, nhưng agent local chưa phân tích được: ${error.message}\nHãy bật python codebase/extension_server.py rồi thử lại.`;
-      }
+      const counts = Object.entries(crawlData.counts_by_star || {}).map(([star, count]) => `${star}★ ${count}`).join(" · ");
+      status.textContent = `Đã crawl ${crawlData.review_count} review (${counts}). Đang gửi JSON cho agent local…`;
+      await analyzePayload(crawlData);
     } catch (error) {
       status.textContent = `Không lấy được review: ${error.message}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
     } finally {
+      pendingCrawl = null;
       activeCrawlId = "";
       runButton.disabled = false;
     }

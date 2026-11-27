@@ -134,6 +134,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 |---|---|---|
 | CP3 · 27/11/2026 | Nối GPT trong `answer(text)`, thêm lọc nhiễu và cờ review trùng, hậu kiểm citation; giữ trả lời thiếu căn cứ khi không còn review sạch | Mở khóa `eval --try`, UI agent và các ca benchmark CP3; xử lý lỗi thiếu citation và nội dung ship/nhận xu/chưa dùng |
 | CP4 · 27/11/2026 | Sau lượt 1, sửa `answer()` ưu tiên review được gửi thay vì nới sang catalog; parser giữ mã `[Rxx]` và truyền yêu cầu `Người dùng:` riêng; chấm hai lượt sơ bộ | Lượt 1 có 63 mã ngoài input/65 quote sai ở 12 câu do catalog-first; B12/B13/B16 có rủi ro không căn cứ và B25 bỏ qua yêu cầu từ chối liên hệ. Lượt 2 còn B17/B22 và metric `rui_ro_duoc_dan_chung` dưới ngưỡng; chi tiết `eval/report.md` |
+| CP4 · 27/11/2026 (sửa theo review PR #20) | Giữ nguyên summary model khi có 1 citation/`no_clear_risk` (kèm ghi chú đơn lẻ), cấm rõ việc đưa ID review tích cực/đối chứng vào `citations`, sửa đụng dấu trong `filter_review_noise` và bỏ `(không có bình luận)` khỏi cờ trùng, hợp nhất luồng extension/CLI, khôi phục thẻ rủi ro + nút Phân tích lại và tránh MV3 timeout trên extension | Xử lý các lỗi còn lại sau lượt 2 (`B17`, `B22`, `rui_ro_duoc_dan_chung` 25/32), lỗi lọc nhiễu `B02`/SP01/SP03, đồng bộ `data/CONTRACT.md` §3 và thêm `codebase/test_agent.py` |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 

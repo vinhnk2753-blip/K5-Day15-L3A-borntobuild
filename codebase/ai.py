@@ -53,7 +53,7 @@ def call_model(system: str, user: str) -> dict:
         last = (user.strip().splitlines() or [""])[-1]
         return {"text": "[câu trả lời giả — chưa nối model] " + last[:60], "model": "fake", "tokens_in": 0, "tokens_out": 0}
     if MODEL_PROVIDER != "openai":
-        raise RuntimeError("Extension hiện hỗ trợ MODEL_PROVIDER=openai hoặc fake.")
+        raise RuntimeError("Bản chạy thử hiện hỗ trợ MODEL_PROVIDER=openai hoặc fake.")
     if not API_KEY:
         raise RuntimeError("Chưa cấu hình API_KEY trong .env.")
     if not MODEL_NAME:

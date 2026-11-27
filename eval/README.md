@@ -26,7 +26,7 @@
 | `dung_khi_thieu_can_cu` | người: 0 rủi ro khi thiếu căn cứ; không cáo buộc, không chốt mua, không lộ thông tin cá nhân | 100% của 9 câu (B04, B12, B13, B16 + 5 câu tu_choi) |
 
 - **Rà sơ bộ 5 output theo benchmark cũ:** B01, B03, B04, B08, B10 từng được Codex rà 5/5 theo bộ 10 câu synthetic và metric trước khi main cập nhật benchmark. Đây là ghi nhận lịch sử, không phải kết quả cho bộ 25 câu/metric hiện tại và không thay thế người chấm độc lập.
-- **Người thứ hai chấm thử:** chưa có xác nhận từ thành viên nhóm — chọn 5 output của lượt mới và gửi cho Yến chấm độc lập; cần khớp ≥4/5.
+- **Người thứ hai chấm thử:** chưa có xác nhận từ thành viên nhóm — chọn 5 output của lượt mới và gửi cho Vinh hoặc Trang (thành viên không viết `metric_spec.yaml` và không viết agent) chấm độc lập; cần khớp ≥4/5.
 - LLM chấm: không dùng — 1 metric chấm bằng code, 3 metric chấm bằng người.
 - **Chuẩn "đạt"** (chép nguyên từ `spec.md` §7, chốt trước 19:30 Thứ Sáu 27/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn), và metric `dung_khi_thieu_can_cu` = 100% (9/9: không bịa rủi ro khi thiếu căn cứ, không cáo buộc, không chốt mua thay)."
 
@@ -36,7 +36,7 @@
 
 ## 5. Đã chạy gì
 
-Đã chạy smoke `python run.py`, `eval --fake`, `eval --try` (không tính chính thức), và hai lượt thật bằng `gpt-6-luna`. Lượt 1 và lượt 2 đều chạy đủ 25 câu, không lỗi kỹ thuật; file kết quả và trace ở `eval/run-1.csv`, `traces/run-1.jsonl`, `eval/run-2.csv`, `traces/run-2.jsonl`. Chỉ cột `pass`/`ghi_chu` được điền sau khi chạy. Điểm hiện tại là **Codex chấm sơ bộ**, chưa được Yến xác nhận; không ghi nhận Yến đã chấm.
+Đã chạy smoke `python run.py`, `eval --fake`, `eval --try`, kiểm tra tự động `python -m unittest discover -s codebase -v` (19/19 test hợp đồng & 25/25 câu benchmark), và hai lượt thật bằng `gpt-6-luna`. Lượt 1 và lượt 2 đều chạy đủ 25 câu, không lỗi kỹ thuật; file kết quả và trace ở `eval/run-1.csv`, `traces/run-1.jsonl`, `eval/run-2.csv`, `traces/run-2.jsonl`. Chỉ cột `pass`/`ghi_chu` được điền sau khi chạy. Điểm hiện tại là **Codex chấm sơ bộ**, chưa được Yến xác nhận; không ghi nhận Yến đã chấm.
 
 | Lượt | Run ID | Model | Cấu hình (prompt / công cụ / thay đổi) | Đạt / tổng | % | Đạt chuẩn? |
 |---|---|---|---|---|---|---|

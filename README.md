@@ -97,7 +97,7 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-____
+Nhóm dùng Codex và Antigravity/Claude Code để hỗ trợ viết/rà code bản chạy thử (`codebase/`, `extension/`), dựng script xử lý data ẩn danh và soạn nháp bộ câu thử; bản chạy thử gọi OpenAI GPT qua `.env` trên nội dung review đã lọc/ẩn danh. Nhóm tự kiểm tra code, nhãn evidence, output và citation bằng unit test + chấm tay trước demo; không dùng AI để bịa phỏng vấn hay sửa kết quả chạy thật.
 
 ## File mẫu — điền ở bước nào
 

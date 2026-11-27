@@ -1,6 +1,6 @@
 # Shopee Review Risk Agent
 
-Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Lấy review JSON** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao. Extension gọi endpoint ngay trong ngữ cảnh trang Shopee, sau đó hiển thị JSON để copy hoặc tải thành file. Bước crawl không cần Apify hay backend Python.
+Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân tích review** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao ngay trong ngữ cảnh trang Shopee, hiển thị thẻ rủi ro có trích dẫn `[Rxx]` từ backend local, đồng thời giữ JSON crawl để copy, tải xuống hoặc bấm **Phân tích lại** mà không cần crawl lại.
 
 ## Cấu hình GPT
 
@@ -20,10 +20,10 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Lấy 
 1. Ở thư mục gốc repo, chạy `python codebase/extension_server.py` để bật agent backend local. Backend dùng `.env`; `MODEL_PROVIDER=openai` sẽ gọi GPT, còn `fake` trả trạng thái giả an toàn.
 2. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
 3. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
-4. Bấm **Lấy review JSON** ở góc dưới bên phải, rồi chọn **Crawl review → JSON**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao.
-5. Extension gửi nguyên object JSON crawl sang backend local; agent lọc nhiễu, chỉ nêu rủi ro có citation kiểm được, ghi một review là phản ánh đơn lẻ và trả `{"output": str, "structured": {...}}`. Xem cả JSON crawl lẫn output agent trong panel; **Copy JSON**/**Tải JSON** thao tác trên JSON crawl.
+4. Bấm **Phân tích review** ở góc dưới bên phải, rồi chọn **Crawl & phân tích trang này**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao (kết quả crawl được gửi về panel qua `window.postMessage` nên không bị timeout service worker MV3).
+5. Extension gửi nguyên object JSON crawl sang backend local; agent lọc nhiễu, gắn cờ lặp, hậu kiểm citation `[Rxx]`, giữ ghi chú phản ánh đơn lẻ và trả `{"output": str, "structured": {...}}`. Panel hiển thị thẻ rủi ro + trích dẫn nguồn và thu gọn JSON crawl / output agent trong mục mở rộng; **Phân tích lại**, **Copy JSON** và **Tải JSON** thao tác trực tiếp trên JSON đã crawl mà không cần crawl lại.
 
-Extension giữ nguyên JSON crawl để người dùng kiểm tra, đồng thời gửi object đó sang agent local. Nếu backend/model lỗi, JSON crawl vẫn còn trong panel để tải hoặc thử phân tích lại sau.
+Extension giữ nguyên JSON crawl để người dùng kiểm tra, đồng thời gửi object đó sang agent local. Nếu backend/model lỗi, JSON crawl vẫn còn trong panel để tải hoặc bấm **Phân tích lại** sau khi bật server.
 
 ## Giới hạn
 

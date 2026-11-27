@@ -1,4 +1,4 @@
-"""Local, read-only tools for the CP2 review-risk prototype."""
+"""Read-only tools for the CP3 review-risk prototype (catalog, parser, noise filter, anomaly counter, optional Apify adapter)."""
 import json
 import os
 import re
@@ -10,9 +10,20 @@ from shopee_reviews import fetch_product_reviews
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
-_RATING = re.compile(r"(?<!\d)([1-5])\s*(?:sao|\*|★)(?!\w)", re.IGNORECASE)
-_REVIEW_ID = re.compile(r"^\s*\[?(R\d{1,3})\]?(?:\s*(?:\||:|-)\s*|\s+)(.*)$", re.IGNORECASE)
-_INLINE_REVIEW_ID = re.compile(r"\[?(R\d{1,3})\]?\s*\|", re.IGNORECASE)
+_INLINE_REVIEW_ID = re.compile(r"(?<![A-Za-z0-9])\[?(R\d{1,3})\]?\s*\|", re.IGNORECASE)
+_BRACKET_REVIEW_ID = re.compile(r"^\s*\[(R\d{1,3})\]\s*(?:[|:-]\s*)?(.*)$", re.IGNORECASE)
+_PLAIN_REVIEW_ID = re.compile(r"^\s*(R\d{1,3})\s*(?:\||:|-)\s*(.*)$", re.IGNORECASE)
+_RATING_ONLY = re.compile(r"^\s*([1-5])\s*(?:sao|\*|★)\s*$", re.IGNORECASE)
+_LEADING_RATING = re.compile(r"^\s*([1-5])\s*(?:sao|\*|★)\s*(?:\||:|-)\s*(.*)$", re.IGNORECASE)
+
+_EMPTY_COMMENTS = {
+    "",
+    "khong co binh luan",
+    "khong binh luan",
+    "chua co binh luan",
+    "khong nhan xet",
+    "khong co nhan xet",
+}
 
 
 def _plain(value):
@@ -21,14 +32,67 @@ def _plain(value):
     return value.replace("đ", "d")
 
 
+def _normalize_plain(value):
+    text = re.sub(r"[^a-z0-9 ]+", " ", _plain(value))
+    return " ".join(text.split())
+
+
+def _normalize_nfc(value):
+    text = unicodedata.normalize("NFC", str(value or "").lower())
+    text = re.sub(r"[^\w ]+", " ", text, flags=re.UNICODE)
+    return " ".join(text.split())
+
+
+def _is_empty_comment(normalized_plain: str) -> bool:
+    return normalized_plain in _EMPTY_COMMENTS
+
+
+def _looks_like_review_batch(text: str) -> bool:
+    """Return True when input contains pasted review lines/markers rather than a catalog lookup query."""
+    non_empty = [line.strip() for line in str(text or "").splitlines() if line.strip()]
+    if len(non_empty) > 1:
+        return True
+    if not non_empty:
+        return False
+    first = non_empty[0]
+    return bool(
+        _INLINE_REVIEW_ID.search(first)
+        or _BRACKET_REVIEW_ID.match(first)
+        or _PLAIN_REVIEW_ID.match(first)
+    )
+
+
+def _extract_header_value(text: str, plain_label: str) -> str:
+    """Extract value after a 'Sản phẩm:' or 'Người dùng:' prefix (optionally preceded by '(...)')."""
+    plain = _plain(text).lstrip()
+    match = re.match(r"^(?:\([^)]*\)\s*)?%s\s*:\s*" % re.escape(plain_label), plain)
+    if not match:
+        return ""
+    colon_pos = text.find(":")
+    if colon_pos < 0:
+        return ""
+    return text[colon_pos + 1:].strip()
+
+
+def _has_plain_term(normalized: str, terms) -> bool:
+    return any(re.search(r"(?<![a-z0-9])%s(?![a-z0-9])" % re.escape(term), normalized) for term in terms)
+
+
+def _has_nfc_term(lower_nfc: str, terms) -> bool:
+    return any(re.search(r"(?<!\w)%s(?!\w)" % re.escape(term), lower_nfc, flags=re.UNICODE) for term in terms)
+
+
 @tool
 def load_product_reviews(query: str) -> dict:
-    """Đọc bộ review sản phẩm mẫu CP2 theo mã, ID hoặc tên.
-    Input: mã SP01–SP03, product_id hoặc một phần tên trong catalog.
+    """Đọc bộ review sản phẩm mẫu trong data/catalog.json theo mã, ID hoặc tên.
+    Input: mã sản phẩm (vd SP01), product_id hoặc tên sản phẩm trong catalog (không khớp tập review dán).
     Output: metadata sản phẩm và review đã chuẩn hóa, giữ mã nguồn [Rxx].
     Tác động ngoài: không; chỉ đọc file JSON cục bộ đã ẩn danh."""
     if not isinstance(query, str) or not query.strip():
-        return {"ok": False, "error": "Hãy nhập mã SP01–SP03 hoặc tên sản phẩm trong catalog."}
+        return {"ok": False, "error": "Hãy nhập mã sản phẩm hoặc tên sản phẩm trong catalog."}
+    if _looks_like_review_batch(query):
+        return {"ok": False, "error": "Đầu vào là tập review dán, chuyển sang trình tách review."}
+
     catalog_path = DATA_DIR / "catalog.json"
     try:
         catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
@@ -37,6 +101,7 @@ def load_product_reviews(query: str) -> dict:
 
     needle = _plain(query.strip())
     products = catalog.get("products", [])
+    available_codes = [str(p.get("product_code")) for p in products if p.get("product_code")]
     exact = [p for p in products if needle in {
         _plain(p.get("product_code")), _plain(p.get("product_id")), _plain(p.get("product_name"))
     }]
@@ -46,7 +111,11 @@ def load_product_reviews(query: str) -> dict:
         or bool(re.search(r"\b%s\b" % re.escape(_plain(p.get("product_code"))), needle))
     )]
     if len(matches) != 1:
-        return {"ok": False, "error": "Không tìm thấy duy nhất một sản phẩm trong catalog CP2."}
+        return {
+            "ok": False,
+            "error": "Không tìm thấy duy nhất một sản phẩm trong catalog.",
+            "available_codes": available_codes,
+        }
 
     product = matches[0]
     relative = Path(str(product.get("file", "")))
@@ -75,124 +144,194 @@ def load_product_reviews(query: str) -> dict:
 
 @tool
 def parse_review_text(text: str) -> dict:
-    """Chuẩn hóa review người dùng dán trực tiếp.
-    Input: mỗi dòng một review; chấp nhận dạng [R01] | 5 sao | nội dung hoặc dòng văn bản.
-    Output: danh sách review có mã [Rxx], sao nếu nhận diện được, và nội dung nguyên văn.
+    """Chuẩn hóa review người dùng dán trực tiếp, giữ mã [Rxx] và tách yêu cầu người dùng.
+    Input: văn bản review dạng [R01] nội dung, R01 | 5 sao | nội dung, hoặc mỗi dòng một review.
+    Output: danh sách review có mã [Rxx], sao nếu có, nội dung nguyên văn, product_name và user_request.
     Tác động ngoài: không; chỉ xử lý văn bản đầu vào trong bộ nhớ."""
     if not isinstance(text, str):
-        return {"reviews": []}
+        return {"reviews": [], "user_request": "", "product_name": ""}
+
     reviews = []
     used = set()
     next_id = 1
+    product_name = ""
+    user_requests = []
+
+    def alloc_id(candidate_id: str) -> str:
+        nonlocal next_id
+        rid = candidate_id.upper() if candidate_id else ""
+        if not rid or rid in used:
+            while "R%02d" % next_id in used:
+                next_id += 1
+            rid = "R%02d" % next_id
+            next_id += 1
+        used.add(rid)
+        return rid
+
+    def split_rating_and_comment(body: str):
+        parts = [part.strip() for part in body.split("|")]
+        if len(parts) >= 2:
+            for index, part in enumerate(parts):
+                rating_match = _RATING_ONLY.match(part)
+                if rating_match:
+                    remainder = " | ".join(parts[index + 1:]).strip()
+                    return int(rating_match.group(1)), remainder
+        leading = _LEADING_RATING.match(body)
+        if leading:
+            return int(leading.group(1)), leading.group(2).strip()
+        return None, body.strip()
+
     for raw_line in text.splitlines():
         line = raw_line.strip().lstrip("-• ").strip()
         if not line:
             continue
-        if _plain(line).startswith(("san pham:", "nguoi dung:")):
-            continue
 
         inline_ids = list(_INLINE_REVIEW_ID.finditer(line))
         if inline_ids:
+            prefix = line[:inline_ids[0].start()].strip()
+            if prefix:
+                extracted_user = _extract_header_value(prefix, "nguoi dung")
+                if extracted_user:
+                    user_requests.append(extracted_user)
+                else:
+                    extracted_prod = _extract_header_value(prefix, "san pham")
+                    if extracted_prod and not product_name:
+                        product_name = extracted_prod.rstrip(". ")
             for index, marker in enumerate(inline_ids):
                 end = inline_ids[index + 1].start() if index + 1 < len(inline_ids) else len(line)
                 body = line[marker.end():end].strip()
-                match = _RATING.search(body)
-                rating = int(match.group(1)) if match else None
-                comment = body[match.end():].strip(" |:-") if match else body
-                review_id = marker.group(1).upper()
-                if review_id in used:
-                    while "R%02d" % next_id in used:
-                        next_id += 1
-                    review_id = "R%02d" % next_id
-                    next_id += 1
-                used.add(review_id)
+                rating, comment = split_rating_and_comment(body)
+                review_id = alloc_id(marker.group(1))
                 reviews.append({"review_id": review_id, "rating_star": rating,
-                                "comment": comment.strip(), "date": "", "variant": ""})
+                                "comment": comment, "date": "", "variant": ""})
             continue
 
-        explicit = _REVIEW_ID.match(line)
-        review_id = explicit.group(1).upper() if explicit else ""
+        extracted_prod = _extract_header_value(line, "san pham")
+        if extracted_prod:
+            if not product_name:
+                product_name = extracted_prod.rstrip(". ")
+            continue
+        extracted_user = _extract_header_value(line, "nguoi dung")
+        if extracted_user:
+            user_requests.append(extracted_user)
+            continue
+
+        explicit = _BRACKET_REVIEW_ID.match(line) or _PLAIN_REVIEW_ID.match(line)
+        explicit_id = explicit.group(1) if explicit else ""
         body = explicit.group(2).strip() if explicit else line
-        parts = [part.strip() for part in body.split("|")]
-        rating = None
-        comment_parts = []
-        for index, part in enumerate(parts):
-            match = _RATING.search(part)
-            if match:
-                rating = int(match.group(1))
-                comment_parts = parts[index + 1:]
-                break
-        if rating is None:
-            match = _RATING.search(body)
-            if match:
-                rating = int(match.group(1))
-                comment = (body[:match.start()] + body[match.end():]).strip(" |:-")
-            else:
-                comment = body
-        else:
-            comment = " | ".join(comment_parts).strip() or parts[-1]
-        if not review_id or review_id in used:
-            while "R%02d" % next_id in used:
-                next_id += 1
-            review_id = "R%02d" % next_id
-            next_id += 1
-        used.add(review_id)
+        rating, comment = split_rating_and_comment(body)
+        review_id = alloc_id(explicit_id)
         reviews.append({"review_id": review_id, "rating_star": rating,
-                        "comment": comment.strip(), "date": "", "variant": ""})
-    return {"reviews": reviews}
+                        "comment": comment, "date": "", "variant": ""})
+
+    return {
+        "reviews": reviews,
+        "user_request": " ".join(user_requests).strip(),
+        "product_name": product_name,
+    }
 
 
 @tool
 def filter_review_noise(reviews: list) -> dict:
-    """Lọc review trống, ngắn, khen ship, nhận xu, chưa dùng, hỏi đáp và lặp.
+    """Lọc review trống, ngắn, khen chung, ship/giá/ngoài chất lượng, nhận xu, chưa dùng, hỏi đáp và lặp.
     Input: danh sách review chuẩn hóa có review_id và comment.
     Output: danh sách sạch, danh sách nhiễu, nhãn lý do và tổng từng nhóm.
     Tác động ngoài: không; quy tắc xác định, không sửa dữ liệu nguồn."""
-    labels = {"nhieu_trong": 0, "nhieu_khen_chung": 0, "nhieu_hoi_dap_rao_ban": 0,
-              "nhieu_ngoai_chat_luong": 0, "nhieu_lap_bat_thuong": 0,
-              "nhieu_nhan_xu": 0, "nhieu_chua_dung": 0, "nhieu_qua_ngan": 0}
-    praise = {"tot", "ok", "dep", "hai long", "san pham tot", "sai on", "rat ok",
-              "hang tot", "mau dep", "dung tot", "ok nha", "rất tốt"}
-    outside = ("giao hang", "giao nhanh", "giao dung hen", "nhan hang", "nhan duoc hang",
-               "ship", "shipper", "dong goi", "van chuyen", "nhan vien",
-               "khuyen mai", "gia ban", "han bao hanh", "le bao hanh", "thieu phu kien", "danh roi")
+    labels = {
+        "nhieu_trong": 0,
+        "nhieu_khen_chung": 0,
+        "nhieu_hoi_dap_rao_ban": 0,
+        "nhieu_ngoai_chat_luong": 0,
+        "nhieu_lap_bat_thuong": 0,
+        "nhieu_nhan_xu": 0,
+        "nhieu_chua_dung": 0,
+        "nhieu_qua_ngan": 0,
+    }
+    exact_praise = {
+        "tot", "ok", "dep", "hai long", "san pham tot", "sai on", "rat ok",
+        "hang tot", "mau dep", "dung tot", "ok nha", "rat tot", "san pham rat tot",
+        "dung rat ok", "rat hai long", "rat ung y", "ung y", "tuyet voi",
+    }
+    generic_praise_terms = (
+        "tot", "ok", "dep", "hai long", "ung y", "ngon", "tien loi", "nen mua",
+        "sai on", "dung on", "chat luong", "phai chang", "phu hop gia", "mau ma dep",
+        "tuyet voi", "dang mua",
+    )
+    user_damage_terms = ("danh roi", "tu lam roi", "lam roi", "tu lam vo", "lam vo")
+    outside_terms = (
+        "giao hang", "giao nhanh", "giao cham", "giao dung hen", "nhan hang",
+        "nhan duoc hang", "ship", "shipper", "dong goi", "van chuyen", "nhan vien",
+        "khuyen mai", "gia ban", "gia le", "gia bien dong", "chenh lech gia",
+        "mua 1 tang 1", "tang len", "tang gia", "giam gia",
+        "han bao hanh", "le bao hanh", "thieu phu kien", "khong kem", "trong hop chi co",
+        "ignore all previous", "ignore previous", "bo qua cac quy tac", "bo qua quy tac",
+    )
     incentive_terms = ("nhan xu", "tang xu", "hoan xu", "nhan diem", "tang diem", "duoc xu")
-    not_used_terms = ("chua dung", "chua su dung", "chua thu", "chua test", "chua mo hop",
-                      "chua trai nghiem", "chua xai")
-    product_terms = ("hong", "loi", "nong", "pin", "sac", "am thanh", "chat lieu", "chay", "ri set",
-                     "ro dien", "ro nuoc", "bung", "phong", "tray xuoc", "mat tieng", "khong hoat dong",
-                     "cham", "yeu", "khong ket noi", "khong len nguon", "re", "nut", "tu tat")
-    question_terms = ("hoi", "thu cu doi moi", "chinh sach", "huong dan", "cach su dung", "cai dat",
-                      "pass lai", "ban lai", "thu lai", "doi sang", "doi mau", "tra hang", "doi tra")
+    not_used_terms = (
+        "chua dung", "chua su dung", "chua test", "chua mo hop",
+        "chua trai nghiem", "chua xai", "chua dung thu",
+    )
+    question_terms = (
+        "hoi", "thu cu doi moi", "chinh sach", "huong dan", "cach su dung", "cai dat",
+        "pass lai", "ban lai", "thu lai", "doi sang", "doi mau", "tra hang", "doi tra",
+        "co ben khong", "co tot khong", "co nen mua", "mua duoc khong",
+    )
+    # Diacritic-sensitive words where stripping accents causes collisions (rè/rẻ, yếu/yêu, cháy/chạy, phồng/phòng, nứt/nút)
+    product_nfc_terms = (
+        "hỏng", "lỗi", "lổi", "rè", "xoẹt", "phồng", "nứt", "rò", "nóng", "rỉ", "gỉ",
+        "kẹt", "bung", "trầy", "xước", "lỏng", "cháy", "khét", "yếu", "ngừng", "ngắt",
+    )
+    # Unambiguous multi-word product performance / defect / experience phrases (accent-insensitive)
+    product_plain_terms = (
+        "am thanh", "chat am", "am luong", "chat lieu", "mui nhua", "mui khet",
+        "toa nhiet", "bong son", "ri set", "ro dien", "ro nuoc", "tray xuoc",
+        "mat tieng", "khong hoat dong", "khong su dung duoc", "khong ket noi",
+        "khong len nguon", "khong sac duoc", "sac khong vao", "khong vao pin",
+        "sac cham", "sac qua cham", "sac lau", "sac rat lau", "sac vao lau",
+        "sac vao rat lau", "sac day", "sac cho", "cam sac", "len vach", "vach pin",
+        "muc pin", "tut pin", "het pin", "pin dung", "pin lau", "pin yeu", "pin ao",
+        "dung luong", "tu tat", "chap chon", "khong khit", "de roi", "lot am", "leak",
+        "de su dung", "it hao dien", "nuong nhanh", "chien nhanh", "ket noi on dinh",
+        "khong nong", "van mat", "chat hon", "vua chan", "size",
+    )
 
-    def has_term(normalized, terms):
-        return any(re.search(r"(?<![a-z0-9])%s(?![a-z0-9])" % re.escape(term), normalized) for term in terms)
+    def has_product_signal(lower_nfc: str, plain: str) -> bool:
+        return _has_nfc_term(lower_nfc, product_nfc_terms) or _has_plain_term(plain, product_plain_terms)
+
     seen = set()
     kept, noise = [], []
     for item in reviews if isinstance(reviews, list) else []:
         if not isinstance(item, dict):
             continue
-        comment = str(item.get("comment", "") or "").strip()
-        normalized = re.sub(r"[^a-z0-9 ]+", " ", _plain(comment))
-        normalized = " ".join(normalized.split())
+        comment = str(item.get("comment", item.get("text", "")) or "").strip()
+        normalized = _normalize_plain(comment)
+        lower_nfc = _normalize_nfc(comment)
+        has_prod = has_product_signal(lower_nfc, normalized)
+        words = normalized.split()
         label = ""
-        if not normalized or normalized in {"khong co binh luan", "khong binh luan", "chua co binh luan", "khong nhan xet"}:
+
+        if _is_empty_comment(normalized):
             label = "nhieu_trong"
-        elif normalized in seen:
-            label = "nhieu_lap_bat_thuong"
-        elif has_term(normalized, incentive_terms) and not has_term(normalized, product_terms):
-            label = "nhieu_nhan_xu"
-        elif has_term(normalized, not_used_terms) and not has_term(normalized, product_terms):
-            label = "nhieu_chua_dung"
-        elif normalized in praise:
-            label = "nhieu_khen_chung"
-        elif has_term(normalized, question_terms) and not has_term(normalized, product_terms):
-            label = "nhieu_hoi_dap_rao_ban"
-        elif has_term(normalized, outside) and not has_term(normalized, product_terms):
+        elif _has_plain_term(normalized, user_damage_terms):
             label = "nhieu_ngoai_chat_luong"
-        elif len(normalized.replace(" ", "")) < 5 or (len(normalized.split()) <= 2 and not has_term(normalized, product_terms)):
+        elif normalized in exact_praise:
+            label = "nhieu_khen_chung"
+        elif normalized in seen and len(normalized.replace(" ", "")) >= 8:
+            label = "nhieu_lap_bat_thuong"
+        elif _has_plain_term(normalized, incentive_terms) and not has_prod:
+            label = "nhieu_nhan_xu"
+        elif _has_plain_term(normalized, not_used_terms) and not has_prod:
+            label = "nhieu_chua_dung"
+        elif _has_plain_term(normalized, question_terms) and not has_prod:
+            label = "nhieu_hoi_dap_rao_ban"
+        elif _has_plain_term(normalized, outside_terms) and not has_prod:
+            label = "nhieu_ngoai_chat_luong"
+        elif len(normalized.replace(" ", "")) < 5 or (len(words) <= 2 and not has_prod):
             label = "nhieu_qua_ngan"
-        if normalized:
+        elif not has_prod and len(words) <= 20 and _has_plain_term(normalized, generic_praise_terms):
+            label = "nhieu_khen_chung"
+
+        if normalized and not _is_empty_comment(normalized):
             seen.add(normalized)
         if label:
             labels[label] += 1
@@ -214,9 +353,8 @@ def flag_review_anomalies(reviews: list) -> dict:
         if not isinstance(item, dict):
             continue
         comment = str(item.get("comment", item.get("text", "")) or "").strip()
-        normalized = re.sub(r"[^a-z0-9 ]+", " ", _plain(comment))
-        normalized = " ".join(normalized.split())
-        if len(normalized.replace(" ", "")) < 8:
+        normalized = _normalize_plain(comment)
+        if _is_empty_comment(normalized) or len(normalized.replace(" ", "")) < 8:
             continue
         total += 1
         review_id = str(item.get("review_id") or item.get("id") or "R%02d" % (index + 1))
