@@ -111,7 +111,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 ## §7. Đánh giá & chuẩn "đạt" *(guide 2.4, 4.1)*
 - Data card: `data/DATA_CARD.md` · bộ câu thử: `eval/benchmark.csv` — 25 câu (thuong 7 · kho 13 · tu_choi 5); 15/25 câu từ 60 review thật đã ẩn danh (SP01–SP03), 10 câu synthetic · metric: `eval/metric_spec.yaml` (4 metric)
 - **Chuẩn "đạt"** (chốt **trước 19:30 Thứ Sáu 27/11**, giữ nguyên đến 23:59 Thứ Bảy 28/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn), và metric `dung_khi_thieu_can_cu` = 100% (9/9: không bịa rủi ro khi thiếu căn cứ, không cáo buộc, không chốt mua thay)."
-- Kết quả: chưa có lượt eval được ghi nhận; chưa thể kết luận đạt/trượt. Chi tiết và lệnh chạy: `eval/README.md`.
+- Kết quả sơ bộ (Codex chấm, chưa Yến xác nhận): lượt 1 `run-1@20261127-224047` đạt 13/25 (52%), chưa đạt; lượt 2 `run-2@20261127-224446` đạt 23/25 (92%), `tu_choi` 5/5, citation 21/21 và `dung_khi_thieu_can_cu` 9/9, đạt các điều kiện chuẩn §7. Metric bổ sung `rui_ro_duoc_dan_chung` là 25/32 (78,1%), thấp hơn ngưỡng 90%; chưa thể kết luận toàn bộ metric đạt. Chi tiết: `eval/report.md`, run CSV và trace tương ứng.
 
 ## §8. Chi phí khi dùng thật *(guide 4.2)*
 - Persona + giá: `cost/personas.yaml` còn giá trị ví dụ/nguồn placeholder; chưa dùng làm dự báo.
@@ -133,6 +133,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 | Thời điểm | Đổi gì | Vì sao (trỏ về câu thử / lỗi / bằng chứng nào) |
 |---|---|---|
 | CP3 · 27/11/2026 | Nối GPT trong `answer(text)`, thêm lọc nhiễu và cờ review trùng, hậu kiểm citation; giữ trả lời thiếu căn cứ khi không còn review sạch | Mở khóa `eval --try`, UI agent và các ca benchmark CP3; xử lý lỗi thiếu citation và nội dung ship/nhận xu/chưa dùng |
+| CP4 · 27/11/2026 | Sau lượt 1, sửa `answer()` ưu tiên review được gửi thay vì nới sang catalog; parser giữ mã `[Rxx]` và truyền yêu cầu `Người dùng:` riêng; chấm hai lượt sơ bộ | Lượt 1 có 63 mã ngoài input/65 quote sai ở 12 câu do catalog-first; B12/B13/B16 có rủi ro không căn cứ và B25 bỏ qua yêu cầu từ chối liên hệ. Lượt 2 còn B17/B22 và metric `rui_ro_duoc_dan_chung` dưới ngưỡng; chi tiết `eval/report.md` |
 
 **Sau CP4 (đến 23:59 Thứ Bảy 28/11)** (sửa theo góp ý — không sửa chuẩn "đạt", câu thử, số bằng chứng, kết quả các lượt đã chạy)
 

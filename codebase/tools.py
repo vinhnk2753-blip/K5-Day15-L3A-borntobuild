@@ -11,7 +11,7 @@ from shopee_reviews import fetch_product_reviews
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 _RATING = re.compile(r"(?<!\d)([1-5])\s*(?:sao|\*|★)(?!\w)", re.IGNORECASE)
-_REVIEW_ID = re.compile(r"^\s*\[?(R\d{1,3})\]?\s*(?:\||:|-)\s*(.*)$", re.IGNORECASE)
+_REVIEW_ID = re.compile(r"^\s*\[?(R\d{1,3})\]?(?:\s*(?:\||:|-)\s*|\s+)(.*)$", re.IGNORECASE)
 _INLINE_REVIEW_ID = re.compile(r"\[?(R\d{1,3})\]?\s*\|", re.IGNORECASE)
 
 

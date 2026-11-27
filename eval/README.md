@@ -36,12 +36,17 @@
 
 ## 5. Đã chạy gì
 
-Đã chạy smoke `python run.py` với `SP01`, `python run.py eval --fake`, và `python run.py eval --try 10`. `--fake` không gọi agent; `--try` ghi `eval/run-try.csv` và `traces/run-try.jsonl` (bị ignore, không phải lượt chính thức). Cả 10 case chạy không lỗi; các mã trích dẫn được xuất đều có trong input. Chưa chạy lượt eval chính thức.
+Đã chạy smoke `python run.py`, `eval --fake`, `eval --try` (không tính chính thức), và hai lượt thật bằng `gpt-6-luna`. Lượt 1 và lượt 2 đều chạy đủ 25 câu, không lỗi kỹ thuật; file kết quả và trace ở `eval/run-1.csv`, `traces/run-1.jsonl`, `eval/run-2.csv`, `traces/run-2.jsonl`. Chỉ cột `pass`/`ghi_chu` được điền sau khi chạy. Điểm hiện tại là **Codex chấm sơ bộ**, chưa được Yến xác nhận; không ghi nhận Yến đã chấm.
 
 | Lượt | Run ID | Model | Cấu hình (prompt / công cụ / thay đổi) | Đạt / tổng | % | Đạt chuẩn? |
 |---|---|---|---|---|---|---|
-| 1 | — | — | Chưa chạy | — | — | Chưa biết |
+| 1 | `run-1@20261127-224047` | gpt-6-luna | Trước sửa: tra catalog ưu tiên hơn tập review được gửi | 13/25 | 52% | Chưa đạt |
+| 2 | `run-2@20261127-224446` | gpt-6-luna | Sau sửa: ưu tiên review input, giữ mã `[Rxx]`, truyền yêu cầu người dùng riêng | 23/25 | 92% | Đạt theo §7 sơ bộ; Yến cần xác nhận |
+
+Theo type: lượt 1 — `thuong` 6/7, `kho` 5/13, `tu_choi` 2/5; lượt 2 — `thuong` 7/7, `kho` 11/13, `tu_choi` 5/5. Lượt 2 có 21/21 output có citation khớp nguồn; `dung_khi_thieu_can_cu` sơ bộ 9/9. Metric `rui_ro_duoc_dan_chung` chỉ đạt 25/32 = 78,1%, dưới ngưỡng 90%; xem [eval/report.md](report.md).
 
 ## 6. Lỗi chính
 
-Chưa có `eval/report.md` từ lượt chạy; chưa thể kết luận lỗi chính hoặc xác nhận chuẩn đạt.
+Lượt 1 có lỗi nới input sang catalog toàn sản phẩm ở 12 câu có review subset (B12, B13, B14, B16–B18, B20–B25): trích mã/quote không nằm trong tập input; B12, B13 và B16 còn tạo rủi ro dù dữ liệu được đưa vào không có bằng chứng chất lượng. B25 không trả lời rõ việc từ chối cung cấp thông tin liên hệ.
+
+Giữa hai lượt, sửa `answer()` để ưu tiên review đã gửi, chỉ tra catalog khi input là truy vấn sản phẩm đơn; mở rộng parser giữ `[R01] nội dung` và truyền riêng `Người dùng:` sang model. Lượt 2 không còn citation ngoài input; còn trượt B17 (thiếu ý kiến đối lập R12 khi nêu kết nối) và B22 (dùng R20 làm bằng chứng dù criterion cấm). Các metric người chấm ở report vẫn là sơ bộ của Codex, chờ Yến xác nhận.
