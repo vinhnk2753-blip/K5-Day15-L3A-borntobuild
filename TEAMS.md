@@ -4,16 +4,17 @@
 > Giữ nguyên tên file `TEAMS.md` ở thư mục gốc repo, giữ nguyên các dòng `- Tên nhóm:` … và tiêu đề cột của bảng. Chỉ thay chỗ `____`.
 > Kiểm bằng `python run.py check`: phần "Kiểm TEAMS.md" không báo gì là đúng format.
 
-- Tên nhóm: ____
-- Lớp: ____
-- Track: ____
-- Link repo: ____
+- Tên nhóm: borntobuild
+- Lớp: L3A
+- Track: D
+- Link repo: https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild
 
 | STT | Họ và tên | Mã học viên | Vai trò | Phần việc chính |
 |---|---|---|---|---|
-| 1 | ____ | ____ | Đội trưởng | ____ |
-| 2 | ____ | ____ | Thành viên | ____ |
-| 3 | ____ | ____ | Thành viên | ____ |
+| 1 | Nguyễn Khánh Vinh | 2A202603390 | Đội trưởng | Điều phối, nộp CP; đào review công khai, dựng data & DATA_CARD; bảng Impact |
+| 2 | Nguyễn Thị Hải Yến | 2A202603567 | Thành viên | Phỏng vấn/khảo sát pain; bộ câu thử, metric & báo cáo eval; slide demo |
+| 3 | Nguyễn Quỳnh Trang | 2A202603477 | Thành viên | Thiết kế & tạo giao diện UI demo; mô phỏng chi phí; tổ chức người dùng thử |
+| 4 | Giáp Mạnh Tuyên | 2A202603648 | Thành viên | Thiết kế kiến trúc; code luồng AI & công cụ lọc/hậu kiểm trích dẫn; đồng chấm eval & video dự phòng |
 
 **Quy tắc điền**
 - **Lớp:** `L3A` hoặc `L3B`. **Track:** một chữ `A` (EdTech), `B` (Y tế), `C` (Du lịch), `D` (Thương mại điện tử), `E` (Tài chính) hoặc `F` (Làn khác). **Link repo:** link GitHub công khai của nhóm.

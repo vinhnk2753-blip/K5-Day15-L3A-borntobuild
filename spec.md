@@ -1,21 +1,21 @@
-# AI SPEC — [Tên lát cắt] · Nhóm [tên nhóm] · Phòng [XXX] · Zone [X]
+# AI SPEC — Lọc nhiễu review & rút 3 rủi ro sản phẩm có trích dẫn · Nhóm borntobuild · Phòng [XXX] · Zone [X]
 
 > Mốc nộp: §7 chốt chuẩn "đạt" tại **CP2 19:30 Thứ Sáu 27/11** · §0–§7 nộp **CP3 10:00 Thứ Bảy 28/11** · đủ §0–§10 **CP4 14:30 Thứ Bảy 28/11** · §10 changelog ghi tiếp đến **23:59 Thứ Bảy 28/11**.
 > Đầu mỗi mục ghi bước guide (`02-guide.md` trong repo đề) chỉ cách điền. Mỗi mục ngắn, có số và nguồn; chi tiết để ở file được trỏ tới. Xoá dòng hướng dẫn trong ngoặc vuông khi điền xong.
 
-Track: [ ] A · [ ] B · [ ] C · [ ] D · [ ] E — bài toán: [đề gợi ý trong file track, hoặc bài toán nhóm tự mở rộng] __
-Data BTC cấp đã dùng (nếu có — không commit nguyên file): __
+Track: [ ] A · [ ] B · [ ] C · [x] D · [ ] E — bài toán: Hướng mở rộng trong Track D — lọc nhiễu/cờ bất thường từ đánh giá sản phẩm & rút tối đa 3 rủi ro lớn nhất kèm trích dẫn trước khi mua
+Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có (Track D nhóm tự thu thập review công khai ẩn danh & dựng dữ liệu chạy thử)
 
 ## §0. Hiện tại việc này diễn ra thế nào *(guide 1.1)*
-- Luồng hiện tại của việc này, trong khoá hoặc trên app thật (3–5 bước; ảnh chụp từ tài khoản của mình, đã che thông tin):
-- Công cụ / AI đang được dùng cho việc này (nếu có) + nguồn. Không kiểm được thì ghi "chưa kiểm":
+- Luồng hiện tại của việc này, trong khoá hoặc trên app thật (3–5 bước; ảnh chụp từ tài khoản của mình, đã che thông tin): *(đang bổ sung trước CP2)*
+- Công cụ / AI đang được dùng cho việc này (nếu có) + nguồn. Không kiểm được thì ghi "chưa kiểm": Chưa kiểm chi tiết (sẽ kiểm tra tính năng tóm tắt/lọc đánh giá hiện có trên Shopee/Lazada/TikTok Shop ở bước 2.1).
 
 ## §1. Người dùng & bằng chứng *(guide 1.1, 1.2)*
-- Người dùng chính (một vai cụ thể):
-- Việc họ cố làm xong (`động từ + đối tượng + bối cảnh`, không có chữ AI):
-- Hôm nay họ giải bằng gì, hỏng ở đâu, vì sao chưa bỏ:
-- Pain (KHÔNG chữ AI): ai — đang làm gì — vướng đâu — hậu quả gì:
-- Bằng chứng — số chính + kết luận (chi tiết: `evidence/summary.md`): __
+- Người dùng chính (một vai cụ thể): Người mua hàng trên sàn TMĐT (Shopee, TikTok Shop, Lazada) đang phân vân chốt đơn sản phẩm giá từ 200.000đ trở lên có nhiều đánh giá.
+- Việc họ cố làm xong (`động từ + đối tượng + bối cảnh`, không có chữ AI): Kiểm tra đánh giá sản phẩm để phát hiện các rủi ro chất lượng/sử dụng thật trước khi quyết định mua trên sàn TMĐT.
+- Hôm nay họ giải bằng gì, hỏng ở đâu, vì sao chưa bỏ: Tự lướt review theo bộ lọc 1–3 sao, lọc "có bình luận/có hình ảnh" hoặc xem review trên TikTok/YouTube. Hỏng ở chỗ: nhiều đánh giá 5★ là nhận xu/khen shipper làm lệch điểm sao, còn review 1–3★ lẫn nhiều khiếu nại về vận chuyển hoặc chọn nhầm size; đọc tay tốn thời gian và dễ bỏ sót lỗi lặp lại. Chưa bỏ vì đây vẫn là nguồn kiểm chứng trải nghiệm người mua trước dễ tiếp cận nhất ngay trên trang sản phẩm.
+- Pain (KHÔNG chữ AI): Người mua trên sàn TMĐT đang đọc đánh giá trước khi chốt đơn nhưng bị ngộp giữa nhiều đánh giá nhiễu (nhận xu, khen giao hàng, lặp nội dung bất thường) làm chìm lỗi thật của sản phẩm, dẫn đến mất 15–30 phút lọc tay hoặc mua nhầm hàng kém chất lượng, tốn tiền và mất công đổi trả.
+- Bằng chứng — số chính + kết luận (chi tiết: `evidence/summary.md`): *(đang thu thập theo giả thuyết tại `evidence/hypothesis.md`, cập nhật bản đầu ở CP2 và hoàn thiện trước CP3)*
 
 ## §2. Impact & quyết định chọn *(guide 1.3)*
 
@@ -87,7 +87,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): __
 - Ai có thể bị hại nếu AI sai, và nhóm chặn thế nào:
 
 ## §10. Phân công & changelog
-- Phân công có tên (theo chặng, chia cặp — guide "Cách chia việc"): __
+- Phân công có tên (theo chặng, chia cặp — guide "Cách chia việc"): Cả nhóm cùng khảo sát/phỏng vấn ban đầu & đọc lỗi lượt 1; chia 2 cặp build/đo — **Nguyễn Khánh Vinh (Đội trưởng):** điều phối, nộp CP, đào review công khai (`evidence/data-mining.md`), dựng data & `data/DATA_CARD.md`, bảng Impact (§2) · **Nguyễn Thị Hải Yến:** phỏng vấn/khảo sát pain (`evidence/`), bộ câu thử & báo cáo eval (`eval/`), slide demo (`demo-slides.pdf`) · **Nguyễn Quỳnh Trang:** thiết kế & tạo giao diện UI demo (`codebase/app.py`), mô phỏng chi phí (`cost/`), tổ chức người dùng thử (`validation/log.md`) · **Giáp Mạnh Tuyên:** thiết kế kiến trúc (§4–§5), code luồng AI & công cụ lọc/hậu kiểm trích dẫn (`codebase/`), đồng chấm eval & quay video dự phòng.
 - Dùng AI vào việc gì (2–3 dòng; chi tiết `docs/ai-usage.md`):
 - Nhật ký thay đổi — **mọi thay đổi sau CP2 19:30 Thứ Sáu 27/11 phải có dòng ở đây**:
 
