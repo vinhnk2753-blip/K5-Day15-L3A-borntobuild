@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Shopee Review Risk Agent",
-  "version": "1.0.0",
-  "description": "Lọc review Shopee và rút tối đa 3 rủi ro sản phẩm có trích dẫn.",
-  "permissions": [],
+  "version": "1.1.0",
+  "description": "Lấy review sản phẩm Shopee và xuất dữ liệu JSON.",
+  "permissions": ["scripting"],
   "host_permissions": [
-    "http://127.0.0.1:8765/*"
+    "http://127.0.0.1:8765/*",
+    "https://shopee.vn/*",
+    "http://shopee.vn/*"
   ],
   "background": {
     "service_worker": "background.js"
