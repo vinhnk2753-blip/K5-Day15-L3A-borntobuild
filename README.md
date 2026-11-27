@@ -82,6 +82,14 @@ Nhóm dùng stack khác (Node, Streamlit, notebook…): sửa hàm `run_app()` t
 - **Trước CP3:** nối model thật theo [docs/connect-model.md](docs/connect-model.md), `eval --try` thấy token > 0 rồi mới `eval`.
 - Bộ chạy gửi **nguyên ô `input`** của câu thử vào `answer(text)`. Dữ liệu nền (bài học, thông báo, lịch…) để trong `data/`, đọc qua công cụ.
 
+### Crawl review Shopee
+
+Đặt `APIFY_TOKEN` trong biến môi trường trước khi chạy `python run.py`, rồi nhập link sản phẩm `https://shopee.vn/...` tại dấu nhắc. Module `codebase/shopee_reviews.py` gọi actor Apify `themineworks/shopee-reviews-scraper` qua HTTP bằng thư viện chuẩn; không cần cài gói Python. Mặc định lấy tối đa 100 review và hiện mã `[R01]`, sao, nội dung, ngày, biến thể và ghi chú độ phủ. Module chỉ giữ các trường review cần cho prototype, không lấy tên người đánh giá.
+
+Actor là dịch vụ bên thứ ba, có giới hạn và mức phí riêng; kết quả không được mặc định là đầy đủ. Cần cấu hình token hợp lệ và kiểm tra `counts_complete`/`coverage_note` trong metadata trước khi dùng làm căn cứ.
+
+Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.md](extension/README.md). Extension crawl tối đa 50 review cho mỗi mức sao trên trang Shopee đang mở, gửi dữ liệu đã bỏ tên người đánh giá tới backend Python cục bộ, rồi dùng GPT để rút tối đa 3 rủi ro có trích dẫn. Backend dùng `MODEL_PROVIDER=openai`, `MODEL_NAME` và `API_KEY` trong `.env`; không nhúng API key vào extension.
+
 ## Phần nào thật, phần nào giả
 
 | Thành phần | Thật / Giả | Ghi chú |

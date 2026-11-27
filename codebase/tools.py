@@ -9,6 +9,7 @@ Công cụ có tác động ra ngoài: KHÔNG tự làm. Trả về bản nháp 
 Dữ liệu công cụ đọc (bài mẫu, thông báo mẫu, lịch…): để trong data/ và mô tả ở data/DATA_CARD.md.
 """
 from tracing import tool, TOOLS  # noqa: F401  (TOOLS: danh sách công cụ đã đăng ký, dùng khi viết vòng lặp agent)
+from shopee_reviews import fetch_product_reviews
 
 
 @tool
@@ -16,3 +17,11 @@ def search_example(query: str) -> list:
     """(ví dụ — thay bằng công cụ của nhóm) Tra dữ liệu mẫu theo câu hỏi.
     Input: câu hỏi (str). Output: danh sách đoạn {"code", "text"}. Không tác động ra ngoài."""
     return [{"code": "VD-1", "text": "(ví dụ) đoạn dữ liệu giả — thay bằng dữ liệu thật của bài toán"}]
+
+
+@tool
+def crawl_shopee_reviews(url: str, max_reviews: int = 100) -> dict:
+    """Lấy review công khai của một listing Shopee Việt Nam.
+    Input: link shopee.vn và số review tối đa. Output: thông tin sản phẩm,
+    review đã ẩn danh và metadata độ phủ. Chỉ đọc qua dịch vụ bên thứ ba; không sửa dữ liệu shop."""
+    return fetch_product_reviews(url, max_reviews=max_reviews)
