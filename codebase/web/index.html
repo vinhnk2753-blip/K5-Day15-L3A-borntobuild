@@ -62,7 +62,8 @@
           <h2 id="result-heading" tabindex="-1"></h2>
           <p id="result-message" class="result-message" aria-live="polite"></p>
           <div id="quantitative" class="stats" aria-label="Tổng quan dữ liệu"></div>
-          <section id="coverage-section" class="panel" aria-labelledby="coverage-heading"><h3 id="coverage-heading">Độ phủ và giới hạn</h3><p id="coverage-note"></p><p class="hint">Chưa có thống kê lọc nhiễu trong lần kiểm tra này. Review có nội dung không đồng nghĩa đã được xác minh là đáng tin.</p></section>
+          <section id="signals-section" class="panel" aria-labelledby="signals-heading" hidden><h3 id="signals-heading">Lọc nhiễu và dấu hiệu bất thường</h3><p id="signals-summary"></p><ul id="signal-counts" class="signal-counts"></ul><p id="anomalies"></p><div id="flag-list"></div><p class="hint">Đếm theo quy tắc prototype trên tập review nhận được. “Giữ lại” không có nghĩa đã xác minh đáng tin; dấu hiệu lặp không đủ để kết luận gian lận/seeding.</p></section>
+          <section id="coverage-section" class="panel" aria-labelledby="coverage-heading"><h3 id="coverage-heading">Độ phủ và giới hạn</h3><p id="coverage-note"></p><p class="hint">Kết quả chỉ phản ánh mẫu nhận được, không đại diện toàn bộ người mua.</p></section>
           <div id="risk-list"></div>
           <div id="state-action" class="state-action" hidden><button id="edit" class="secondary" type="button">Bổ sung / sửa đánh giá</button><button id="retry" class="primary" type="button" hidden>Thử lại</button></div>
           <p class="result-footnote">Kết quả chỉ phản ánh tập đánh giá bạn cung cấp. Đọc review gốc và tự cân nhắc trước khi mua.</p>

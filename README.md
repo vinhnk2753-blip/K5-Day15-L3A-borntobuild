@@ -45,7 +45,8 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
 - UI issue #4: `python run.py` mở **http://127.0.0.1:8000**. Nhập link listing Shopee để lấy review, hoặc chọn **Dán tập review có số sao** rồi nhập mỗi dòng `2 | Nội dung review` cùng URL sản phẩm. Bấm `[Rxx]` mở nguồn do backend trả; Ctrl+C để dừng. Không cần cài package ngoài thư viện chuẩn Python.
-- Web gọi `crawl_shopee_reviews` và `analyze_reviews` của Tuyên như extension, không phân tích hai lần. Giữ nguyên status `risks/no_clear_risk/insufficient` và citations. Fake trả insufficient đúng backend; **không còn bộ tự dựng rủi ro của UI**. Backend chưa trả số nhiễu/sạch nên UI ghi rõ chưa có, không tự tính 0 hoặc áp ngưỡng sạch riêng.
+- Web gọi **`answer(text)` một lần**, truyền JSON `{mode, url, reviews?}`. Backend trả `output` dạng chuỗi và `structured` để web dựng thẻ. `analyze_reviews` vẫn dùng chung với extension. Công cụ định lượng đếm review trống, lặp, nhận thưởng, chưa dùng, chỉ nói giao hàng/dịch vụ và khen chung; hiện số bị loại, tỷ lệ, số giữ lại và nguồn cờ. Dưới 3 review giữ lại → chưa đủ dữ liệu, không gọi model.
+- Demo CP2: chọn **Dán tập review có số sao → Tai nghe minh họa → Kiểm tra rủi ro**. Với `MODEL_PROVIDER=fake`, 4 review được xét, loại 1 (25%), giữ 3 và hiển thị 3 rủi ro giả lập kèm `[R01]`, `[R03]`, `[R04]`. Bấm mã để đối chiếu nguyên văn. Có nhãn giả lập rõ ràng; không dùng làm bằng chứng chất lượng AI thật. Mẫu chỉ nói chưa dùng/nhận xu trả chưa đủ dữ liệu; input tích cực không bị ép sinh 3 rủi ro.
 - Crawl link cần `APIFY_TOKEN`; phân tích OpenAI cần `MODEL_PROVIDER=openai`, `MODEL_NAME`, `API_KEY` trong `.env`. Fixture chỉ dùng chế độ dán, URL minh họa không được crawl. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'` rồi chạy lại. CLI tùy chọn: `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`, nhập link và `/quit` để thoát; đặt lại `web` để dùng giao diện.
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
@@ -95,8 +96,9 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
 | Lời gọi AI ở quyết định trung tâm | Cần xác minh live từ CP3 | Model và người kiểm: ____; chế độ fake hiện chưa chứng minh chất lượng AI thật |
-| Backend của khung | **Giả** nếu MODEL_PROVIDER=fake | Giữ nguyên nhánh fake, token 0; AI thật thuộc phần việc khác |
-| UI issue #4 | **Web local nối backend Shopee** | Nhận link/review có sao; fake trả insufficient, không tự sinh rủi ro; nguồn/usage từ backend; chưa thử live API trong phiên đồng bộ |
+| Backend phân tích | **Giả** nếu MODEL_PROVIDER=fake | Lời gọi model được tracing ghi model=fake, token 0; rủi ro minh họa theo cụm từ có trong review, không phải AI thật |
+| Thống kê nhiễu | **Tính từ input theo quy tắc prototype** | Một lần gọi tool; có nguồn cho từng cờ; không xác minh review thật/giả, không kết luận seeding |
+| UI issue #4 | **Web local gọi answer(text)** | Nhận link/review có sao; hiển thị structured/nguồn/usage của backend; demo mặc định không cần API key khi dùng chế độ dán |
 
 ## Dùng AI vào việc gì
 
@@ -104,7 +106,7 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 Khai báo chung của nhóm ngoài UI: ____ (các thành viên bổ sung phần việc và người kiểm; giữ nguyên khai báo dữ liệu của Vinh trong bảng chi tiết).
 
-Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, đồng bộ schema backend Shopee, fixture và kiểm thử. Đã kiểm 23 test Python và 18 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Ngày 27/11/2026, Trang xác nhận đã kiểm tay code/fixture và đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [đối chiếu issue #4](docs/issue-4-checklist.md) và [xử lý review PR #18](docs/pr-18-review-fixes.md).
+Trong phạm vi UI issue #4, Codex hỗ trợ dựng web, nối `answer(text)`, bổ sung công cụ định lượng và fake dùng chung ở backend theo yêu cầu hoàn thiện CP2. Đã kiểm 34 test Python và 21 nhóm kiểm tra Chrome; API/crawler được stub trong test, chưa thử live. Ngày 27/11/2026, Trang xác nhận đã kiểm tay bản trước và chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh; thay đổi bổ sung CP2 hiện ghi riêng trong [checklist](docs/issue-4-checklist.md). Không tạo bằng chứng phỏng vấn hoặc chấm điểm AI thật. Xem [xử lý review PR #18](docs/pr-18-review-fixes.md).
 
 ## File mẫu — điền ở bước nào
 

@@ -17,7 +17,9 @@ from app import create_server, main
 from ui_backend import MAX_BODY_BYTES
 
 URL = "https://shopee.vn/product/123/456"
-ROWS = [{"rating_star": 2, "comment": "Tai trái mất kết nối."}]
+ROWS = [{"rating_star": 2, "comment": "Tai trái mất kết nối."},
+        {"rating_star": 4, "comment": "Âm thanh nghe rõ khi gọi điện."},
+        {"rating_star": 5, "comment": "Pin đủ dùng cho buổi học."}]
 
 
 class WebTests(unittest.TestCase):
@@ -63,10 +65,13 @@ class WebTests(unittest.TestCase):
             response = self.post({"mode": "reviews", "url": sample["url"], "reviews": sample["reviews"]})
             crawl.assert_not_called()
         self.assertEqual(response["origin"], "backend")
-        self.assertEqual(response["analysis"]["status"], "insufficient")
+        self.assertEqual(response["analysis"]["status"], "risks")
         self.assertEqual(response["analysis"]["model"], "fake")
-        self.assertEqual(response["analysis"]["risks"], [])
+        self.assertEqual(len(response["analysis"]["risks"]), 3)
+        self.assertEqual(response["analysis"]["stats"]["filtered_noise"], 1)
+        self.assertEqual(response["analysis"]["stats"]["noise_pct"], 25)
         self.assertEqual(response["usage"]["model_calls"], 1)
+        self.assertEqual(response["usage"]["tool_calls"], 1)
         self.assertEqual(response["usage"]["tokens_in"], 0)
         self.assertNotIn("flagged_percent", response)
 

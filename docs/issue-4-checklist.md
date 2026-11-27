@@ -1,38 +1,43 @@
-# Issue #4 — UI đồng bộ backend Shopee
+# Issue #4 — hoàn thiện khung UI CP2
 
-Theo yêu cầu người dùng, UI đã được chuyển từ adapter fake tự dựng sang gọi trực tiếp backend Tuyên tại main commit 4b1f050.
-Giữ nhánh feat/issue-4-ui-demo và cập nhật vào PR #18; không sửa agent.py, ai.py, tools.py, metric, benchmark hoặc chuẩn đạt.
+Phạm vi: phần việc Nguyễn Quỳnh Trang trong [issue #4](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/issues/4), cập nhật trên PR #18.
+Sau khi đồng bộ backend Tuyên, người dùng yêu cầu bổ sung nốt định lượng, demo giả 3 rủi ro và điểm nối answer(text).
 
-## Đối chiếu hành vi hiện tại
+## Checklist triển khai
 
-| Phần | Hiện trạng |
-|---|---|
-| Nhập sản phẩm | Link listing Shopee; hoặc link + review có số sao |
-| Chọn mẫu | Fixture synthetic chỉ cho chế độ dán; không crawl URL minh họa |
-| Kết quả | Dùng status risks/no_clear_risk/insufficient và title/summary/citations từ backend |
-| Nguồn Rxx | Popup text/rating/date/variant từ citation object backend; không dùng mã preview do UI tự gán |
-| Fake | Trả insufficient đúng backend; không tự dựng 3 thẻ |
-| Thiếu dữ liệu | Theo trạng thái backend, bỏ ngưỡng sạch 2 của UI cũ |
-| Ngoài phạm vi | Chặn URL ngoài Shopee; không tuyên bố phát hiện mọi yêu cầu ngoài phạm vi trong review |
-| Định lượng | Hiện review_count và độ phủ được trả. **Backend chưa có số review nhiễu/sạch nên chưa đủ phần cờ định lượng của checklist gốc**; không tự bịa hoặc hiện 0 |
-| Tracing | begin/end quanh lời gọi thật; mode dán không gọi crawler nên tool_calls=0 là bình thường |
-| Lệnh | python run.py mở web; REVIEW_LENS_MODE=cli gọi answer(link) nguyên trạng |
+- [x] Giao diện tối giản: nhập link Shopee hoặc dán review có sao; chọn bộ minh họa.
+- [x] Hiện cờ nhiễu/bất thường định lượng: tổng xét, số loại, tỷ lệ, số giữ; từng loại có nguồn Rxx.
+- [x] Tối đa 3 rủi ro theo dữ liệu, có review gốc đối chiếu trong popup.
+- [x] G10: dưới 3 review giữ lại sau lọc theo quy tắc → insufficient, không gọi model.
+- [x] URL ngoài Shopee bị từ chối; lỗi đầu vào/cấu hình/mạng có thông báo và giữ dữ liệu.
+- [x] codebase/app.py mở web; adapter gọi đúng agent.answer(text) một lần. Output luôn là str; structured là khóa bổ sung, không phá hợp đồng khung.
+- [x] Tracing đếm model/tool/token thực tế; tool định lượng gọi một lần, không tính lại ở UI.
+- [x] python run.py chạy được bằng Python stdlib; không thêm dependency.
+- [x] 34 test Python và 21 nhóm kiểm tra Chrome đạt; kiểm desktop 1440 và mobile 390/320.
 
-Hợp đồng chi tiết: docs/ui-ai-contract-proposal.md. Một lần phân tích chỉ gọi model một lần, không gọi answer để lấy văn bản rồi gọi analyze_reviews lần nữa.
+## Kịch bản demo DoD
 
-## Kiểm thử
+1. Đặt MODEL_PROVIDER=fake, chạy python run.py.
+2. Chọn **Dán tập review có số sao → Tai nghe minh họa → Kiểm tra rủi ro**.
+3. Kết quả từ answer: 4 review xét, loại 1 review chưa dùng (25%), giữ 3.
+4. Xem 3 rủi ro minh họa: kết nối, pin, cảm giác đeo; mở [R01], [R03], [R04] để đối chiếu nguyên văn. Cờ chưa dùng mở [R02].
+5. Tracing: model=fake, model_calls=1, tool_calls=1, tokens_in=0, tokens_out=0.
+6. Chọn mẫu chỉ nói chưa dùng/nhận xu: giữ 0/3, báo chưa đủ dữ liệu, model_calls=0, tool_calls=1.
+7. Dán ít nhất 3 review tích cực khác nhau: không ép tạo rủi ro; ngoài Shopee bị chặn trước khi gọi tool/model.
 
-- 23 test Python: fake đúng trạng thái, backend citations, API schema, source metadata, PII, sao bắt buộc, lỗi cấu hình, luồng link gọi crawler, usage qua OpenAI HTTP stub, nội dung có URL/Rxx không kích hoạt crawler, HTTP 400/413, route sản phẩm, log ngoại lệ, cổng sai và không cho server khác dùng chung cổng UI.
-- 18 nhóm kiểm tra browser QA: link/review modes, chọn mẫu, fake không bịa rủi ro, usage, không bịa tỷ lệ nhiễu, popup nguồn và metadata, lỗi mạng, thông báo HTTP 400/403/413/502, cảnh báo dữ liệu cũ và desktop/mobile. Profile tạm được dọn sau kiểm thử.
-- Ba thẻ rủi ro/no_clear_risk trong browser QA dùng response fixture riêng của test. Không báo đó là kết quả OpenAI thật.
-- Chưa thử live crawler/OpenAI; không có chi phí hoặc token API thật được ghi nhận.
-- Không ghi/chấm benchmark, không sửa CSV kết quả hoặc trace đã có.
+Nhãn giả lập hiện xuyên suốt. Thống kê là kết quả quy tắc trên mẫu input, không phải đánh giá độ chính xác AI; không kết luận seeding hoặc shop gian lận.
+Không gọi API/crawler thật trong kiểm thử. Link thật vẫn cần cấu hình Apify; demo bằng chế độ dán không gọi crawler.
 
-## Trạng thái hợp đồng và phần chưa triển khai
+## Phạm vi backend và hợp đồng
 
-Theo xác nhận của Trang ngày 27/11/2026, nhóm đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Backend hiện chưa trả thống kê nhiễu/sạch, chưa nhận trực tiếp mã catalog MWG hoặc review không có số sao trong answer(text). Các khả năng này vẫn cần triển khai nếu nhóm đưa vào luồng chạy; xác nhận chốt hợp đồng không đồng nghĩa code đã hỗ trợ.
-Mã backend đã được merge từ main nhưng không bị chỉnh trong phần đồng bộ UI này. Dữ liệu và tài liệu của Vinh/Yến giữ nguyên.
+Theo yêu cầu bổ sung, thay đổi agent.py/tools.py để web, CLI, extension dùng chung định lượng, G10 và fake; tách review_input.py/review_signals.py.
+Giữ nguyên tracing.py, run.py, ai.py, chuẩn đạt, metric và benchmark. Các cập nhật eval/spec từ main là commit của nhóm được merge vào nhánh, không phải sửa chuẩn để khớp output.
 
-## Review PR #18 và kiểm tay
+Ngưỡng 3 khớp data/CONTRACT.md; catalog MWG SP01–SP03 và review không có sao vẫn chưa được backend Shopee hỗ trợ, không thuộc ba mục vừa yêu cầu.
+Chi tiết schema/quy tắc: [hợp đồng UI](ui-ai-contract-proposal.md).
 
-Đối chiếu từng nhận xét: [pr-18-review-fixes.md](pr-18-review-fixes.md). Ngày 27/11/2026, Trang xác nhận đã kiểm tay code và fixture `ui_demo_data.json`, đồng thời đã chốt khác biệt hợp đồng với Tuyên/Vinh. Ghi nhận theo xác nhận của người phụ trách; chưa có kết quả chạy API/crawler live trong phiên kiểm thử này.
+## Xác nhận và bàn giao
+
+Trang đã xác nhận kiểm tay code/fixture của bản trước và chốt khác biệt MWG/Shopee với Tuyên/Vinh ngày 27/11/2026.
+Lần bổ sung này có thay đổi backend và được kiểm tự động như trên; không tự gán xác nhận kiểm tay trước đó cho code mới.
+PR #18 vẫn cần reviewer kiểm lại/duyệt; file này đánh dấu tiến độ triển khai, không tự đóng issue hoặc merge.

@@ -2,7 +2,15 @@
 
 Review của vinhnk2753-blip trên commit `3984bcf`: [yêu cầu chỉnh sửa](https://github.com/vinhnk2753-blip/K5-Day15-L3A-borntobuild/pull/18#pullrequestreview-6087817796).
 
-## Những điểm đã xử lý
+## Bổ sung hoàn thiện CP2 sau review
+
+Người dùng yêu cầu bổ sung ba mục còn thiếu: định lượng, demo fake có 3 rủi ro và web gọi answer(text). Hiện web serialize input sang JSON và gọi answer một lần; nhận output chuỗi + structured, không parse output hoặc gọi model hai lần. Công cụ định lượng dùng chung backend, có nguồn cho từng cờ; G10 dưới 3 review giữ lại không gọi model. Demo tai nghe cho 4 review, loại 1 (25%), giữ 3 và 3 rủi ro giả có trích dẫn nguyên văn. Không còn các mục thiếu đó trong checklist triển khai.
+
+Kiểm mới: **34 test Python**, **21 nhóm Chrome QA**; demo mặc định đi qua answer thật trong app với model fake, không cần chèn response fixture. API/crawler live chưa được xác minh. Backend agent/tools được bổ sung theo yêu cầu lần này; framework, ai.py, chuẩn đạt, metric và benchmark giữ nguyên. [Checklist hiện tại](issue-4-checklist.md) và [hợp đồng hiện tại](ui-ai-contract-proposal.md) thay thế mô tả hành vi trong bảng lịch sử bên dưới.
+
+Xác nhận kiểm tay của Trang áp dụng bản trước lần bổ sung; không tự ghi người dùng đã rà code backend mới.
+
+## Lịch sử xử lý review ở bản trước
 
 | Nhận xét | Cách xử lý và kiểm chứng |
 |---|---|
@@ -22,10 +30,10 @@ Review của vinhnk2753-blip trên commit `3984bcf`: [yêu cầu chỉnh sửa](
 | CSS khó review | Chuyển thành nhiều dòng; giữ nguyên nội dung CSS ngoài khoảng trắng. |
 | Profile Chrome QA tồn đọng | `finally` đợi Chrome thoát, kiểm tra đường dẫn là thư mục riêng trong temp rồi xóa; kiểm tra thư mục đã biến mất. |
 
-Kiểm chứng: **23 test Python đạt**, **18 nhóm kiểm tra Chrome đạt**; chạy web qua `python run.py` ở cổng 8001. Test OpenAI/crawler dùng stub; thẻ rủi ro browser dùng response fixture riêng, chưa xác minh dịch vụ live. Không sửa backend, framework, metric, benchmark hay kết quả eval.
+Kiểm chứng bản trước: **23 test Python đạt**, **18 nhóm kiểm tra Chrome đạt**; chạy web qua `python run.py` ở cổng 8001. Test OpenAI/crawler dùng stub; thẻ rủi ro browser dùng response fixture riêng, chưa xác minh dịch vụ live. Tại bản đó chưa sửa backend/framework/metric/benchmark/kết quả eval.
 
 ## Xác nhận người phụ trách và trạng thái duyệt
 
 - **Kiểm tay code/fixture — đã xác nhận:** ngày 27/11/2026, Trang xác nhận đã kiểm tay code và dữ liệu mẫu. Cập nhật README, khai báo AI, checklist và provenance của `ui_demo_data.json` theo xác nhận này.
-- **Chốt hợp đồng nhóm — đã xác nhận:** ngày 27/11/2026, Trang xác nhận đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Backend Shopee hiện có vẫn khác `data/CONTRACT.md` ở catalog SP01–SP03, sao review, thống kê nhiễu và ngưỡng G10; [hợp đồng UI](ui-ai-contract-proposal.md) mô tả đúng code đang chạy. Chưa đánh dấu đã triển khai catalog MWG hoặc cờ nhiễu định lượng.
+- **Chốt hợp đồng nhóm — đã xác nhận:** ngày 27/11/2026, Trang xác nhận đã chốt khác biệt hợp đồng MWG/Shopee với Tuyên/Vinh. Bản bổ sung CP2 đã có định lượng và G10 ngưỡng 3; catalog SP01–SP03/review không sao vẫn chưa được nối vào backend Shopee. [Hợp đồng UI](ui-ai-contract-proposal.md) mô tả code hiện tại.
 - **Duyệt PR:** review đang `CHANGES_REQUESTED`; các commit sửa không thay thế việc reviewer kiểm lại và duyệt. Không tự resolve nhận xét hoặc merge PR.

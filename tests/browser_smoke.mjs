@@ -52,16 +52,30 @@ try {
   assert(await evaluate(`document.getElementById('stale-note').hidden`), 'Không báo kết quả cũ trước lần phân tích đầu tiên');
   await evaluate(`document.getElementById('review-form').requestSubmit()`);
   await waitFor(`!document.getElementById('results').hidden && !document.getElementById('analyze').disabled`);
-  assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Chưa đủ căn cứ phân tích');
+  assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Có 3 rủi ro cần cân nhắc');
   assert(await evaluate(`document.getElementById('stale-note').hidden`), 'Ẩn cảnh báo cũ sau khi có kết quả mới');
-  assert.equal(await evaluate(`document.querySelectorAll('#risk-list article').length`), 0);
+  assert.equal(await evaluate(`document.querySelectorAll('#risk-list article').length`), 3);
   assert((await evaluate(`document.getElementById('usage-values').textContent`)).includes('Số lần gọi model: 1'));
-  assert((await evaluate(`document.getElementById('coverage-section').textContent`)).includes('Chưa có thống kê lọc nhiễu'));
-  assert(!(await evaluate(`document.getElementById('quantitative').textContent`)).includes('%'));
+  assert((await evaluate(`document.getElementById('quantitative').textContent`)).includes('25%'));
+  assert((await evaluate(`document.getElementById('signals-summary').textContent`)).includes('Giữ 3/3'));
+  assert((await evaluate(`document.getElementById('usage-values').textContent`)).includes('Công cụ: 1'));
+  await evaluate(`document.querySelector('#risk-list .source-link').click()`);
+  assert.equal(await evaluate(`document.getElementById('source-content').textContent`), 'Sau một tuần dùng, tai trái hay mất kết nối.');
+  await evaluate(`document.getElementById('source-dialog').close();document.querySelector('#flag-list .source-link').click()`);
+  assert.equal(await evaluate(`document.getElementById('source-content').textContent`), 'Giao nhanh, chưa dùng thử nên chưa biết chất lượng.');
+  await evaluate(`document.getElementById('source-dialog').close()`);
   await screenshot('.local/ui-desktop.png', 1440);
   await screenshot('.local/ui-mobile.png', 390, true);
   await cdp('Emulation.setDeviceMetricsOverride', { width: 320, height: 844, deviceScaleFactor: 1, mobile: true });
   assert(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'Không tràn ngang ở 320px');
+  await submitText('5 | Giao hàng nhanh, chưa sử dụng.\n5 | Đánh giá để nhận xu.');
+  assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Chưa đủ căn cứ phân tích');
+  assert.equal(await evaluate(`document.querySelectorAll('#risk-list article').length`), 0);
+  assert((await evaluate(`document.getElementById('usage-values').textContent`)).includes('Số lần gọi model: 0'));
+  assert((await evaluate(`document.getElementById('signals-summary').textContent`)).includes('Giữ 0/3'));
+  await submitText('5 | Pin đủ dùng một buổi.\n5 | Âm thanh rõ khi nghe nhạc.\n5 | Đeo thoải mái khi sử dụng.');
+  assert.equal(await evaluate(`document.getElementById('result-heading').textContent`), 'Chưa thấy rủi ro rõ ràng');
+  assert.equal(await evaluate(`document.querySelectorAll('#risk-list article').length`), 0);
   await evaluate(`document.getElementById('reviews').value='Không có số sao';document.getElementById('reviews').dispatchEvent(new Event('input'));document.getElementById('review-form').requestSubmit()`);
   assert(await evaluate(`!document.getElementById('form-error').hidden && document.activeElement.id==='reviews'`));
   const fixture = {
@@ -108,8 +122,9 @@ try {
   assert.equal(await evaluate(`document.getElementById('reviews').value`), '');
   await evaluate(`document.getElementById('input-mode').value='link';document.getElementById('input-mode').dispatchEvent(new Event('change'));document.getElementById('product-url').value='https://other.example/product/1/2';document.getElementById('product-url').dispatchEvent(new Event('input'));document.getElementById('review-form').requestSubmit()`);
   assert((await evaluate(`document.getElementById('form-error').textContent`)).includes('shopee.vn'));
-  report = { passed:true,checks:['link input mode','URL validation','rated-review mode','sample selection','fake backend insufficient without risks','actual tracing usage','no fabricated noise statistics','desktop/mobile 390/320','missing stars rejected','risk cards from explicit QA response fixture','verbatim source and metadata','no_clear_risk QA fixture','stale result reset','network error','clear'],limitations:'Không gọi crawler hoặc OpenAI thật. Ba thẻ rủi ro/no_clear_risk được kiểm bằng response fixture chèn riêng trong browser QA, không có generator trong app.',screenshots:['.local/ui-home.png','.local/ui-desktop.png','.local/ui-mobile.png'] };
+  report = { passed:true,checks:['link input mode','URL validation','rated-review mode','sample selection','fake answer returns 3 sourced risks','actual model/tool tracing usage','measured noise count and percentage','desktop/mobile 390/320','missing stars rejected','real demo risk and flag source popups','G10 blocks noisy-only input without model','risk cards from explicit QA response fixture','verbatim source and metadata','no_clear_risk QA fixture','stale result reset','network error','clear'],limitations:'Không gọi crawler hoặc OpenAI thật. Demo mặc định đi qua answer và fake theo quy tắc; response fixture riêng chỉ dùng để kiểm bổ sung các trạng thái trình duyệt.',screenshots:['.local/ui-home.png','.local/ui-desktop.png','.local/ui-mobile.png'] };
   report.checks.push('no stale warning before first result', 'stale warning cleared after new result', 'HTTP 400/403/413/502 server messages');
+  report.checks.push('positive fake input does not force risks');
   await fs.writeFile('.local/browser-smoke.json', JSON.stringify(report,null,2));
   console.log(JSON.stringify(report));
 

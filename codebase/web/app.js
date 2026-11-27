@@ -44,9 +44,23 @@ function render(data) {
   const measured = data.origin === "backend" && Number.isInteger(r.review_count);
   $("quantitative").hidden = !measured; $("coverage-section").hidden = !measured;
   const stats = [[String(r.review_count || 0), "review có nội dung"], [String(r.risks.length), "rủi ro có nguồn"], [data.coverage?.counts_complete === true ? "Đã xác nhận" : "Chưa rõ", "độ phủ nguồn"]];
+  if (measured && r.stats) stats.splice(0, 3, [String(r.stats.total), "review được xét"], [String(r.stats.filtered_noise), `loại theo quy tắc (${r.stats.noise_pct}%)`], [String(r.stats.kept_clean), "review giữ lại"]);
   $("quantitative").replaceChildren(...stats.map(([value, label]) => { const el = node("div", undefined, "stat"); el.append(node("strong", value), node("span", label)); return el; }));
   const coverage = data.coverage;
   $("coverage-note").textContent = coverage?.counts_complete === true ? "Nguồn báo đã lấy đủ theo phạm vi truy vấn. Không đồng nghĩa mọi người mua đều có cùng trải nghiệm." : "Nguồn chưa xác nhận đã lấy đủ review. Kết quả chỉ phản ánh phần dữ liệu backend nhận được.";
+  $("signals-section").hidden = !measured || !r.stats;
+  $("flag-list").replaceChildren(); $("signal-counts").replaceChildren();
+  if (measured && r.stats) {
+    const s = r.stats;
+    $("signals-summary").textContent = `Nhận ${s.input_total}, xét ${s.total}, ngoài giới hạn ${s.excluded_limit}. Giữ ${s.kept_clean}/${s.min_clean_reviews} review tối thiểu sau lọc theo quy tắc.`;
+    const labels = { empty: "Trống", duplicate: "Lặp", reward: "Nhận thưởng", not_used: "Chưa dùng", shipping_only: "Giao hàng/dịch vụ", generic: "Khen chung" };
+    $("signal-counts").append(...Object.entries(s.noise_breakdown).filter(([, count]) => count > 0).map(([key, count]) => node("li", `${labels[key] || key}: ${count}`)));
+    $("anomalies").textContent = r.anomalies?.join(" ") || "Chưa phát hiện dấu hiệu bất thường theo các quy tắc hiện có.";
+    (r.flags || []).forEach(flag => {
+      const el = node("div", undefined, "flag"); el.append(node("p", flag.label));
+      flag.citations.forEach(source => el.append(sourceButton(source.id))); $("flag-list").append(el);
+    });
+  }
   $("risk-list").replaceChildren(...r.risks.slice(0, 3).map((risk, i) => {
     const card = node("article", undefined, "panel risk");
     card.append(node("p", `RỦI RO ${i + 1}`, "eyebrow"), node("h3", risk.title), node("p", risk.summary, "risk-description"));
@@ -55,7 +69,7 @@ function render(data) {
   }));
   $("state-action").hidden = r.status === "risks"; $("retry").hidden = r.status !== "error";
   $("usage-values").textContent = data.usage ? `Model: ${data.usage.models.join(", ") || "không gọi"}\nSố lần gọi model: ${data.usage.model_calls} · Công cụ: ${data.usage.tool_calls}\nToken vào: ${data.usage.tokens_in} · Token ra: ${data.usage.tokens_out}` : "Chưa nhận usage từ backend, không tự ước lượng token.";
-  $("usage-mode").textContent = data.mock ? "Backend fake không tạo rủi ro. Token 0 không dùng để dự báo chi phí hay chất lượng AI thật." : "Usage lấy từ tracing; lượt không đủ dữ liệu có thể không gọi model.";
+  $("usage-mode").textContent = data.mock ? "Kết quả giả lập theo quy tắc, không phải AI thật. Token 0 không dùng để dự báo chi phí hay chất lượng AI thật." : "Usage lấy từ tracing; lượt không đủ dữ liệu có thể không gọi model.";
   $("result-heading").focus();
 }
 form.addEventListener("submit", async event => {
@@ -113,7 +127,7 @@ $("product-select").addEventListener("change", async () => {
     const data = await response.json(); if (ticket !== revision) return;
     $("product-url").value = data.url;
     $("reviews").value = data.reviews.map(r => `${r.rating_star} | ${r.comment}`).join("\n"); invalidate();
-    $("catalog-note").textContent = "Đã nạp review và URL tự dựng để thử chế độ dán. Fake không tự tạo rủi ro; không crawl URL này.";
+    $("catalog-note").textContent = "Đã nạp review synthetic và URL tự dựng. Chế độ giả minh họa theo quy tắc; không crawl URL này.";
   } catch (_) { inputError("Chưa tải được bộ minh họa. Bạn có thể dán review có số sao."); }
 });
 async function init() {

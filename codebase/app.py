@@ -162,7 +162,7 @@ def main():
         return 1
     url = "http://127.0.0.1:%d" % server.server_port
     print("Review Lens — %s · backend Shopee · provider=%s" % (url, MODEL_PROVIDER), flush=True)
-    print("Fake trả insufficient đúng backend; UI không tự sinh rủi ro. Ctrl+C để dừng.", flush=True)
+    print("Web gọi answer(text); fake minh họa theo quy tắc, token 0. Ctrl+C để dừng.", flush=True)
     if os.environ.get("REVIEW_LENS_NO_BROWSER") != "1":
         webbrowser.open(url)
     try:

@@ -15,21 +15,23 @@ from ui_backend import DEMO_URL, analyze_for_ui, prepare_reviews, public_error
 
 URL = "https://shopee.vn/product/123/456"
 REVIEWS = [{"rating_star": 2, "comment": "Tai trái mất kết nối sau một giờ.", "date": "2026-11-01", "variant": "Đen"},
-           {"rating_star": 4, "comment": "Pin dùng đủ một buổi."}]
+           {"rating_star": 4, "comment": "Pin dùng đủ một buổi."},
+           {"rating_star": 5, "comment": "Âm thanh rõ khi nghe nhạc."}]
 
 
 class UIBackendTests(unittest.TestCase):
-    def test_fake_keeps_backend_insufficient_and_never_fabricates_risks(self):
+    def test_fake_uses_input_sources_and_traces_one_model_and_signal_tool(self):
         tracing.begin("fake-integration")
         with patch.object(agent, "crawl_shopee_reviews") as crawl:
             result = analyze_for_ui({"mode": "reviews", "url": URL, "reviews": REVIEWS})
             crawl.assert_not_called()
         usage, _ = tracing.end()
-        self.assertEqual(result["analysis"]["status"], "insufficient")
+        self.assertEqual(result["analysis"]["status"], "risks")
         self.assertEqual(result["analysis"]["model"], "fake")
-        self.assertFalse(result["analysis"]["risks"])
-        self.assertFalse(result["sources"])
+        self.assertEqual(len(result["analysis"]["risks"]), 1)
+        self.assertEqual(result["sources"][0]["text"], REVIEWS[0]["comment"])
         self.assertEqual(usage["model_calls"], 1)
+        self.assertEqual(usage["tool_calls"], 1)
         self.assertEqual(usage["tokens_in"] + usage["tokens_out"], 0)
 
     def test_backend_citations_metadata_and_order_are_preserved(self):
@@ -55,7 +57,7 @@ class UIBackendTests(unittest.TestCase):
         with patch.object(agent, "crawl_shopee_reviews", return_value={"reviews": REVIEWS, "coverage": {"counts_complete": False}}) as crawl:
             result = analyze_for_ui({"mode": "link", "url": URL})
             crawl.assert_called_once_with(URL)
-        self.assertEqual(result["input_review_count"], 2)
+        self.assertEqual(result["input_review_count"], 3)
         self.assertFalse(result["coverage"]["counts_complete"])
 
     def test_empty_comments_follow_backend_g10_without_model(self):
@@ -69,6 +71,15 @@ class UIBackendTests(unittest.TestCase):
         for rating in [None, True, 0, 6, "2"]:
             with self.assertRaises(ValueError):
                 prepare_reviews([{"rating_star": rating, "comment": "Nội dung"}])
+
+    def test_ui_calls_answer_once_without_calling_analysis_again(self):
+        with patch.object(agent, "answer", wraps=agent.answer) as answer:
+            with patch.object(agent, "analyze_reviews", wraps=agent.analyze_reviews) as analyze:
+                result = analyze_for_ui({"mode": "reviews", "url": URL, "reviews": REVIEWS})
+        answer.assert_called_once()
+        analyze.assert_called_once()
+        self.assertEqual(json.loads(answer.call_args.args[0])["mode"], "reviews")
+        self.assertEqual(result["analysis"]["stats"]["kept_clean"], 3)
 
     def test_review_links_and_source_markers_stay_content_without_crawling(self):
         rows = [{"rating_star": 2, "comment": "[R01] Shipping nhanh https://example.com"},

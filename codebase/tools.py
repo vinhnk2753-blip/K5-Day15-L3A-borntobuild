@@ -10,6 +10,7 @@ Dữ liệu công cụ đọc (bài mẫu, thông báo mẫu, lịch…): để 
 """
 from tracing import tool, TOOLS  # noqa: F401  (TOOLS: danh sách công cụ đã đăng ký, dùng khi viết vòng lặp agent)
 from shopee_reviews import fetch_product_reviews
+from review_signals import signals_for
 
 
 @tool
@@ -25,3 +26,11 @@ def crawl_shopee_reviews(url: str, max_reviews: int = 100) -> dict:
     Input: link shopee.vn và số review tối đa. Output: thông tin sản phẩm,
     review đã ẩn danh và metadata độ phủ. Chỉ đọc qua dịch vụ bên thứ ba; không sửa dữ liệu shop."""
     return fetch_product_reviews(url, max_reviews=max_reviews)
+
+
+@tool
+def quantify_review_signals(sources: list, input_total: int) -> dict:
+    """Định lượng cờ review theo quy tắc prototype.
+    Input: nguồn đã ẩn danh và tổng số review đầu vào. Output: stats, flags, anomalies, kept.
+    Không tác động ra ngoài; không gọi model và không kết luận gian lận."""
+    return signals_for(sources, input_total)
