@@ -14,5 +14,7 @@ README của nhóm có mục "Dùng AI vào việc gì" (2–3 dòng, bắt bu�
 | Sinh data `synthetic` (nếu có) | | | Seed __ · kiểm tay __ dòng | |
 | Chấm cột `pass` bằng LLM (nếu có) | | | Kiểm tra thủ công __ câu thử, khớp __/__ | |
 | Slide, văn bản | | | | |
+| UI issue #4 / PR #18 | Codex | Web stdlib, adapter gọi answer(text)/analyze_review_payload theo main PR #20, hiển thị stats/flags/anomalies/reviews_by_id; bỏ backend và helper trùng lặp của PR #18; sửa UX và tài liệu | 22 test UI/HTTP + 19 test backend main, 20 nhóm Chrome QA và run.py check đạt; API test dùng stub. Trang xác nhận đã tự rà bản trước vòng đồng bộ này và sẽ rà thêm bản sửa mới (28/11/2026); chưa xác nhận đã kiểm tay bản cuối | Nguyễn Quỳnh Trang |
+| Thiết kế và tài liệu UI issue #4 | Codex + Figma plugin | Hỗ trợ thiết kế UI, hợp đồng điểm nối và báo cáo xử lý review | Người dùng đã xem/chỉnh thiết kế; báo cáo nêu rõ schema main, fake insufficient và phạm vi UI, không tạo bằng chứng phỏng vấn | Nguyễn Quỳnh Trang |
 
 **Không dùng AI để:** tạo người được phỏng vấn, trích dẫn, câu trả lời khảo sát; sửa kết quả các lượt đã chạy (`eval/run-*.csv`, `cost/simulate-*.csv`, `traces/`).
