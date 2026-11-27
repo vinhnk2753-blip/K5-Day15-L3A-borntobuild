@@ -19,7 +19,7 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Lấy 
 
 1. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
 2. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
-3. Bấm **Lấy review JSON** ở góc dưới bên phải, rồi chọn **Crawl review → JSON**.
+3. Bấm **Lấy review JSON** ở góc dưới bên phải, rồi chọn **Crawl review → JSON**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao.
 4. Xem JSON ngay trong panel, bấm **Copy JSON** hoặc **Tải JSON** để lưu file.
 
 Luồng hiện tại tập trung vào crawl và xuất JSON. Backend agent Python được giữ riêng cho bước phân tích tiếp theo.

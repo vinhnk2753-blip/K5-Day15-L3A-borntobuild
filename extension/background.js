@@ -12,7 +12,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       target: { tabId },
       world: "MAIN",
       func: crawlReviewsInPage,
-      args: [message.payload?.ids, message.payload?.maxPerStar]
+      args: [message.payload?.ids, message.payload?.maxPerStar, message.payload?.requestId]
     }).then(([result]) => {
       if (result?.error) throw new Error(result.error);
       sendResponse({ ok: true, data: result?.result });
@@ -39,7 +39,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 // Runs in Shopee's page world so fetch uses the same origin, session cookies,
 // and page context as the working DevTools Console snippet.
-async function crawlReviewsInPage(ids, maxPerStar = 50) {
+async function crawlReviewsInPage(ids, maxPerStar = 50, requestId = "") {
   if (location.hostname !== "shopee.vn" || !ids?.shopid || !ids?.itemid) {
     throw new Error("Hãy mở đúng trang sản phẩm Shopee.vn rồi thử lại.");
   }
@@ -54,8 +54,24 @@ async function crawlReviewsInPage(ids, maxPerStar = 50) {
   let offset = 0;
   let scanned = 0;
   let total = null;
+  let pages = 0;
+
+  function reportProgress(stage) {
+    window.postMessage({
+      source: "born-to-build-shopee-review-progress",
+      requestId,
+      stage,
+      page: Math.max(1, pages),
+      offset,
+      scanned,
+      collected: stars.reduce((sum, star) => sum + byStar.get(star).length, 0),
+      counts_by_star: Object.fromEntries(stars.map(star => [star, byStar.get(star).length]))
+    }, location.origin);
+  }
 
   while (scanned < MAX_SCANNED && stars.some(star => byStar.get(star).length < maxPerStar)) {
+    pages++;
+    reportProgress("requesting");
     const url = new URL("/api/v2/item/get_ratings", location.origin);
     const params = {
       filter: 0, flag: 1, itemid: ids.itemid, limit: PAGE_SIZE,
@@ -83,7 +99,10 @@ async function crawlReviewsInPage(ids, maxPerStar = 50) {
     if (payload?.error || !Array.isArray(page)) {
       throw new Error(payload?.error_msg || "Shopee không trả danh sách review dạng JSON.");
     }
-    if (page.length === 0) break;
+    if (page.length === 0) {
+      reportProgress("page_done");
+      break;
+    }
 
     const signature = page.map(review => review.cmtid ?? `${review.rating_star}|${review.ctime}|${review.comment}`).join(",");
     if (pageSignatures.has(signature)) break;
@@ -113,10 +132,12 @@ async function crawlReviewsInPage(ids, maxPerStar = 50) {
     if (Number.isFinite(Number(data.item_rating_summary?.rating_count))) {
       total = Number(data.item_rating_summary.rating_count);
     }
+    reportProgress("page_done");
     if (data.has_more === false || (data.has_more !== true && page.length < PAGE_SIZE)) break;
     await new Promise(resolve => setTimeout(resolve, WAIT_MS));
   }
 
+  reportProgress("complete");
   const reviews = stars.flatMap(star => byStar.get(star));
   return {
     ok: true,

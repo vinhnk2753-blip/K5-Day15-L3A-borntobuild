@@ -59,6 +59,20 @@
   const downloadButton = shadow.querySelector(".download");
   const jsonOutput = shadow.querySelector(".json-output");
   let latestJson = "";
+  let activeCrawlId = "";
+
+  window.addEventListener("message", event => {
+    const progress = event.data;
+    if (event.source !== window
+      || progress?.source !== "born-to-build-shopee-review-progress"
+      || !activeCrawlId
+      || progress.requestId !== activeCrawlId) return;
+
+    const counts = Object.entries(progress.counts_by_star || {})
+      .map(([star, count]) => `${star}★ ${count}`).join(" · ");
+    const action = progress.stage === "requesting" ? "Đang tải" : "Đã xử lý";
+    status.textContent = `${action} trang ${progress.page}: đã quét ${progress.scanned} review, đã lấy ${progress.collected} (${counts}).`;
+  });
 
   launcher.addEventListener("click", () => { panel.hidden = !panel.hidden; });
   closeButton.addEventListener("click", () => { panel.hidden = true; });
@@ -117,10 +131,11 @@
     try {
       const ids = readProductIds();
       currentItemId = ids.itemid;
-      status.textContent = `Đang lấy review sản phẩm ${ids.itemid} trong ngữ cảnh trang Shopee…`;
+      activeCrawlId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid}…`;
       const response = await chrome.runtime.sendMessage({
         type: "CRAWL_SHOPEE_REVIEWS",
-        payload: { ids, maxPerStar: MAX_PER_STAR }
+        payload: { ids, maxPerStar: MAX_PER_STAR, requestId: activeCrawlId }
       });
       if (!response?.ok || !response.data) throw new Error(response?.error || "Extension không nhận được JSON review.");
 
@@ -134,6 +149,7 @@
     } catch (error) {
       status.textContent = `Không lấy được review: ${error.message}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
     } finally {
+      activeCrawlId = "";
       runButton.disabled = false;
     }
   });
