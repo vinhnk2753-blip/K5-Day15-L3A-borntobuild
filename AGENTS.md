@@ -40,6 +40,6 @@ Khung chỉ dùng thư viện chuẩn của Python. Thêm thư viện thì ghi v
 
 ## Quy ước của nhóm
 
-- Ngôn ngữ trả lời người dùng: __
-- Phong cách code / đặt tên: __
-- Ai duyệt thay đổi do agent tạo trước khi commit: __
+- Ngôn ngữ trả lời người dùng: Tiếng Việt (ngắn gọn, trung lập, gắn mã trích dẫn nguyên văn `[Rxx]`, không kết luận shop gian lận/seeding và không quyết định mua thay).
+- Phong cách code / đặt tên: Chỉ dùng thư viện chuẩn Python (`requirements.txt` không thêm gói ngoài); mã sản phẩm `SP01–SP06`, mã trích dẫn `[R01]..[Rxx]`; đặt tên nhánh dạng `feat/issue-<số>-<mô-tả>` hoặc `feat/<số>-<mô-tả>`.
+- Ai duyệt thay đổi do agent tạo trước khi commit: Chủ issue tự kiểm diff và chạy `python run.py check` + unit test trước khi mở PR; ít nhất 1 thành viên khác (đặc biệt Đội trưởng Nguyễn Khánh Vinh hoặc thành viên cặp build/đo) review trước khi merge vào `main`.

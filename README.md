@@ -44,7 +44,7 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- Sau khi chạy `python run.py`, mở web local **http://127.0.0.1:8000**, chọn sản phẩm `SP01`, `SP02`, `SP03` hoặc chuyển sang **Dán tập review văn bản** (mỗi review một dòng, không bắt buộc URL hay số sao). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, fake trả `insufficient` và không sinh rủi ro. Bấm `[Rxx]` để đối chiếu nguồn đã che PII; Ctrl+C để dừng.
+- Sau khi chạy `python run.py`, mở web local **http://127.0.0.1:8000**, chọn sản phẩm thật `SP01–SP06` (60 review ĐMX/TGDĐ + 90 review Tiki đã ẩn danh) hoặc chuyển sang **Dán tập review văn bản** (mỗi review một dòng, không bắt buộc URL hay số sao). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, fake trả `insufficient` và không sinh rủi ro. Bấm `[Rxx]` để đối chiếu nguồn đã che PII; Ctrl+C để dừng.
 - Với nhà cung cấp tương thích OpenAI, đặt thêm `OPENAI_BASE_URL` trong `.env` theo địa chỉ nhà cung cấp (ví dụ `https://api.shopaikey.com/v1`, không thêm `/chat/completions`). Bỏ trống để dùng OpenAI trực tiếp. Giữ `MODEL_PROVIDER=openai`, dùng key và mã model của nhà cung cấp đó; dừng rồi chạy lại server sau khi đổi cấu hình. Khả năng tương thích của dịch vụ trung gian cần kiểm tra bằng một lượt gọi thật; giá trong `cost/personas.yaml` cần đối chiếu với biểu phí thực tế của dịch vụ.
 - Web gọi `agent.answer(text)` cho mã catalog hoặc raw review, dùng nguyên `structured` của backend main PR #20. Chế độ payload Shopee ở API `/api/analyze` gọi `agent.analyze_review_payload(payload)`, không gọi crawler Apify. Không còn `review_input.py`/`review_signals.py` hoặc bộ fake riêng tại UI.
 - CLI tùy chọn: PowerShell đặt `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`; nhập mã catalog hoặc review và `/quit` để thoát. Đặt lại `web` để mở giao diện. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'`. Không thêm dependency ngoài Python stdlib.
@@ -93,17 +93,16 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
-| Lời gọi AI ở quyết định trung tâm | **Thật** khi `.env` chọn `openai`; chế độ fake trả tokens 0 và không tạo rủi ro | Model: lấy từ `MODEL_NAME` (đã smoke test `gpt-6-luna`) |
-| Web UI issue #4 | Hiển thị kết quả backend main | Catalog thật và raw review; fake trả insufficient; test UI dùng stub cho nhánh rủi ro, chưa xác minh live API trong lượt đồng bộ PR #18 |
-|  |  |  |
+| Lời gọi AI ở quyết định trung tâm (`codebase/ai.py`) | **Thật** khi `.env` đặt `MODEL_PROVIDER=openai`; **Giả** (`fake`) khi không có `.env` | Đã chạy thật 2 lượt eval 25 câu (`eval/run-1.csv`, `run-2.csv`), 50 phiên mô phỏng chi phí (`cost/simulate-1.csv`) và demo Web UI với `gpt-6-luna` (OpenAI / `OPENAI_BASE_URL` tương thích). Chế độ `fake` trả token 0, trạng thái `insufficient` và không tự sinh rủi ro |
+| Dữ liệu đánh giá nền (`data/products/*.json`, `eval/benchmark.csv`) | **Thật** (150 review công khai ẩn danh `SP01–SP06` + 15 câu `B11–B25`) · **Synthetic** (10 câu `B01–B10` & 3 bộ `DEMO01–DEMO03` trong UI) | 150/150 review công khai ĐMX/TGDĐ + Tiki đã kiểm 0 lỗi PII bằng `python evidence/count.py`; dữ liệu `synthetic` chỉ dùng cho ca biên/tấn công và thử giao diện, không dùng làm bằng chứng pain |
+| Web UI local (`codebase/app.py`, `codebase/web/`) | **Thật** — nối trực tiếp `agent.answer(text)` & `agent.analyze_review_payload()` | Hiển thị thống kê lọc nhiễu, cờ lặp, tối đa 3 rủi ro kèm modal đối chiếu `[Rxx]` và usage token thật từ tracing (test tự động trong `tests/` dùng stub để chạy offline) |
+| Chrome extension Shopee (`extension/`) | **Thử nghiệm / phụ thuộc nền tảng** | Đọc review trong page context trên trang Shopee và đẩy JSON sang backend local; endpoint Shopee từng trả HTTP 403 nên không phải nguồn bắt buộc của luồng `python run.py`, `eval` hay `simulate` |
 
 ## Dùng AI vào việc gì
 
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
-Nhóm dùng Codex và Antigravity/Claude Code để hỗ trợ viết/rà code bản chạy thử (`codebase/`, `extension/`), dựng script xử lý data ẩn danh và soạn nháp bộ câu thử; bản chạy thử gọi OpenAI GPT qua `.env` trên nội dung review đã lọc/ẩn danh. Nhóm tự kiểm tra code, nhãn evidence, output và citation bằng unit test + chấm tay trước demo; không dùng AI để bịa phỏng vấn hay sửa kết quả chạy thật.
-
-UI PR #18 được đồng bộ theo backend PR #20, không sửa backend chính thức hoặc file eval/trace đã có. Báo cáo thay đổi: [docs/pr-18-review-fixes.md](docs/pr-18-review-fixes.md); hướng dẫn/schema UI: [docs/ui-ai-contract-proposal.md](docs/ui-ai-contract-proposal.md).
+Nhóm dùng Codex, Claude Code và Antigravity để hỗ trợ viết/rà code bản chạy thử (`codebase/`, `extension/`), dựng script đếm dữ liệu (`evidence/count.py`), soạn nháp bộ câu thử (`eval/`), chấm nháp eval, chạy kiểm tra chi phí (`cost/`) và biên tập tài liệu; bản chạy thử gọi OpenAI GPT (`gpt-6-luna`) qua `.env` trên review đã lọc và che PII. Các thành viên tự kiểm tay 60/60 + 90/90 nhãn dữ liệu, rà xác nhận 25/25 câu eval cả 2 lượt + chấm mù chéo 5/5 câu, đối chiếu 50 phiên mô phỏng chi phí và chạy toàn bộ bộ test trước khi merge; không dùng AI để bịa phỏng vấn hay sửa kết quả chạy thật.
 
 ## File mẫu — điền ở bước nào
 
@@ -135,5 +134,5 @@ UI PR #18 được đồng bộ theo backend PR #20, không sửa backend chính
 | 4 | Bản chạy thử làm trọn lát cắt | `codebase/` · lệnh ở mục "Lệnh" |
 | 5 | Định nghĩa "tốt" + bộ câu thử | `data/DATA_CARD.md` · `eval/` |
 | 6 | Mô phỏng chi phí khi dùng thật | `cost/` |
-| 7 | Slide + demo + video dự phòng | `demo-slides.pdf` ở thư mục gốc · link video: ____ |
+| 7 | Slide + demo + video dự phòng | `demo-slides.pdf` ở thư mục gốc · link video: [Video demo dự phòng (Google Drive)](https://drive.google.com/file/d/1ANgzsTN_givlL6PipNGsTdFwEgPLhk-C/view?usp=sharing) |
 | + | *Bonus:* người dùng thử | `validation/log.md` |
