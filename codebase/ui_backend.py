@@ -67,6 +67,10 @@ def analyze_for_ui(request):
             if not isinstance(source, dict) or source.get("id") not in analysis["reviews_by_id"]:
                 raise RuntimeError("Backend trả citation không có trong nguồn.")
             metadata[source["id"]] = source
+        for source in risk.get("counter_citations") or []:
+            if not isinstance(source, dict) or source.get("id") not in analysis["reviews_by_id"]:
+                raise RuntimeError("Backend trả counter_citation không có trong nguồn.")
+            metadata[source["id"]] = source
     sources = []
     for rid, text in analysis["reviews_by_id"].items():
         if not re.fullmatch(r"R\d{1,3}", rid) or not isinstance(text, str):

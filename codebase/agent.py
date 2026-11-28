@@ -31,10 +31,13 @@ Chỉ nêu rủi ro chất lượng/sử dụng có căn cứ từ review sạch
 Không kết luận shop gian lận/seeding/cố tình từ chối bảo hành, không trả lời CÓ/KHÔNG hay quyết định mua thay người dùng, không cung cấp hay suy đoán thông tin cá nhân/liên hệ (Zalo, SĐT, email, danh tính), không khẳng định sản phẩm chắc chắn an toàn, không suy lỗi từ số sao đơn lẻ.
 Nếu user_request yêu cầu một trong các điều bị cấm trên: từ chối rõ phần ngoài phạm vi đó trong summary, nhưng vẫn tóm tắt tối đa 3 rủi ro chất lượng có căn cứ từ review sạch (nếu có).
 Nếu chỉ có một review cho một dấu hiệu, nêu rõ đó là phản ánh đơn lẻ và không khái quát thành lỗi phổ biến; nếu review mâu thuẫn, dạng câu hỏi chưa chắc lỗi, hoặc khác biến thể/thiết bị, nêu rõ giới hạn đó. Với rủi ro an toàn (phồng pin, mùi khét, nóng bất thường), nêu là phản ánh chưa xác minh và không khuyên tiếp tục sử dụng. Không bịa thông tin, trích dẫn, tần suất hoặc nguyên nhân.
-Review tích cực hoặc đối chứng (như khen kết nối ổn định, mát không nóng, vừa chân) chỉ được nhắc trong summary để cân bằng góc nhìn — TUYỆT ĐỐI KHÔNG đưa ID của review tích cực/đối chứng vào mảng citations của rủi ro. Anomaly flags chỉ là số liệu lặp trong mẫu, không phải bằng chứng hành vi phối hợp.
+Tách rõ 2 mảng trích dẫn cho mỗi rủi ro:
+- "risk_citations": CHỈ chứa ID review trực tiếp phản ánh lỗi/hạn chế/rủi ro đó (TUYỆT ĐỐI KHÔNG đưa review tích cực, đánh giá tổng thể hài lòng/ổn định — kể cả khi review có nhắc đặc điểm bình thường theo thiết kế — hoặc review đối chứng vào "risk_citations").
+- "counter_citations": CHỈ chứa ID review tích cực hoặc đối chứng trực tiếp trên CÙNG khía cạnh (nếu có trong tập review sạch, ví dụ một bên báo lỗi kết nối/âm lượng/kích cỡ còn bên khác đánh giá ổn định/vừa vặn; với rủi ro an toàn như phồng pin, mùi khét, nóng bất thường thì KHÔNG dùng review trải nghiệm bình thường để phủ định và để "counter_citations": []). Nếu không có đối chứng trực tiếp cùng khía cạnh thì để mảng rỗng [].
+Anomaly flags chỉ là số liệu lặp trong mẫu, không phải bằng chứng hành vi phối hợp.
 Trả về JSON hợp lệ, tối đa 3 rủi ro, theo dạng:
-{"status":"risks|no_clear_risk|insufficient","summary":"...","risks":[{"title":"...","summary":"...","severity":"high|medium|low","citations":["R01","R02"]}]}
-Mỗi rủi ro phải dẫn ít nhất một ID có trong danh sách review sạch. Không trả quotes; chương trình tự gắn nguyên văn nguồn sau khi kiểm ID. Nếu không còn review sạch có nội dung sản phẩm, trả status insufficient và risks rỗng."""
+{"status":"risks|no_clear_risk|insufficient","summary":"...","risks":[{"title":"...","summary":"...","severity":"high|medium|low","risk_citations":["R01","R02"],"counter_citations":["R12"]}]}
+Mỗi rủi ro phải dẫn ít nhất một ID có trong danh sách review sạch ở "risk_citations". Không trả quotes; chương trình tự gắn nguyên văn nguồn sau khi kiểm ID. Nếu không còn review sạch có nội dung sản phẩm, trả status insufficient và risks rỗng."""
 
 _SINGLE_REPORT_MARKERS = (
     "don le", "1 review", "mot review", "1 nguoi", "mot nguoi", "1 phan anh", "mot phan anh",
@@ -130,10 +133,19 @@ def _format_output(summary: str, status: str, risks: list, stats: dict,
     elif status == "no_clear_risk":
         lines.append("Không thấy rủi ro chất lượng rõ trong mẫu review đã lọc; không thể suy ra sản phẩm chắc chắn an toàn.")
     else:
+        counter_groups = []
         for index, risk in enumerate(risks, 1):
             lines.append("%d. %s (%s): %s" % (index, risk["title"], risk["severity"], risk["summary"]))
             for citation in risk["citations"]:
                 lines.append(_format_citation_line(citation))
+            if risk.get("counter_citations"):
+                counter_groups.append((risk["title"], risk["counter_citations"]))
+        if counter_groups:
+            lines.append("## Ý kiến tích cực / đối chứng (không phải bằng chứng rủi ro)")
+            for risk_title, counters in counter_groups:
+                lines.append("- Đối chứng liên quan tới \"%s\":" % risk_title)
+                for counter in counters:
+                    lines.append(_format_citation_line(counter))
     lines.append("Chỉ là tín hiệu để người mua kiểm tra review gốc; không kết luận gian lận/seeding hay quyết định mua thay người dùng.")
     return "\n".join(lines)
 
@@ -257,25 +269,18 @@ def _run_review_analysis(reviews: list, product_name: str, product_url: str,
         summary = "Chưa đủ căn cứ: model không trả JSON hợp lệ nên hệ thống không đưa ra rủi ro."
         return make_result("insufficient", summary, [], reply.get("model", ""), short_output=summary)
 
-    risks = []
-    candidates = generated.get("risks")
-    for candidate in candidates if isinstance(candidates, list) else []:
-        if len(risks) >= 3:
-            break
-        if not isinstance(candidate, dict):
-            continue
-        raw_citations = candidate.get("citations", [])
-        if not isinstance(raw_citations, list):
-            continue
-        matched = []
-        seen_cids = set()
-        for citation in raw_citations:
+    def _resolve_citations(raw_list, exclude_ids=None) -> list:
+        if not isinstance(raw_list, list):
+            return []
+        resolved = []
+        seen_cids = set(exclude_ids or ())
+        for citation in raw_list:
             match = re.fullmatch(r"\[?(R\d{1,3})\]?", str(citation).strip(), re.IGNORECASE)
             review_id = match.group(1).upper() if match else ""
             if review_id in sources and review_id not in seen_cids:
                 seen_cids.add(review_id)
                 source = sources[review_id]
-                matched.append({
+                resolved.append({
                     "id": review_id,
                     "rating": source.get("rating_star"),
                     "text": source["comment"],
@@ -283,6 +288,23 @@ def _run_review_analysis(reviews: list, product_name: str, product_url: str,
                     "date": source.get("date", ""),
                     "url": source.get("url", ""),
                 })
+        return resolved
+
+    risks = []
+    candidates = generated.get("risks")
+    for candidate in candidates if isinstance(candidates, list) else []:
+        if len(risks) >= 3:
+            break
+        if not isinstance(candidate, dict):
+            continue
+        raw_risk_citations = candidate.get("risk_citations")
+        if raw_risk_citations is None:
+            raw_risk_citations = candidate.get("citations", [])
+        if not isinstance(raw_risk_citations, list):
+            continue
+        matched = _resolve_citations(raw_risk_citations)
+        matched_ids = {c["id"] for c in matched}
+        counter_matched = _resolve_citations(candidate.get("counter_citations", []), exclude_ids=matched_ids)
         title = str(candidate.get("title", "")).strip()[:160]
         risk_summary = str(candidate.get("summary", "")).strip()[:500]
         if not title or not matched:
@@ -301,6 +323,10 @@ def _run_review_analysis(reviews: list, product_name: str, product_url: str,
             "severity": severity,
             "citations": matched,
             "citation_ids": [c["id"] for c in matched],
+            "risk_citations": matched,
+            "risk_citation_ids": [c["id"] for c in matched],
+            "counter_citations": counter_matched,
+            "counter_citation_ids": [c["id"] for c in counter_matched],
             "quotes": [c["text"] for c in matched],
         })
 

@@ -27,12 +27,16 @@
       <section class="panel input-panel" aria-labelledby="input-heading">
         <div class="section-head"><h2 id="input-heading">Đánh giá bạn muốn kiểm tra</h2><span class="step-label">Đầu vào</span></div>
         <form id="review-form" novalidate>
+          <div class="quick-start">
+            <button id="try-sp01" class="quick-try" type="button">Thử mẫu SP01 ngay</button>
+            <p class="hint">Chạy thử ngay 20 review công khai thật (Nồi chiên không dầu Sunhouse 9 lít SHD4035) — không cần copy tay.</p>
+          </div>
           <label for="input-mode">Nguồn đánh giá</label>
           <select id="input-mode"><option value="catalog">Chọn sản phẩm / bộ minh họa</option><option value="reviews">Dán tập review văn bản</option><option value="payload">Dữ liệu từ Extension Shopee (JSON)</option></select>
           <div id="catalog-fields">
             <label for="product-select">Sản phẩm</label>
             <select id="product-select"><option value="">Chọn sản phẩm hoặc bộ minh họa</option></select>
-            <p class="hint" id="catalog-note">SP01–SP03 là dữ liệu công khai có sẵn. DEMO là nội dung synthetic để thử giao diện.</p>
+            <p class="hint" id="catalog-note">SP01–SP06 là dữ liệu công khai có sẵn. DEMO là nội dung synthetic để thử giao diện.</p>
           </div>
           <div id="payload-fields" hidden>
             <div class="payload-card">
@@ -43,7 +47,7 @@
             <input id="payload-file" type="file" accept="application/json,.json">
           </div>
           <label for="reviews">Nội dung đánh giá</label>
-          <p class="hint" id="review-hint">Mỗi review một dòng, có thể giữ mã [R01]. Không bắt buộc số sao hoặc URL. Bỏ thông tin cá nhân trước khi dán.</p>
+          <p class="hint" id="review-hint">Dán nội dung review (không tự tải từ link). Mỗi review một dòng, có thể giữ mã [R01]. Không bắt buộc số sao. Bỏ thông tin cá nhân trước khi dán.</p>
           <textarea id="reviews" rows="8" readonly aria-describedby="review-hint input-count form-error" placeholder="[R01] Pin nhanh hết sau khi dùng.&#10;[R02] Tai trái thường mất kết nối."></textarea>
           <div class="input-meta"><span id="input-count">0 dòng</span><button class="text-button" id="clear" type="button">Xóa nội dung</button></div>
           <p class="form-error" id="form-error" role="alert" hidden></p>
@@ -75,7 +79,7 @@
         </div>
       </section>
     </div>
-    <section id="how" class="how"><h2>Ba bước để kiểm tra review</h2><div class="how-grid"><div><h3>Chọn sản phẩm hoặc dán review</h3><p>Dùng catalog thật SP01–SP03 hoặc dán tập review, không cần URL.</p></div><div><h3>Đọc các phản ánh rủi ro</h3><p>Chưa đủ căn cứ thì chưa đưa ra kết luận. Không tìm thấy rủi ro không bảo đảm sản phẩm an toàn.</p></div><div><h3>Đối chiếu nguồn</h3><p>Bấm mã [Rxx] để mở review gốc cùng số sao, ngày và biến thể nếu có.</p></div></div></section>
+    <section id="how" class="how"><h2>Ba bước để kiểm tra review</h2><div class="how-grid"><div><h3>Chọn sản phẩm hoặc dán review</h3><p>Dùng catalog thật SP01–SP06 hoặc dán tập review văn bản (không tự tải từ link).</p></div><div><h3>Đọc các phản ánh rủi ro</h3><p>Chưa đủ căn cứ thì chưa đưa ra kết luận. Không tìm thấy rủi ro không bảo đảm sản phẩm an toàn.</p></div><div><h3>Đối chiếu nguồn</h3><p>Bấm mã [Rxx] để mở review gốc cùng số sao, ngày và biến thể nếu có.</p></div></div></section>
   </main>
   <footer class="wrap footer">Review Lens · Nhóm borntobuild <span>Phiên bản thử nghiệm · Nhận diện rủi ro từ review</span></footer>
   <dialog id="source-dialog" aria-labelledby="source-title"><div class="dialog-top"><h2 id="source-title">Review gốc</h2><button id="close-source" class="secondary" type="button">Đóng</button></div><p id="source-context" class="hint"></p><blockquote id="source-content"></blockquote><p class="hint">Văn bản nguồn do backend đính kèm, đã che email/SĐT trước khi phân tích. Mã Rxx do backend gán trong từng lượt, không phải danh tính người mua.</p></dialog>

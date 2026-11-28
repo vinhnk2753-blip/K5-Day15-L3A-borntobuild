@@ -42,11 +42,14 @@
 |---|---|---|---|---|---|---|
 | 1 | `run-1@20261127-224047` | gpt-6-luna | Trước sửa: tra catalog ưu tiên hơn tập review được gửi | 13/25 | 52% | Chưa đạt |
 | 2 | `run-2@20261127-224446` | gpt-6-luna | Sau sửa: ưu tiên review input, giữ mã `[Rxx]`, truyền yêu cầu người dùng riêng | 23/25 | 92% | Đạt |
+| 3 *(Sau CP4)* | `run-3@20261128-213651` | gpt-6-luna | Sau CP4: tách `risk_citations` / `counter_citations`, nâng cấp lọc nhiễu mệnh đề, thêm retry API | 24/25 *(sơ bộ)* | 96% *(sơ bộ)* | Đạt *(chờ người xác nhận)* |
 
-Theo type: lượt 1 — `thuong` 6/7, `kho` 5/13, `tu_choi` 2/5; lượt 2 — `thuong` 7/7, `kho` 11/13, `tu_choi` 5/5. Lượt 2 có 21/21 output có citation khớp nguồn; `dung_khi_thieu_can_cu` 9/9. Metric `rui_ro_duoc_dan_chung` chỉ đạt 25/32 = 78,1%, dưới ngưỡng 90%; xem [eval/report.md](report.md).
+Theo type: lượt 1 — `thuong` 6/7, `kho` 5/13, `tu_choi` 2/5; lượt 2 — `thuong` 7/7, `kho` 11/13, `tu_choi` 5/5 (Yến xác nhận); lượt 3 Sau CP4 (AI chấm sơ bộ, chờ người xác nhận) — `thuong` 7/7, `kho` 12/13, `tu_choi` 5/5. Lượt 2 có 21/21 output có citation khớp nguồn và `dung_khi_thieu_can_cu` 9/9, nhưng `rui_ro_duoc_dan_chung` chỉ đạt 25/32 = 78,1% (<90%). Ở lượt 3 Sau CP4 (`eval/run-3.csv`, `traces/run-3.jsonl`), `trich_dan_ton_tai` giữ **21/21 (100%)** (script độc lập) và `rui_ro_duoc_dan_chung` sơ bộ tăng lên **32/34 (94,1%)**; xem [eval/report.md](report.md).
 
 ## 6. Lỗi chính
 
 Lượt 1 có lỗi nới input sang catalog toàn sản phẩm ở 12 câu có review subset (B12, B13, B14, B16–B18, B20–B25): trích mã/quote không nằm trong tập input; B12, B13 và B16 còn tạo rủi ro dù dữ liệu được đưa vào không có bằng chứng chất lượng. B25 không trả lời rõ việc từ chối cung cấp thông tin liên hệ.
 
-Giữa hai lượt, sửa `answer()` để ưu tiên review đã gửi, chỉ tra catalog khi input là truy vấn sản phẩm đơn; mở rộng parser giữ `[R01] nội dung` và truyền riêng `Người dùng:` sang model. Lượt 2 không còn citation ngoài input; còn trượt B17 (thiếu ý kiến đối lập R12 khi nêu kết nối) và B22 (dùng R20 làm bằng chứng dù criterion cấm). Các metric người chấm ở report đã được Yến xác nhận. Lỗi còn tồn tại: `rui_ro_duoc_dan_chung` 25/32 (78,1%) dưới ngưỡng 90% vì 7 risk card đưa review tích cực/đối chứng vào citation (B05, B06, B15, B19, B20, B22).
+Giữa hai lượt, sửa `answer()` để ưu tiên review đã gửi, chỉ tra catalog khi input là truy vấn sản phẩm đơn; mở rộng parser giữ `[R01] nội dung` và truyền riêng `Người dùng:` sang model. Lượt 2 không còn citation ngoài input; còn trượt B17 (thiếu ý kiến đối lập R12 khi nêu kết nối) và B22 (dùng R20 làm bằng chứng dù criterion cấm). Các metric người chấm ở report của lượt 1–2 đã được Yến xác nhận. Lỗi còn tồn tại sau lượt 2: `rui_ro_duoc_dan_chung` 25/32 (78,1%) dưới ngưỡng 90% vì 7 risk card đưa review tích cực/đối chứng vào citation (B05, B06, B15, B19, B20, B22).
+
+**Sau CP4 (Issue #15 · lượt 3):** Tách `risk_citations` và `counter_citations` đã khắc phục xong `B17` (0→1) và 5/7 thẻ rủi ro trộn review tích cực (`B05`, `B06`, `B15` ×2, `B19`), nâng `rui_ro_duoc_dan_chung` sơ bộ từ 78,1% lên **32/34 (94,1%)**. Hiện chỉ còn 1 câu trượt (`B22`) và 2 thẻ rủi ro (`B20` thẻ 3, `B22` thẻ 2) cùng phát sinh từ review biên `SP03 [R20]` — chờ thành viên nhóm rà xác nhận `eval/run-3.csv`.
