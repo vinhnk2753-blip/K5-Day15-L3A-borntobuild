@@ -136,14 +136,30 @@ class WebTests(unittest.TestCase):
 
     def test_extension_handoff_cors_and_origin_isolation(self):
         ext_origin = "chrome-extension://abcdefghijklmnop"
-        status, headers, _ = self.raw_request("OPTIONS", "/api/extension-handoff", headers={"Origin": ext_origin})
+        status, headers, _ = self.raw_request(
+            "OPTIONS",
+            "/api/extension-handoff",
+            headers={"Origin": ext_origin, "Access-Control-Request-Private-Network": "true"},
+        )
         self.assertEqual(status, 204)
         self.assertEqual(headers.get("Access-Control-Allow-Origin"), ext_origin)
         self.assertIn("POST", headers.get("Access-Control-Allow-Methods", ""))
+        self.assertEqual(headers.get("Access-Control-Allow-Private-Network"), "true")
 
-        status, headers, _ = self.raw_request("OPTIONS", "/api/extension-handoff", headers={"Origin": "https://evil.example"})
+        status, headers, _ = self.raw_request(
+            "OPTIONS",
+            "/api/extension-handoff",
+            headers={"Origin": "https://evil.example", "Access-Control-Request-Private-Network": "true"},
+        )
         self.assertEqual(status, 403)
         self.assertNotIn("Access-Control-Allow-Origin", headers)
+        self.assertNotIn("Access-Control-Allow-Private-Network", headers)
+
+        manifest_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "extension", "manifest.json")
+        with open(manifest_path, encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        self.assertIn("action", manifest)
+        self.assertIn("http://127.0.0.1:8000/*", manifest.get("host_permissions", []))
 
         status, headers, _ = self.raw_request("OPTIONS", "/api/analyze", headers={"Origin": ext_origin})
         self.assertNotEqual(status, 204)

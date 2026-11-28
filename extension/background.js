@@ -2,6 +2,26 @@ const WEB_UI_ORIGIN = "http://127.0.0.1:8000";
 const WEB_UI_HANDOFF_URL = `${WEB_UI_ORIGIN}/api/extension-handoff`;
 const API_URL = "http://127.0.0.1:8765/analyze";
 
+chrome.action.onClicked.addListener(async tab => {
+  const tabId = tab?.id;
+  const tabUrl = typeof tab?.url === "string" ? tab.url : "";
+  if (tabId && tabUrl.startsWith("https://shopee.vn/")) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: "ONE_CLICK_RUN" });
+      return;
+    } catch {
+      try {
+        await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+        await chrome.tabs.sendMessage(tabId, { type: "ONE_CLICK_RUN" });
+        return;
+      } catch {
+        // Fall through to open Web UI if content script injection is unavailable on this tab.
+      }
+    }
+  }
+  await chrome.tabs.create({ url: `${WEB_UI_ORIGIN}/`, active: true });
+});
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "CRAWL_SHOPEE_REVIEWS") {
     const tabId = _sender.tab?.id;
@@ -47,7 +67,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         if (!result.ui_url.startsWith(`${WEB_UI_ORIGIN}/`)) {
           throw new Error("URL Web UI trả về không hợp lệ.");
         }
-        await chrome.tabs.create({ url: result.ui_url });
+        await chrome.tabs.create({ url: result.ui_url, active: true });
         sendResponse({
           ok: true,
           ui_url: result.ui_url,
@@ -97,15 +117,17 @@ function startCrawlInPage(ids, maxPerStar = 50, requestId = "") {
 
       const PAGE_SIZE = 20;
       const MAX_SCANNED = 5000;
-      const WAIT_MS = 500;
+      const WAIT_MS = 350;
+      maxPerStar = Math.max(1, Math.min(50, Math.trunc(Number(maxPerStar) || 50)));
       const stars = [5, 4, 3, 2, 1];
       const byStar = new Map(stars.map(star => [star, []]));
       const seen = new Set();
       const pageSignatures = new Set();
-      let offset = 0;
       let scanned = 0;
       let total = null;
       let pages = 0;
+      let currentStar = null;
+      let currentOffset = 0;
 
       function reportProgress(stage) {
         window.postMessage({
@@ -113,82 +135,99 @@ function startCrawlInPage(ids, maxPerStar = 50, requestId = "") {
           requestId,
           stage,
           page: Math.max(1, pages),
-          offset,
+          star: currentStar,
+          star_page: Math.floor(currentOffset / PAGE_SIZE) + 1,
+          offset: currentOffset,
           scanned,
           collected: stars.reduce((sum, star) => sum + byStar.get(star).length, 0),
           counts_by_star: Object.fromEntries(stars.map(star => [star, byStar.get(star).length]))
         }, location.origin);
       }
 
-      while (scanned < MAX_SCANNED && stars.some(star => byStar.get(star).length < maxPerStar)) {
-        pages++;
-        reportProgress("requesting");
-        const url = new URL("/api/v2/item/get_ratings", location.origin);
-        const params = {
-          filter: 0, flag: 1, itemid: ids.itemid, limit: PAGE_SIZE,
-          offset, shopid: ids.shopid, type: 0
-        };
-        for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+      for (const star of stars) {
+        let offset = 0;
+        currentStar = star;
+        while (byStar.get(star).length < maxPerStar && scanned < MAX_SCANNED) {
+          pages++;
+          currentOffset = offset;
+          reportProgress("requesting");
+          const url = new URL("/api/v2/item/get_ratings", location.origin);
+          const params = {
+            filter: 0, flag: 1, itemid: ids.itemid, limit: PAGE_SIZE,
+            offset, shopid: ids.shopid, type: star
+          };
+          for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
 
-        const response = await fetch(url, {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            Accept: "application/json, text/plain, */*",
-            "X-Requested-With": "XMLHttpRequest",
-            "X-Shopee-Language": "vi"
-          }
-        });
-        if (!response.ok) {
-          throw new Error(`Shopee trả HTTP ${response.status} khi lấy review.`);
-        }
-
-        const payload = await response.json();
-        const data = payload?.data;
-        const page = data?.ratings;
-        if (payload?.error || !Array.isArray(page)) {
-          throw new Error(payload?.error_msg || "Shopee không trả danh sách review dạng JSON.");
-        }
-        if (page.length === 0) {
-          reportProgress("page_done");
-          break;
-        }
-
-        const signature = page.map(review => review.cmtid ?? `${review.rating_star}|${review.ctime}|${review.comment}`).join(",");
-        if (pageSignatures.has(signature)) break;
-        pageSignatures.add(signature);
-
-        for (const review of page) {
-          const star = Number(review.rating_star);
-          if (!byStar.has(star) || byStar.get(star).length >= maxPerStar) continue;
-          const key = String(review.cmtid ?? `${star}|${review.ctime}|${review.comment}`);
-          if (seen.has(key)) continue;
-          seen.add(key);
-
-          const ctime = Number(review.ctime) || 0;
-          const variants = Array.isArray(review.product_items) ? review.product_items : [];
-          byStar.get(star).push({
-            review_id: String(review.cmtid ?? ""),
-            rating_star: star,
-            comment: String(review.comment ?? ""),
-            ctime,
-            date: ctime ? new Date(ctime * 1000).toISOString() : "",
-            variant: variants.map(item => item?.name || item?.model_name || "").filter(Boolean).join(", ")
+          const response = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+            headers: {
+              Accept: "application/json, text/plain, */*",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-Shopee-Language": "vi"
+            }
           });
-        }
+          if (!response.ok) {
+            throw new Error(`Shopee trả HTTP ${response.status} khi lấy review ${star} sao.`);
+          }
 
-        offset += page.length;
-        scanned += page.length;
-        const rawTotal = data.item_rating_summary?.rating_total ?? data.item_rating_summary?.rating_count;
-        if (typeof rawTotal === "number" && Number.isFinite(rawTotal)) {
-          total = rawTotal;
-        } else if (Array.isArray(rawTotal) && typeof rawTotal[0] === "number" && Number.isFinite(rawTotal[0])) {
-          total = rawTotal[0];
+          const payload = await response.json();
+          const data = payload?.data;
+          const page = data?.ratings;
+          if (payload?.error || !Array.isArray(page)) {
+            throw new Error(payload?.error_msg || `Shopee không trả danh sách review ${star} sao dạng JSON.`);
+          }
+          if (page.length === 0) {
+            reportProgress("page_done");
+            break;
+          }
+
+          const signature = `${star}:` + page.map(review => review.cmtid ?? `${review.rating_star}|${review.ctime}|${review.comment}`).join(",");
+          if (pageSignatures.has(signature)) {
+            reportProgress("page_done");
+            break;
+          }
+          pageSignatures.add(signature);
+
+          for (const review of page) {
+            const rating = Number(review.rating_star);
+            if (rating !== star || byStar.get(star).length >= maxPerStar) continue;
+            const key = String(review.cmtid ?? `${rating}|${review.ctime}|${review.comment}`);
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            const ctime = Number(review.ctime) || 0;
+            const variants = Array.isArray(review.product_items) ? review.product_items : [];
+            byStar.get(star).push({
+              review_id: String(review.cmtid ?? ""),
+              rating_star: rating,
+              comment: String(review.comment ?? ""),
+              ctime,
+              date: ctime ? new Date(ctime * 1000).toISOString() : "",
+              variant: variants.map(item => item?.name || item?.model_name || "").filter(Boolean).join(", ")
+            });
+          }
+
+          offset += page.length;
+          currentOffset = offset;
+          scanned += page.length;
+          const rawTotal = data.item_rating_summary?.rating_total ?? data.item_rating_summary?.rating_count;
+          if (typeof rawTotal === "number" && Number.isFinite(rawTotal)) {
+            total = rawTotal;
+          } else if (Array.isArray(rawTotal) && typeof rawTotal[0] === "number" && Number.isFinite(rawTotal[0])) {
+            total = rawTotal[0];
+          }
+          reportProgress("page_done");
+          if (byStar.get(star).length >= maxPerStar
+            || data.has_more === false
+            || (data.has_more !== true && page.length < PAGE_SIZE)) break;
+          await new Promise(resolve => setTimeout(resolve, WAIT_MS));
         }
-        reportProgress("page_done");
-        if (data.has_more === false || (data.has_more !== true && page.length < PAGE_SIZE)) break;
-        await new Promise(resolve => setTimeout(resolve, WAIT_MS));
+        reportProgress("star_done");
+        if (star > 1 && scanned < MAX_SCANNED) {
+          await new Promise(resolve => setTimeout(resolve, WAIT_MS));
+        }
       }
 
       reportProgress("complete");
@@ -203,9 +242,16 @@ function startCrawlInPage(ids, maxPerStar = 50, requestId = "") {
         ok: true,
         data: {
           ok: true,
-          product: { shopid: String(ids.shopid), itemid: String(ids.itemid), name: productName, url: location.href },
+          product: {
+            shopid: String(ids.shopid),
+            itemid: String(ids.itemid),
+            name: productName,
+            url: `https://shopee.vn/product/${encodeURIComponent(ids.shopid)}/${encodeURIComponent(ids.itemid)}`,
+            page_url: location.href
+          },
           collected_at: new Date().toISOString(),
           source: "Shopee public item ratings endpoint, fetched in product page context",
+          crawl_strategy: "sequential_star_filter_type_5_to_1",
           limits: { max_per_star: maxPerStar, max_scanned: MAX_SCANNED },
           scanned_count: scanned,
           review_total_reported: total,

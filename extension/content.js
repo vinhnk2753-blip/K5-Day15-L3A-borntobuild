@@ -1,5 +1,7 @@
 (() => {
-  if (document.getElementById("born-to-build-shopee-review-agent")) return;
+  if (globalThis.__bornToBuildReviewAgentLoaded) return;
+  globalThis.__bornToBuildReviewAgentLoaded = true;
+  document.getElementById("born-to-build-shopee-review-agent")?.remove();
 
   const MAX_PER_STAR = 50;
   const PROGRESS_SOURCE = "born-to-build-shopee-review-progress";
@@ -60,8 +62,8 @@
     <section class="panel" hidden aria-label="Phân tích review sản phẩm">
       <header><strong>Rủi ro từ review Shopee</strong><button class="close" type="button" aria-label="Đóng">×</button></header>
       <div class="body">
-        <button class="run" type="button">Crawl &amp; phân tích trang này</button>
-        <div class="status" role="status">Lấy tối đa 50 review mỗi mức sao, tự động đẩy sang Web UI Review Lens (http://127.0.0.1:8000) để lọc nhiễu và rút tối đa 3 rủi ro có trích dẫn.</div>
+        <button class="run" type="button">Crawl &amp; phân tích lại</button>
+        <div class="status" role="status">1-click: lấy tối đa 50 review mỗi mức sao (5★→1★), tự động đẩy sang Web UI Review Lens (http://127.0.0.1:8000) và chạy phân tích.</div>
         <div class="actions">
           <button class="open-ui" type="button" hidden>Mở trên Web UI</button>
           <button class="retry" type="button" hidden>Phân tích trong panel</button>
@@ -96,10 +98,12 @@
   const agentOutput = shadow.querySelector(".agent-output");
 
   let latestCrawlData = null;
+  let latestCrawlUrl = "";
   let latestJson = "";
   let currentItemId = "";
   let activeCrawlId = "";
   let pendingCrawl = null;
+  let isRunning = false;
 
   window.addEventListener("message", event => {
     if (event.origin !== location.origin || event.source !== window) return;
@@ -110,7 +114,8 @@
       const counts = Object.entries(msg.counts_by_star || {})
         .map(([star, count]) => `${star}★ ${count}`).join(" · ");
       const action = msg.stage === "requesting" ? "Đang tải" : "Đã xử lý";
-      status.textContent = `${action} trang ${msg.page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
+      const label = msg.star ? `${msg.star}★ trang ${msg.star_page || msg.page}` : `trang ${msg.page}`;
+      status.textContent = `${action} ${label}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
       return;
     }
 
@@ -125,7 +130,28 @@
     }
   });
 
-  launcher.addEventListener("click", () => { panel.hidden = !panel.hidden; });
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type !== "ONE_CLICK_RUN") return undefined;
+    panel.hidden = false;
+    if (!isRunning) {
+      runCrawlAndHandoff();
+    }
+    sendResponse({ ok: true });
+    return undefined;
+  });
+
+  launcher.addEventListener("click", () => {
+    if (isRunning) {
+      panel.hidden = !panel.hidden;
+      return;
+    }
+    if (panel.hidden && (!latestCrawlData || latestCrawlUrl !== location.href)) {
+      panel.hidden = false;
+      runCrawlAndHandoff();
+      return;
+    }
+    panel.hidden = !panel.hidden;
+  });
   closeButton.addEventListener("click", () => { panel.hidden = true; });
   copyButton.addEventListener("click", async () => {
     try {
@@ -309,7 +335,9 @@
     }
   });
 
-  runButton.addEventListener("click", async () => {
+  async function runCrawlAndHandoff() {
+    if (isRunning) return;
+    isRunning = true;
     runButton.disabled = true;
     openUiButton.hidden = true;
     retryButton.hidden = true;
@@ -319,13 +347,14 @@
     copyButton.hidden = true;
     downloadButton.hidden = true;
     latestCrawlData = null;
+    latestCrawlUrl = "";
     latestJson = "";
 
     try {
       const ids = readProductIds();
       currentItemId = ids.itemid;
       activeCrawlId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid}…`;
+      status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid} (5★→1★)…`;
 
       const crawlPromise = new Promise((resolve, reject) => {
         pendingCrawl = { resolve, reject };
@@ -342,6 +371,7 @@
 
       const crawlData = await crawlPromise;
       latestCrawlData = crawlData;
+      latestCrawlUrl = location.href;
       latestJson = JSON.stringify(crawlData, null, 2);
       jsonOutput.textContent = latestJson;
       jsonDetails.hidden = false;
@@ -362,11 +392,19 @@
         }
       }
     } catch (error) {
-      status.textContent = `Không lấy được review: ${error.message}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
+      const msg = error?.message || String(error);
+      if (msg.includes("Extension context invalidated")) {
+        status.textContent = "Extension vừa được reload; hãy F5 tải lại trang Shopee hoặc bấm biểu tượng extension trên thanh công cụ Chrome.";
+      } else {
+        status.textContent = `Không lấy được review: ${msg}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
+      }
     } finally {
       pendingCrawl = null;
       activeCrawlId = "";
+      isRunning = false;
       runButton.disabled = false;
     }
-  });
+  }
+
+  runButton.addEventListener("click", runCrawlAndHandoff);
 })();

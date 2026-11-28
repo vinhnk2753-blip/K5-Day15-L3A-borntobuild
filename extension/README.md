@@ -20,8 +20,7 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân 
 1. Ở thư mục gốc repo, chạy `python run.py` để bật Web UI Review Lens tại `http://127.0.0.1:8000`.
 2. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
 3. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
-4. Bấm **Phân tích review** ở góc dưới bên phải, rồi chọn **Crawl & phân tích trang này**.
-5. Khi crawl xong, extension tự `POST` payload sang `http://127.0.0.1:8000/api/extension-handoff` (lưu tạm trong bộ nhớ RAM, không ghi file ra ổ đĩa) và mở tab `http://127.0.0.1:8000/?handoff=<id>`. Web UI tự nhận payload, điền bản xem trước và gọi agent phân tích ngay.
+4. Trên trang sản phẩm Shopee, **chỉ cần 1 click**: bấm nút nổi **Phân tích review** ở góc dưới bên phải (hoặc bấm **biểu tượng extension** trên thanh công cụ Chrome). Extension sẽ mở panel, tự crawl tuần tự 5★→1★ (tối đa 50 review mỗi mức sao), tự `POST` payload sang `http://127.0.0.1:8000/api/extension-handoff` (chỉ lưu tạm trong RAM, không ghi file) và mở tab `http://127.0.0.1:8000/?handoff=<id>`. Web UI tự nhận payload và gọi agent phân tích ngay.
 
 > Bạn cũng có thể chọn chế độ **Dữ liệu từ Extension Shopee (JSON)** trên Web UI để nạp lại file `.json` đã tải xuống bất cứ lúc nào.
 
