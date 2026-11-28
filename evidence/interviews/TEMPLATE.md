@@ -1,32 +1,38 @@
-# Khảo sát — mẫu form và cách lưu kết quả
+# P_ · [vai, vd: người mua online ≥2 lần/tháng] · [trực tiếp / video] · [ngày giờ] · hỏi: TV_ · ghi: TV_
 
-> Điền ở guide bước 1.2. Không khảo sát thì xoá thư mục này.
-> Ngưỡng: **≥20 người ngoài nhóm, đúng người dùng**, giữ log đủ câu hỏi và từng câu trả lời.
+> Điền ở guide bước 1.2. Ôn lại: ngày 2 · lab ngày 2. Tham khảo: further-reading/mom-test-summary.md trong repo đề.
+> **Chép file này thành `P1.md`, `P2.md`, `P3.md`…** trong cùng thư mục — mỗi người được phỏng vấn một file.
+> Không ghi tên, SĐT, email, mã học viên: ghi P1 + vai. TV1, TV2… là thành viên nhóm đã hỏi / ghi. Không ghi âm khi chưa được đồng ý.
 
-## Mẫu form (chép sang Google Form, sửa [việc] theo lát cắt)
+**Đối tượng:** người mua online ít nhất 2 lần/tháng trên Shopee, Tiki, Lazada hoặc TikTok Shop. Mục tiêu tối thiểu: **3–5 người** ngoài nhóm.
+**Nguyên tắc:** hỏi về **lần gần nhất đã xảy ra**, không hỏi "bạn có muốn app X không". Không giới thiệu ý tưởng trước khi hỏi xong phần 1–5.
+**Tin nhắn hẹn mẫu:** *"Chào bạn, nhóm mình đang tìm hiểu cách mọi người kiểm tra đánh giá khi mua hàng online. Bạn cho mình hỏi 10–15 phút về lần gần nhất bạn mua món trên 300k online được không? Không giới thiệu sản phẩm gì cả."*
 
-##  Kịch bản phỏng vấn (15 phút / người)
+## Câu đã hỏi (giữ nguyên câu)
 
-**Đối tượng:** người mua online ít nhất 2 lần/tháng trên Tiki, Shopee, Lazada hoặc TikTok Shop. Mục tiêu tối thiểu: **5 người** (đủ để thấy pain lặp lại trong 1 ngày hackathon). Nếu còn thời gian: 1–2 người bán.
+1. Kể lại lần gần nhất bạn mua một món trên 300k online. Bạn chọn nó thế nào?
+2. Lúc đó bạn đọc khoảng bao nhiêu review? Đọc review nào trước (1 sao, mới nhất, có ảnh…)? Mất bao lâu?
+3. Có lần nào mua về mới thấy lỗi mà lẽ ra review đã nhắc tới không? Kể cụ thể.
+4. Bạn làm gì khi thấy review khen giống hệt nhau hoặc chỉ khen giao hàng?
+5. Hiện bạn có mẹo hay công cụ gì để đọc review nhanh hơn?
+6. Nếu có bản tóm tắt rủi ro, bạn cần thấy gì để **tin** nó?
+7. *(Sau khi demo mẫu, nếu có)* Bạn sẽ bấm vào trích dẫn để xem review gốc không? Còn thiếu gì?
 
-**Nguyên tắc:** hỏi về **lần gần nhất đã xảy ra**, không hỏi "bạn có muốn app X không". Không giới thiệu ý tưởng trước khi hỏi xong phần 1–3.
+## Ghi chép (theo thứ tự kể)
 
-| # | Câu hỏi | Muốn tìm hiểu |
-|---|---|---|
-| 1 | Kể lại lần gần nhất bạn mua một món trên 300k online. Bạn chọn nó thế nào? | Hành vi thật, vai trò của review |
-| 2 | Lúc đó bạn đọc khoảng bao nhiêu review? Đọc review nào trước (1 sao, mới nhất, có ảnh…)? | Cách đọc, thời gian bỏ ra |
-| 3 | Có lần nào mua về mới thấy lỗi mà lẽ ra review đã nhắc tới không? Kể cụ thể. | Pain chính: bỏ sót rủi ro |
-| 4 | Bạn làm gì khi thấy review khen giống hệt nhau hoặc chỉ khen giao hàng? | Pain về nhiễu / review không đáng tin |
-| 5 | Hiện bạn có mẹo hay công cụ gì để đọc review nhanh hơn? | Giải pháp đang dùng (đối thủ thật) |
-| 6 | Nếu có bản tóm tắt rủi ro, bạn cần thấy gì để **tin** nó? | Yêu cầu về dẫn chứng |
-| 7 | (Sau khi demo mẫu) Bạn sẽ bấm vào trích dẫn để xem review gốc không? Còn thiếu gì? | Phản hồi trên mẫu |
+-
 
-Ghi lại: thời gian người đó nói họ bỏ ra để đọc review, và số lần họ nhắc lại cùng một vấn đề.
+## Số nghe được (không nhớ thì ghi "không nhớ")
 
----
+- Lần gần nhất: __
+- Số lần trong 1 tháng qua: __
+- Lần đó mất: __ phút
+- Đang xoay xở bằng: __ · vì sao chưa bỏ cách đó: __
 
-## Lưu vào thư mục này
+## Trích nguyên văn (1–2 câu)
 
-- `questions.md` — nguyên bộ câu hỏi + kênh đã gửi + giờ mở / chốt.
-- `results.csv` — bản xuất **đã xoá** mọi cột nhận ra người trả lời. Bản gốc còn thông tin cá nhân thì **không** commit.
-- Số chính + ≥3 câu trả lời nguyên văn → chép vào `evidence/summary.md`. Dưới khoảng 10 người thì chỉ ghi x/n, không ghi %.
+- "…"
+
+## Kết luận 1 dòng
+
+Có gặp chỗ vướng [tên]? Có / Không / Một phần — vì sao. Có điều gì **ngược** với điều nhóm nghĩ?
