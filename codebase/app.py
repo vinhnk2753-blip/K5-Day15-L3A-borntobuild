@@ -1,8 +1,11 @@
 """Web local dùng backend main thống nhất; chạy bằng python run.py."""
 import json
 import os
+import re
+import secrets
 import sys
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -17,6 +20,26 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tracing
 import ai
 from ui_backend import ROOT, MAX_BODY_BYTES, MAX_REVIEW_CHARS, MAX_REVIEWS, analyze_for_ui, public_error, catalog_products
+
+HANDOFF_TTL_SECONDS = 900
+MAX_HANDOFFS = 10
+_HANDOFF_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+_EXT_ORIGIN_RE = re.compile(r"^chrome-extension://[A-Za-z0-9._-]+$")
+
+
+def _validate_handoff_payload(payload):
+    """Kiểm tra sơ bộ payload từ extension; giữ nguyên văn bản để agent tự ẩn danh và đếm PII."""
+    if not isinstance(payload, dict):
+        raise ValueError("Payload extension phải là một object JSON.")
+    product = payload.get("product") if isinstance(payload.get("product"), dict) else {}
+    raw_url = payload.get("url") or product.get("url")
+    parsed = urlsplit(str(raw_url or ""))
+    if parsed.scheme not in {"http", "https"} or parsed.hostname != "shopee.vn":
+        raise ValueError("Chỉ hỗ trợ payload sản phẩm công khai trên shopee.vn.")
+    reviews = payload.get("reviews")
+    if not isinstance(reviews, list) or len(reviews) > MAX_REVIEWS:
+        raise ValueError("Danh sách review phải là mảng có tối đa %d mục." % MAX_REVIEWS)
+    return len(reviews)
 
 
 def load_catalog():
@@ -52,18 +75,65 @@ def cli_main():
 def create_server(port=8000):
     catalog = load_catalog()
     lock = threading.Lock()
+    handoff_lock = threading.Lock()
+    handoffs = {}  # Chỉ lưu trong bộ nhớ tạm (không ghi file theo spec.md §9).
     static = Path(__file__).with_name("web")
 
+    def prune_handoffs(now):
+        expired = [hid for hid, entry in handoffs.items() if entry["expires_at"] <= now]
+        for hid in expired:
+            handoffs.pop(hid, None)
+
     class Handler(BaseHTTPRequestHandler):
-        def send_data(self, value, status=200, content_type="application/json; charset=utf-8"):
+        def _local_origins(self):
+            return {
+                "http://127.0.0.1:%d" % self.server.server_port,
+                "http://localhost:%d" % self.server.server_port,
+            }
+
+        def send_data(self, value, status=200, content_type="application/json; charset=utf-8", extra_headers=None):
             body = json.dumps(value, ensure_ascii=False).encode("utf-8") if isinstance(value, (dict, list)) else value
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            for header_name, header_value in (extra_headers or {}).items():
+                self.send_header(header_name, header_value)
             self.end_headers()
             self.wfile.write(body)
+
+        def _read_json_body(self, extra_headers=None):
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                if length <= 0:
+                    self.send_data({"message": "Đầu vào rỗng hoặc Content-Length không hợp lệ."}, 400, extra_headers=extra_headers)
+                    return None
+                if length > MAX_BODY_BYTES:
+                    self.send_data({"message": "Đầu vào vượt giới hạn 2 MB."}, 413, extra_headers=extra_headers)
+                    return None
+                return json.loads(self.rfile.read(length).decode("utf-8"))
+            except (ValueError, UnicodeError):
+                self.send_data({"message": "Đầu vào API không hợp lệ."}, 400, extra_headers=extra_headers)
+                return None
+
+        def do_OPTIONS(self):
+            path = urlsplit(self.path).path
+            if path != "/api/extension-handoff":
+                self.send_data({"message": "Không tìm thấy endpoint."}, 404)
+                return
+            origin = self.headers.get("Origin", "")
+            if not _EXT_ORIGIN_RE.fullmatch(origin):
+                self.send_data({"message": "Origin không được phép."}, 403)
+                return
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Vary", "Origin")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
 
         def do_GET(self):
             path = urlsplit(self.path).path
@@ -94,29 +164,63 @@ def create_server(port=8000):
                         rows = demo["input"]["reviews"]
                     text = "\n".join("[%s] %s" % (row["id"], row["text"]) for row in rows)
                     self.send_data({"id": product_id, "text": text, "synthetic": bool(demo)})
+            elif path.startswith("/api/extension-handoff/"):
+                origin = self.headers.get("Origin")
+                if origin and origin not in self._local_origins():
+                    self.send_data({"ok": False, "message": "Yêu cầu phải đến từ giao diện tại máy này."}, 403)
+                    return
+                handoff_id = path[len("/api/extension-handoff/"):]
+                if not _HANDOFF_ID_RE.fullmatch(handoff_id):
+                    self.send_data({"ok": False, "message": "Mã phiên dữ liệu từ extension không hợp lệ."}, 404)
+                    return
+                with handoff_lock:
+                    prune_handoffs(time.monotonic())
+                    entry = handoffs.get(handoff_id)
+                if not entry:
+                    self.send_data({"ok": False, "message": "Phiên dữ liệu từ extension không tồn tại hoặc đã hết hạn. Hãy bấm 'Mở trên Web UI' lại trong extension."}, 404)
+                    return
+                self.send_data({"ok": True, "handoff_id": handoff_id, "payload": entry["payload"]})
             else:
                 self.send_data({"message": "Không tìm thấy trang."}, 404)
 
         def do_POST(self):
-            if urlsplit(self.path).path != "/api/analyze":
+            path = urlsplit(self.path).path
+            if path == "/api/extension-handoff":
+                origin = self.headers.get("Origin", "")
+                if not _EXT_ORIGIN_RE.fullmatch(origin):
+                    self.send_data({"ok": False, "message": "Chỉ nhận dữ liệu tự động từ Chrome extension."}, 403)
+                    return
+                cors = {"Access-Control-Allow-Origin": origin, "Vary": "Origin"}
+                payload = self._read_json_body(extra_headers=cors)
+                if payload is None:
+                    return
+                try:
+                    review_count = _validate_handoff_payload(payload)
+                except ValueError as exc:
+                    self.send_data({"ok": False, "message": str(exc)}, 400, extra_headers=cors)
+                    return
+                now = time.monotonic()
+                handoff_id = secrets.token_urlsafe(16)
+                with handoff_lock:
+                    prune_handoffs(now)
+                    while len(handoffs) >= MAX_HANDOFFS:
+                        handoffs.pop(next(iter(handoffs)))
+                    handoffs[handoff_id] = {"payload": payload, "expires_at": now + HANDOFF_TTL_SECONDS}
+                ui_url = "http://127.0.0.1:%d/?handoff=%s" % (self.server.server_port, handoff_id)
+                print("[web] handoff_stored reviews=%d" % review_count, flush=True)
+                self.send_data({"ok": True, "handoff_id": handoff_id, "ui_url": ui_url, "review_count": review_count},
+                               200, extra_headers=cors)
+                return
+
+            if path != "/api/analyze":
                 self.send_data({"message": "Không tìm thấy endpoint."}, 404)
                 return
             origin = self.headers.get("Origin")
-            if origin and origin not in {"http://127.0.0.1:%d" % self.server.server_port,
-                                         "http://localhost:%d" % self.server.server_port}:
+            if origin and origin not in self._local_origins():
                 self.send_data({"message": "Yêu cầu phải đến từ giao diện tại máy này."}, 403)
                 return
-            try:
-                length = int(self.headers.get("Content-Length", "0"))
-                if length <= 0:
-                    self.send_data({"message": "Đầu vào rỗng hoặc Content-Length không hợp lệ."}, 400)
-                    return
-                if length > MAX_BODY_BYTES:
-                    self.send_data({"message": "Đầu vào vượt giới hạn 2 MB."}, 413)
-                    return
-                request = json.loads(self.rfile.read(length).decode("utf-8"))
-            except (ValueError, UnicodeError):
-                self.send_data({"message": "Đầu vào API không hợp lệ."}, 400)
+            request = self._read_json_body()
+            if request is None:
                 return
             status = 200
             with lock:

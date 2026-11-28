@@ -2,7 +2,10 @@
 const $ = id => document.getElementById(id);
 const form = $("review-form");
 let busy = false, revision = 0, snapshot = [], lastSourceButton = null, hasResult = false;
+let activePayload = null;
 let limits = { max_reviews: 250, max_review_chars: 3000 };
+const DEFAULT_PAYLOAD_TITLE = "Chưa có dữ liệu từ Chrome extension.";
+const DEFAULT_PAYLOAD_META = "Mở trang sản phẩm Shopee, bấm “Crawl & phân tích trang này” trong extension để tự động đẩy sang đây, hoặc chọn file JSON đã tải.";
 const lines = () => $("reviews").value.split(/\r?\n/);
 function node(tag, text, cls) { const el = document.createElement(tag); if (text !== undefined) el.textContent = text; if (cls) el.className = cls; return el; }
 function sourceButton(id) {
@@ -24,7 +27,36 @@ function preview() {
 function invalidate() {
   revision++; snapshot = []; $("results").hidden = true; $("empty-state").hidden = false;
   $("stale-note").hidden = !hasResult; $("form-error").hidden = true;
-  $("reviews").removeAttribute("aria-invalid"); $("product-select").removeAttribute("aria-invalid"); preview();
+  $("reviews").removeAttribute("aria-invalid"); $("product-select").removeAttribute("aria-invalid");
+  $("payload-file").removeAttribute("aria-invalid"); preview();
+}
+function resetPayloadBanner() {
+  $("payload-title").textContent = DEFAULT_PAYLOAD_TITLE;
+  $("payload-meta").textContent = DEFAULT_PAYLOAD_META;
+}
+function formatPayloadPreview(payload) {
+  const rows = Array.isArray(payload?.reviews) ? payload.reviews : [];
+  return rows.map((row, index) => {
+    const rid = `R${String(index + 1).padStart(2, "0")}`;
+    const rating = row?.rating_star ?? row?.rating;
+    const starText = rating != null && rating !== "" ? `${rating}★ · ` : "";
+    const body = String(row?.comment ?? row?.text ?? "").replace(/\s+/g, " ").trim() || "(không có nội dung)";
+    return `[${rid}] ${starText}${body}`;
+  }).join("\n");
+}
+function applyPayload(payload, sourceLabel) {
+  activePayload = payload;
+  const product = payload?.product && typeof payload.product === "object" ? payload.product : {};
+  const name = product.name || payload?.product_name || "Sản phẩm Shopee";
+  const url = payload?.url || product.url || "";
+  const count = Array.isArray(payload?.reviews) ? payload.reviews.length : 0;
+  const stars = payload?.counts_by_star && typeof payload.counts_by_star === "object"
+    ? Object.entries(payload.counts_by_star).map(([star, n]) => `${star}★: ${n}`).join(" · ")
+    : "";
+  $("payload-title").textContent = `${sourceLabel}: ${name}`;
+  $("payload-meta").textContent = [`${count} review`, stars, url].filter(Boolean).join(" · ");
+  $("reviews").value = formatPayloadPreview(payload);
+  preview();
 }
 function inputError(message, target = "reviews") {
   $("form-error").textContent = message; $("form-error").hidden = false;
@@ -85,10 +117,14 @@ function render(data) {
 form.addEventListener("submit", async event => {
   event.preventDefault(); if (busy) return;
   let request;
-  if ($("input-mode").value === "catalog") {
+  const mode = $("input-mode").value;
+  if (mode === "catalog") {
     const id = $("product-select").value;
     if (!id) { inputError("Hãy chọn sản phẩm hoặc bộ minh họa.", "product-select"); return; }
     request = id.startsWith("SP") ? { mode: "catalog", product_id: id } : { mode: "reviews", text: $("reviews").value };
+  } else if (mode === "payload") {
+    if (!activePayload) { inputError("Chưa có dữ liệu JSON từ extension. Hãy crawl từ extension hoặc chọn file JSON.", "payload-file"); return; }
+    request = { mode: "payload", payload: activePayload };
   } else {
     if (!$("reviews").value.trim()) { inputError("Hãy dán tập review, mỗi review một dòng."); return; }
     if (lines().length > limits.max_reviews || lines().some(line => line.length > limits.max_review_chars)) { inputError("Tối đa 250 dòng, mỗi dòng 3.000 ký tự."); return; }
@@ -107,17 +143,37 @@ form.addEventListener("submit", async event => {
   } finally { clearTimeout(timeout); setBusy(false); }
 });
 function changeMode() {
-  const manual = $("input-mode").value === "reviews";
-  $("catalog-fields").hidden = manual; $("reviews").readOnly = !manual; invalidate();
+  const mode = $("input-mode").value;
+  $("catalog-fields").hidden = mode !== "catalog";
+  $("payload-fields").hidden = mode !== "payload";
+  $("reviews").readOnly = mode !== "reviews";
+  invalidate();
 }
 $("input-mode").addEventListener("change", changeMode);
 $("reviews").addEventListener("input", invalidate);
+$("payload-file").addEventListener("change", async () => {
+  const file = $("payload-file").files?.[0];
+  invalidate();
+  if (!file) { activePayload = null; resetPayloadBanner(); $("reviews").value = ""; preview(); return; }
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.reviews)) {
+      throw new Error("schema");
+    }
+    applyPayload(data, "Đã nạp từ file JSON");
+  } catch (_) {
+    activePayload = null; resetPayloadBanner(); $("reviews").value = ""; preview();
+    inputError("File JSON không đúng định dạng payload review từ extension Shopee.", "payload-file");
+  }
+});
 $("clear").addEventListener("click", () => {
-  hasResult = false; $("reviews").value = ""; $("product-select").value = ""; $("input-mode").value = "reviews";
+  hasResult = false; activePayload = null; $("payload-file").value = ""; resetPayloadBanner();
+  $("reviews").value = ""; $("product-select").value = ""; $("input-mode").value = "reviews";
   changeMode(); $("reviews").focus();
 });
 $("edit").addEventListener("click", () => {
-  const target = $("input-mode").value === "reviews" ? $("reviews") : $("product-select");
+  const mode = $("input-mode").value;
+  const target = mode === "reviews" ? $("reviews") : mode === "payload" ? $("payload-file") : $("product-select");
   target.focus(); target.scrollIntoView({ block: "center" });
 });
 $("retry").addEventListener("click", () => form.requestSubmit());
@@ -134,6 +190,33 @@ $("product-select").addEventListener("change", async () => {
     $("catalog-note").textContent = data.synthetic ? "Bộ synthetic để thử UI, không phải dữ liệu thu thập thật." : "Mẫu review công khai đã lưu; không tải lại trang nguồn.";
   } catch (_) { if (ticket === revision) inputError("Chưa tải được sản phẩm; có thể chuyển sang dán review.", "product-select"); }
 });
+async function loadExtensionHandoff(handoffId) {
+  $("input-mode").value = "payload";
+  changeMode();
+  $("payload-title").textContent = "Đang tải dữ liệu từ Chrome extension…";
+  $("payload-meta").textContent = "Tự động nhận review vừa crawl và chạy kiểm tra rủi ro.";
+  const ticket = revision;
+  try {
+    const response = await fetch(`/api/extension-handoff/${encodeURIComponent(handoffId)}`);
+    const data = await response.json();
+    if (ticket !== revision) return;
+    if (!response.ok || !data.payload) {
+      resetPayloadBanner();
+      inputError(data.message || "Không tải được dữ liệu từ extension (có thể đã hết hạn).", "payload-file");
+      return;
+    }
+    if (window.history?.replaceState) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    applyPayload(data.payload, "Nhận tự động từ Chrome extension");
+    form.requestSubmit();
+  } catch (_) {
+    if (ticket === revision) {
+      resetPayloadBanner();
+      inputError("Không kết nối được backend để tải dữ liệu từ extension.", "payload-file");
+    }
+  }
+}
 async function init() {
   try {
     const response = await fetch("/api/products"); if (!response.ok) throw new Error("config");
@@ -142,6 +225,11 @@ async function init() {
     $("mode").textContent = data.model_provider === "fake" ? "Chế độ giả · Chưa phân tích bằng AI thật" : "Phân tích dựa trên review nhận được";
     $("limit-note").textContent = "Dán tối đa 250 dòng, mỗi dòng 3.000 ký tự. Không bắt buộc số sao hay URL.";
   } catch (_) { $("mode").textContent = "Chưa tải được cấu hình; kiểm tra backend local."; }
-  changeMode();
+  const handoffId = new URLSearchParams(window.location.search).get("handoff");
+  if (handoffId) {
+    await loadExtensionHandoff(handoffId);
+  } else {
+    changeMode();
+  }
 }
 init();

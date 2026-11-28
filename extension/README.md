@@ -1,6 +1,6 @@
 # Shopee Review Risk Agent
 
-Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân tích review** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao ngay trong ngữ cảnh trang Shopee, hiển thị thẻ rủi ro có trích dẫn `[Rxx]` từ backend local, đồng thời giữ JSON crawl để copy, tải xuống hoặc bấm **Phân tích lại** mà không cần crawl lại.
+Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân tích review** để lấy tối đa 50 review cho từng mức 5–4–3–2–1 sao ngay trong ngữ cảnh trang Shopee, **tự động đẩy JSON sang Web UI Review Lens (`http://127.0.0.1:8000`) và mở tab chạy phân tích**, đồng thời giữ JSON crawl để bấm **Mở trên Web UI**, **Phân tích trong panel**, **Copy JSON** hoặc **Tải JSON** mà không cần crawl lại.
 
 ## Cấu hình GPT
 
@@ -15,18 +15,23 @@ Extension Chrome Manifest V3: trên trang sản phẩm Shopee.vn, bấm **Phân 
 
    Có thể đổi `MODEL_NAME` sang model GPT mà tài khoản API của nhóm được phép dùng. Không đưa API key vào extension.
 
-## Chạy thử giao diện extension
+## Chạy thử — Cách 1: Tự đẩy sang Web UI Review Lens (khuyên dùng)
 
-1. Ở thư mục gốc repo, chạy `python codebase/extension_server.py` để bật agent backend local. Backend dùng `.env`; `MODEL_PROVIDER=openai` sẽ gọi GPT, còn `fake` trả trạng thái giả an toàn.
+1. Ở thư mục gốc repo, chạy `python run.py` để bật Web UI Review Lens tại `http://127.0.0.1:8000`.
 2. Mở `chrome://extensions`, bật **Developer mode**, chọn **Load unpacked** và trỏ tới thư mục `extension/`.
 3. Nếu extension đã cài, nhấn **Reload** sau khi cập nhật code; tải lại trang sản phẩm Shopee.
-4. Bấm **Phân tích review** ở góc dưới bên phải, rồi chọn **Crawl & phân tích trang này**. Trong lúc chạy, panel cập nhật trang đang lấy, số review đã quét và số review gom được theo từng mức sao (kết quả crawl được gửi về panel qua `window.postMessage` nên không bị timeout service worker MV3).
-5. Extension gửi nguyên object JSON crawl sang backend local; agent lọc nhiễu, gắn cờ lặp, hậu kiểm citation `[Rxx]`, giữ ghi chú phản ánh đơn lẻ và trả `{"output": str, "structured": {...}}`. Panel hiển thị thẻ rủi ro + trích dẫn nguồn và thu gọn JSON crawl / output agent trong mục mở rộng; **Phân tích lại**, **Copy JSON** và **Tải JSON** thao tác trực tiếp trên JSON đã crawl mà không cần crawl lại.
+4. Bấm **Phân tích review** ở góc dưới bên phải, rồi chọn **Crawl & phân tích trang này**.
+5. Khi crawl xong, extension tự `POST` payload sang `http://127.0.0.1:8000/api/extension-handoff` (lưu tạm trong bộ nhớ RAM, không ghi file ra ổ đĩa) và mở tab `http://127.0.0.1:8000/?handoff=<id>`. Web UI tự nhận payload, điền bản xem trước và gọi agent phân tích ngay.
 
-Extension giữ nguyên JSON crawl để người dùng kiểm tra, đồng thời gửi object đó sang agent local. Nếu backend/model lỗi, JSON crawl vẫn còn trong panel để tải hoặc bấm **Phân tích lại** sau khi bật server.
+> Bạn cũng có thể chọn chế độ **Dữ liệu từ Extension Shopee (JSON)** trên Web UI để nạp lại file `.json` đã tải xuống bất cứ lúc nào.
+
+## Chạy thử — Cách 2: Xem trực tiếp trong panel Shopee (cổng 8765)
+
+Nếu không chạy `python run.py`, bạn vẫn có thể chạy `python codebase/extension_server.py` (cổng `8765`). Khi cổng `8000` không bật, extension tự động dự phòng sang cổng `8765` (hoặc bạn bấm **Phân tích trong panel**) để hiển thị thẻ rủi ro ngay trong panel nổi trên trang Shopee.
 
 ## Giới hạn
 
 - Review được lấy từ endpoint ratings hiển thị công khai của Shopee; endpoint này không phải Open API chính thức và có thể đổi hoặc chặn yêu cầu. Request chạy trong page context để dùng đúng phiên Shopee của tab, tương tự fetch từ DevTools Console.
 - Tối đa 50 review mỗi mức sao, 250 tổng cộng; độ phủ không được xem là đầy đủ nếu Shopee không xác nhận.
+- Payload handoff trên Web UI chỉ giữ trong bộ nhớ tạm (tối đa 10 phiên, tự hủy sau 15 phút) và không ghi dữ liệu review ra ổ đĩa.
 - Muốn phân tích bằng GPT cần OpenAI API key và quyền sử dụng model đã chọn. Không có cấu hình thì agent chạy chế độ giả an toàn, không tự tạo rủi ro.
