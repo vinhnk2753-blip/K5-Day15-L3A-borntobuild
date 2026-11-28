@@ -1,5 +1,7 @@
 (() => {
-  if (document.getElementById("born-to-build-shopee-review-agent")) return;
+  if (globalThis.__bornToBuildReviewAgentLoaded) return;
+  globalThis.__bornToBuildReviewAgentLoaded = true;
+  document.getElementById("born-to-build-shopee-review-agent")?.remove();
 
   const MAX_PER_STAR = 50;
   const PROGRESS_SOURCE = "born-to-build-shopee-review-progress";
@@ -60,10 +62,11 @@
     <section class="panel" hidden aria-label="Phân tích review sản phẩm">
       <header><strong>Rủi ro từ review Shopee</strong><button class="close" type="button" aria-label="Đóng">×</button></header>
       <div class="body">
-        <button class="run" type="button">Crawl &amp; phân tích trang này</button>
-        <div class="status" role="status">Lấy tối đa 50 review mỗi mức sao, lọc nhiễu và rút tối đa 3 rủi ro có trích dẫn.</div>
+        <button class="run" type="button">Crawl &amp; phân tích lại</button>
+        <div class="status" role="status">1-click: lấy tối đa 50 review mỗi mức sao (5★→1★), tự động đẩy sang Web UI Review Lens (http://127.0.0.1:8000) và chạy phân tích.</div>
         <div class="actions">
-          <button class="retry" type="button" hidden>Phân tích lại</button>
+          <button class="open-ui" type="button" hidden>Mở trên Web UI</button>
+          <button class="retry" type="button" hidden>Phân tích trong panel</button>
           <button class="copy" type="button" hidden>Copy JSON</button>
           <button class="download" type="button" hidden>Tải JSON</button>
         </div>
@@ -83,6 +86,7 @@
   const panel = shadow.querySelector(".panel");
   const closeButton = shadow.querySelector(".close");
   const runButton = shadow.querySelector(".run");
+  const openUiButton = shadow.querySelector(".open-ui");
   const retryButton = shadow.querySelector(".retry");
   const status = shadow.querySelector(".status");
   const results = shadow.querySelector(".results");
@@ -94,10 +98,12 @@
   const agentOutput = shadow.querySelector(".agent-output");
 
   let latestCrawlData = null;
+  let latestCrawlUrl = "";
   let latestJson = "";
   let currentItemId = "";
   let activeCrawlId = "";
   let pendingCrawl = null;
+  let isRunning = false;
 
   window.addEventListener("message", event => {
     if (event.origin !== location.origin || event.source !== window) return;
@@ -107,8 +113,14 @@
     if (msg.source === PROGRESS_SOURCE) {
       const counts = Object.entries(msg.counts_by_star || {})
         .map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      const action = msg.stage === "requesting" ? "Đang tải" : "Đã xử lý";
-      status.textContent = `${action} trang ${msg.page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
+      const starLabel = msg.star === 0 ? "mọi mức sao" : msg.star ? `${msg.star}★` : "review";
+      const page = msg.star_page || msg.page;
+      const action = msg.stage === "requesting"
+        ? `Đang tải ${starLabel}`
+        : msg.stage === "star_done"
+          ? `Đã xong ${starLabel}`
+          : `Đã xử lý ${starLabel}`;
+      status.textContent = `${action}, trang ${page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
       return;
     }
 
@@ -123,7 +135,28 @@
     }
   });
 
-  launcher.addEventListener("click", () => { panel.hidden = !panel.hidden; });
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type !== "ONE_CLICK_RUN") return undefined;
+    panel.hidden = false;
+    if (!isRunning) {
+      runCrawlAndHandoff();
+    }
+    sendResponse({ ok: true });
+    return undefined;
+  });
+
+  launcher.addEventListener("click", () => {
+    if (isRunning) {
+      panel.hidden = !panel.hidden;
+      return;
+    }
+    if (panel.hidden && (!latestCrawlData || latestCrawlUrl !== location.href)) {
+      panel.hidden = false;
+      runCrawlAndHandoff();
+      return;
+    }
+    panel.hidden = !panel.hidden;
+  });
   closeButton.addEventListener("click", () => { panel.hidden = true; });
   copyButton.addEventListener("click", async () => {
     try {
@@ -225,7 +258,41 @@
     throw new Error("Không nhận diện được mã sản phẩm từ URL hiện tại.");
   }
 
-  async function analyzePayload(crawlData) {
+  async function pushToWebUI(crawlData) {
+    openUiButton.disabled = true;
+    try {
+      const response = await chrome.runtime.sendMessage({
+        type: "PUSH_TO_WEB_UI",
+        payload: crawlData
+      });
+      if (!response?.ok || !response?.ui_url) {
+        throw new Error(response?.error || "Web UI local (127.0.0.1:8000) chưa phản hồi.");
+      }
+      results.replaceChildren();
+      addText(
+        results,
+        "div",
+        `Đã đẩy ${crawlData.review_count} review sang Web UI Review Lens và tự động mở tab phân tích.`,
+        "summary"
+      );
+      const link = document.createElement("a");
+      link.className = "product-link";
+      link.href = response.ui_url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "Mở lại tab phân tích trên Web UI";
+      results.appendChild(link);
+      const crawlWarnings = Array.isArray(crawlData.crawl_warnings) && crawlData.crawl_warnings.length
+        ? ` Cảnh báo crawl: ${crawlData.crawl_warnings.join(" ")}`
+        : "";
+      status.textContent = `Đã đẩy tự động ${crawlData.review_count} review sang Web UI (http://127.0.0.1:8000).${crawlWarnings}`;
+      return { ok: true, ui_url: response.ui_url };
+    } finally {
+      openUiButton.disabled = false;
+    }
+  }
+
+  async function analyzePayload(crawlData, { silentError = false } = {}) {
     retryButton.disabled = true;
     results.replaceChildren();
     agentDetails.hidden = true;
@@ -240,18 +307,38 @@
       renderResult(analysis.structured, crawlData.product?.url || location.href);
       agentOutput.textContent = JSON.stringify(analysis, null, 2);
       agentDetails.hidden = false;
-      status.textContent = `Phân tích xong (${analysis.structured.status || "không rõ"}): ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.`;
+      const crawlWarnings = Array.isArray(crawlData.crawl_warnings) && crawlData.crawl_warnings.length
+        ? ` Cảnh báo crawl: ${crawlData.crawl_warnings.join(" ")}`
+        : "";
+      status.textContent = `Phân tích xong (${analysis.structured.status || "không rõ"}): ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.${crawlWarnings}`;
+      return { ok: true };
     } catch (error) {
-      status.textContent = `Đã giữ JSON (${crawlData.review_count} review), nhưng agent local chưa phân tích được: ${error.message}\nHãy bật python codebase/extension_server.py rồi bấm "Phân tích lại".`;
+      if (!silentError) {
+        status.textContent = `Đã giữ JSON (${crawlData.review_count} review), nhưng agent panel (cổng 8765) chưa phân tích được: ${error.message}\nHãy chạy python run.py rồi bấm "Mở trên Web UI", hoặc chạy python codebase/extension_server.py rồi bấm "Phân tích trong panel".`;
+      }
+      return { ok: false, error: error.message };
     } finally {
       retryButton.disabled = false;
     }
   }
 
+  openUiButton.addEventListener("click", async () => {
+    if (!latestCrawlData) return;
+    runButton.disabled = true;
+    status.textContent = `Đang đẩy ${latestCrawlData.review_count} review sang Web UI Review Lens…`;
+    try {
+      await pushToWebUI(latestCrawlData);
+    } catch (error) {
+      status.textContent = `Chưa kết nối được Web UI (http://127.0.0.1:8000): ${error.message}\nHãy chạy python run.py ở thư mục gốc rồi bấm "Mở trên Web UI" lại.`;
+    } finally {
+      runButton.disabled = false;
+    }
+  });
+
   retryButton.addEventListener("click", async () => {
     if (!latestCrawlData) return;
     runButton.disabled = true;
-    status.textContent = `Đang gửi lại ${latestCrawlData.review_count} review cho agent local…`;
+    status.textContent = `Đang gửi ${latestCrawlData.review_count} review cho extension server (cổng 8765)…`;
     try {
       await analyzePayload(latestCrawlData);
     } finally {
@@ -259,8 +346,11 @@
     }
   });
 
-  runButton.addEventListener("click", async () => {
+  async function runCrawlAndHandoff() {
+    if (isRunning) return;
+    isRunning = true;
     runButton.disabled = true;
+    openUiButton.hidden = true;
     retryButton.hidden = true;
     results.replaceChildren();
     jsonDetails.hidden = true;
@@ -268,13 +358,14 @@
     copyButton.hidden = true;
     downloadButton.hidden = true;
     latestCrawlData = null;
+    latestCrawlUrl = "";
     latestJson = "";
 
     try {
       const ids = readProductIds();
       currentItemId = ids.itemid;
       activeCrawlId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid}…`;
+      status.textContent = `Đang bắt đầu crawl sản phẩm ${ids.itemid} (5★→1★)…`;
 
       const crawlPromise = new Promise((resolve, reject) => {
         pendingCrawl = { resolve, reject };
@@ -291,22 +382,40 @@
 
       const crawlData = await crawlPromise;
       latestCrawlData = crawlData;
+      latestCrawlUrl = location.href;
       latestJson = JSON.stringify(crawlData, null, 2);
       jsonOutput.textContent = latestJson;
       jsonDetails.hidden = false;
+      openUiButton.hidden = false;
       retryButton.hidden = false;
       copyButton.hidden = false;
       downloadButton.hidden = false;
 
       const counts = Object.entries(crawlData.counts_by_star || {}).map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      status.textContent = `Đã crawl ${crawlData.review_count} review (${counts}). Đang gửi JSON cho agent local…`;
-      await analyzePayload(crawlData);
+      status.textContent = `Đã crawl ${crawlData.review_count} review (${counts}). Đang đẩy tự động sang Web UI Review Lens…`;
+      try {
+        await pushToWebUI(crawlData);
+      } catch (uiError) {
+        status.textContent = `Web UI (8000) chưa bật; đang thử phân tích qua extension server (8765)…`;
+        const fallback = await analyzePayload(crawlData, { silentError: true });
+        if (!fallback.ok) {
+          status.textContent = `Đã giữ JSON (${crawlData.review_count} review), nhưng chưa kết nối được Web UI (8000: ${uiError.message}) hay extension server (8765: ${fallback.error}).\n• Chạy python run.py rồi bấm "Mở trên Web UI" (khuyên dùng).\n• Hoặc chạy python codebase/extension_server.py rồi bấm "Phân tích trong panel".`;
+        }
+      }
     } catch (error) {
-      status.textContent = `Không lấy được review: ${error.message}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
+      const msg = error?.message || String(error);
+      if (msg.includes("Extension context invalidated")) {
+        status.textContent = "Extension vừa được reload; hãy F5 tải lại trang Shopee hoặc bấm biểu tượng extension trên thanh công cụ Chrome.";
+      } else {
+        status.textContent = `Không lấy được review: ${msg}\nHãy tải lại extension và trang Shopee rồi thử lại.`;
+      }
     } finally {
       pendingCrawl = null;
       activeCrawlId = "";
+      isRunning = false;
       runButton.disabled = false;
     }
-  });
+  }
+
+  runButton.addEventListener("click", runCrawlAndHandoff);
 })();

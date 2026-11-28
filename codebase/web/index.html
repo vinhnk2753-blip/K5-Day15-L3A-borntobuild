@@ -28,11 +28,19 @@
         <div class="section-head"><h2 id="input-heading">Đánh giá bạn muốn kiểm tra</h2><span class="step-label">Đầu vào</span></div>
         <form id="review-form" novalidate>
           <label for="input-mode">Nguồn đánh giá</label>
-          <select id="input-mode"><option value="catalog">Chọn sản phẩm / bộ minh họa</option><option value="reviews">Dán tập review văn bản</option></select>
+          <select id="input-mode"><option value="catalog">Chọn sản phẩm / bộ minh họa</option><option value="reviews">Dán tập review văn bản</option><option value="payload">Dữ liệu từ Extension Shopee (JSON)</option></select>
           <div id="catalog-fields">
             <label for="product-select">Sản phẩm</label>
             <select id="product-select"><option value="">Chọn sản phẩm hoặc bộ minh họa</option></select>
             <p class="hint" id="catalog-note">SP01–SP03 là dữ liệu công khai có sẵn. DEMO là nội dung synthetic để thử giao diện.</p>
+          </div>
+          <div id="payload-fields" hidden>
+            <div class="payload-card">
+              <p id="payload-title" class="payload-title">Chưa có dữ liệu từ Chrome extension.</p>
+              <p id="payload-meta" class="hint">Mở trang sản phẩm Shopee, bấm “Crawl &amp; phân tích trang này” trong extension để tự động đẩy sang đây, hoặc chọn file JSON đã tải.</p>
+            </div>
+            <label for="payload-file">Hoặc nạp file JSON từ extension <span>(tùy chọn)</span></label>
+            <input id="payload-file" type="file" accept="application/json,.json">
           </div>
           <label for="reviews">Nội dung đánh giá</label>
           <p class="hint" id="review-hint">Mỗi review một dòng, có thể giữ mã [R01]. Không bắt buộc số sao hoặc URL. Bỏ thông tin cá nhân trước khi dán.</p>

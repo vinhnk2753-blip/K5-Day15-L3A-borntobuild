@@ -1,10 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Shopee Review Risk Agent",
-  "version": "1.1.0",
-  "description": "Lọc nhiễu review Shopee, xuất JSON và rút tối đa 3 rủi ro sản phẩm có trích dẫn.",
+  "version": "1.3.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1ouypzSG2BxSQ8f0iTm+ivJCRRYZNVMjL0MV9H8LBJexpBQa+K+Nz93IuItgYVb1W02jQ9oy22AWFzJ1di6DCdwWFEZiWnwH2+4Sp7+hypBbWCwbwAzIb1fKw4RXb7q5lFRRYREB+lJxHs6A+bMTJ13OCYAcH9pxfwGzS/XOHPBIGvYInYIRxahH4vZY7/iBtH5HtrNQpAi/LXXXcUwNa07iyl63giD/hK2W5PNWXv2ADIfhHxOAzjKWqN46Uqs8+nXKJPo6VDoXCm7j+YhYKhY4Oei8L52Hgvf3GqHtiS8j65DveJgjUT9yJwuf05j4Qetb2EInamN+sE/x/I8ZUwIDAQAB",
+  "description": "1-click crawl review Shopee (5★→1★), tự động đẩy sang Web UI Review Lens (http://127.0.0.1:8000) và chạy phân tích rủi ro.",
+  "action": {
+    "default_title": "Review Lens: 1-click crawl & phân tích review Shopee"
+  },
   "permissions": ["scripting"],
   "host_permissions": [
+    "http://127.0.0.1:8000/*",
     "http://127.0.0.1:8765/*",
     "https://shopee.vn/*"
   ],
