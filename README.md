@@ -135,5 +135,5 @@ UI PR #18 được đồng bộ theo backend PR #20, không sửa backend chính
 | 4 | Bản chạy thử làm trọn lát cắt | `codebase/` · lệnh ở mục "Lệnh" |
 | 5 | Định nghĩa "tốt" + bộ câu thử | `data/DATA_CARD.md` · `eval/` |
 | 6 | Mô phỏng chi phí khi dùng thật | `cost/` |
-| 7 | Slide + demo + video dự phòng | `demo-slides.pdf` ở thư mục gốc · link video: ____ |
+| 7 | Slide + demo + video dự phòng | `demo-slides.pdf` ở thư mục gốc · [video demo dự phòng](https://drive.google.com/file/d/1ANgzsTN_givlL6PipNGsTdFwEgPLhk-C/view) |
 | + | *Bonus:* người dùng thử | `validation/log.md` |
