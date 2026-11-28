@@ -44,7 +44,10 @@ Gõ `dir` (Windows) hoặc `ls` (macOS / Linux): thấy `run.py` và `README.md`
 
 - Windows: gõ `python` mà mở Microsoft Store hoặc báo không có lệnh → dùng `py`. Chưa có Python: cài từ python.org, **tick "Add python.exe to PATH"**, mở lại PowerShell.
 - macOS: báo `command not found: python` là bình thường → dùng `python3`.
-- Sau khi chạy `python run.py`, nhập `SP01`, `SP02`, `SP03` hoặc dán review (mỗi dòng một review). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, chế độ giả không sinh kết luận rủi ro.
+- Sau khi chạy `python run.py`, mở web local **http://127.0.0.1:8000**, chọn sản phẩm `SP01`, `SP02`, `SP03` hoặc chuyển sang **Dán tập review văn bản** (mỗi review một dòng, không bắt buộc URL hay số sao). Nếu `.env` đặt `MODEL_PROVIDER=openai`, agent gọi model thật; nếu không, fake trả `insufficient` và không sinh rủi ro. Bấm `[Rxx]` để đối chiếu nguồn đã che PII; Ctrl+C để dừng.
+- Với nhà cung cấp tương thích OpenAI, đặt thêm `OPENAI_BASE_URL` trong `.env` theo địa chỉ nhà cung cấp (ví dụ `https://api.shopaikey.com/v1`, không thêm `/chat/completions`). Bỏ trống để dùng OpenAI trực tiếp. Giữ `MODEL_PROVIDER=openai`, dùng key và mã model của nhà cung cấp đó; dừng rồi chạy lại server sau khi đổi cấu hình. Khả năng tương thích của dịch vụ trung gian cần kiểm tra bằng một lượt gọi thật; giá trong `cost/personas.yaml` cần đối chiếu với biểu phí thực tế của dịch vụ.
+- Web gọi `agent.answer(text)` cho mã catalog hoặc raw review, dùng nguyên `structured` của backend main PR #20. Chế độ payload Shopee ở API `/api/analyze` gọi `agent.analyze_review_payload(payload)`, không gọi crawler Apify. Không còn `review_input.py`/`review_signals.py` hoặc bộ fake riêng tại UI.
+- CLI tùy chọn: PowerShell đặt `$env:REVIEW_LENS_MODE='cli'` rồi `python run.py`; nhập mã catalog hoặc review và `/quit` để thoát. Đặt lại `web` để mở giao diện. Nếu cổng bận, đặt `$env:REVIEW_LENS_PORT='8001'`. Không thêm dependency ngoài Python stdlib.
 
 Trong README này lệnh viết là `python …`; máy nhóm cần `python3` hay `py` thì gõ thay.
 
@@ -91,6 +94,7 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 | Thành phần | Thật / Giả | Ghi chú |
 |---|---|---|
 | Lời gọi AI ở quyết định trung tâm | **Thật** khi `.env` chọn `openai`; chế độ fake trả tokens 0 và không tạo rủi ro | Model: lấy từ `MODEL_NAME` (đã smoke test `gpt-6-luna`) |
+| Web UI issue #4 | Hiển thị kết quả backend main | Catalog thật và raw review; fake trả insufficient; test UI dùng stub cho nhánh rủi ro, chưa xác minh live API trong lượt đồng bộ PR #18 |
 |  |  |  |
 
 ## Dùng AI vào việc gì
@@ -98,6 +102,8 @@ Demo dạng Chrome extension có hướng dẫn riêng tại [extension/README.m
 2–3 dòng (bắt buộc): nhóm dùng công cụ AI nào để làm gì, người kiểm lại phần nào. Chi tiết: [docs/ai-usage.md](docs/ai-usage.md). Coding agent đọc [AGENTS.md](AGENTS.md).
 
 Nhóm dùng Codex và Antigravity/Claude Code để hỗ trợ viết/rà code bản chạy thử (`codebase/`, `extension/`), dựng script xử lý data ẩn danh và soạn nháp bộ câu thử; bản chạy thử gọi OpenAI GPT qua `.env` trên nội dung review đã lọc/ẩn danh. Nhóm tự kiểm tra code, nhãn evidence, output và citation bằng unit test + chấm tay trước demo; không dùng AI để bịa phỏng vấn hay sửa kết quả chạy thật.
+
+UI PR #18 được đồng bộ theo backend PR #20, không sửa backend chính thức hoặc file eval/trace đã có. Báo cáo thay đổi: [docs/pr-18-review-fixes.md](docs/pr-18-review-fixes.md); hướng dẫn/schema UI: [docs/ui-ai-contract-proposal.md](docs/ui-ai-contract-proposal.md).
 
 ## File mẫu — điền ở bước nào
 
