@@ -28,7 +28,7 @@ Nhánh: `feat/issue-11-cost-analysis`, đồng bộ main `dfdbd0b` gồm PR #23 
 - [x] So sánh ≥2 mức giá, có giả định và độ nhạy; chỉ đo token gpt-6-luna, chưa chạy/chấm model thứ hai.
 - [x] Chốt kết luận pilot, đồng bộ §8 và changelog §10; không sửa chuẩn/eval của main.
 - [x] Trang xác nhận đã rà soát lại số liệu Issue #11 ngày 28/11/2026; xác nhận này áp dụng cho số liệu, không tự mở rộng thành đã rà toàn bộ code.
-- [ ] Trang tạo PR để nhóm review và bàn giao số liệu cho Issue #13.
+- [x] Trang tạo PR #27 để nhóm review và bàn giao số liệu cho Issue #13.
 
 ## Kết quả để đưa vào slide Issue #13
 
