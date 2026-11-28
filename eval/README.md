@@ -1,6 +1,6 @@
 # Hồ sơ đánh giá — một trang
 
-> Bản CP2 (27/11/2026) · phụ trách: Nguyễn Thị Hải Yến. Số câu và nguồn kiểm bằng `python run.py check`.
+> Bản CP2 (27/11/2026), rà lại CP3 (28/11/2026) · phụ trách: Nguyễn Thị Hải Yến. Số câu và nguồn kiểm bằng `python run.py check`. CP3 giữ nguyên 25 câu vì chuẩn "đạt" chốt ở CP2 ghi mẫu số "≥ 20/25".
 
 ## 1. Dataset → xử lý
 
