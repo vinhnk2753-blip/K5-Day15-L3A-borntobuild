@@ -1,4 +1,26 @@
+const WEB_UI_ORIGIN = "http://127.0.0.1:8000";
+const WEB_UI_HANDOFF_URL = `${WEB_UI_ORIGIN}/api/extension-handoff`;
 const API_URL = "http://127.0.0.1:8765/analyze";
+
+chrome.action.onClicked.addListener(async tab => {
+  const tabId = tab?.id;
+  const tabUrl = typeof tab?.url === "string" ? tab.url : "";
+  if (tabId && tabUrl.startsWith("https://shopee.vn/")) {
+    try {
+      await chrome.tabs.sendMessage(tabId, { type: "ONE_CLICK_RUN" });
+      return;
+    } catch {
+      try {
+        await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+        await chrome.tabs.sendMessage(tabId, { type: "ONE_CLICK_RUN" });
+        return;
+      } catch {
+        // Fall through to open Web UI if content script injection is unavailable on this tab.
+      }
+    }
+  }
+  await chrome.tabs.create({ url: `${WEB_UI_ORIGIN}/`, active: true });
+});
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "CRAWL_SHOPEE_REVIEWS") {
@@ -22,6 +44,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       }
       sendResponse({ ok: true, started: true });
     }).catch(error => sendResponse({ ok: false, error: error?.message || String(error) }));
+    return true;
+  }
+
+  if (message?.type === "PUSH_TO_WEB_UI") {
+    fetch(WEB_UI_HANDOFF_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(message.payload)
+    })
+      .then(async response => {
+        const rawText = await response.text();
+        let result = null;
+        try {
+          result = JSON.parse(rawText);
+        } catch {
+          throw new Error(`Web UI trả HTTP ${response.status} không phải JSON hợp lệ.`);
+        }
+        if (!response.ok || !result?.ok || typeof result.ui_url !== "string") {
+          throw new Error(result?.message || result?.error || `Web UI trả HTTP ${response.status}`);
+        }
+        if (!result.ui_url.startsWith(`${WEB_UI_ORIGIN}/`)) {
+          throw new Error("URL Web UI trả về không hợp lệ.");
+        }
+        await chrome.tabs.create({ url: result.ui_url, active: true });
+        sendResponse({
+          ok: true,
+          ui_url: result.ui_url,
+          handoff_id: result.handoff_id,
+          review_count: result.review_count
+        });
+      })
+      .catch(error => sendResponse({ ok: false, error: error?.message || String(error) }));
     return true;
   }
 
@@ -259,6 +313,10 @@ function startCrawlInPage(ids, maxPerStar = 50, requestId = "") {
 
       reportProgress("complete");
       const reviews = stars.flatMap(star => byStar.get(star));
+      const productName = (document.querySelector("h1")?.textContent || document.title || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 200);
       window.postMessage({
         source: RESULT_SOURCE,
         requestId,
@@ -266,7 +324,9 @@ function startCrawlInPage(ids, maxPerStar = 50, requestId = "") {
         data: {
           ok: true,
           product: {
-            shopid: String(ids.shopid), itemid: String(ids.itemid),
+            shopid: String(ids.shopid),
+            itemid: String(ids.itemid),
+            name: productName,
             url: `https://shopee.vn/product/${encodeURIComponent(ids.shopid)}/${encodeURIComponent(ids.itemid)}`,
             page_url: location.href
           },
