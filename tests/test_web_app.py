@@ -282,6 +282,43 @@ class WebTests(unittest.TestCase):
         self.assertNotIn('id="product-url"', html)
         self.assertIn("/api/extension-handoff/", self.get("/app.js"))
 
+    def test_post_cp4_ux_quick_start_hint_fake_heading_and_counter_citations(self):
+        html = self.get("/")
+        self.assertIn('id="try-sp01"', html)
+        self.assertIn("Thử mẫu SP01 ngay", html)
+        self.assertIn("không tự tải từ link", html)
+        self.assertIn("SP01–SP06", html)
+
+        js = self.get("/app.js")
+        self.assertIn("Chế độ giả — chưa gọi AI thật", js)
+        self.assertIn("counter_citations", js)
+
+        mock_reply = {
+            "output": "ok",
+            "structured": {
+                "status": "risks",
+                "product_name": "Sản phẩm thử",
+                "summary": "Có 1 rủi ro kèm đối chứng.",
+                "stats": {"total": 2, "filtered_noise": 0, "noise_pct": 0.0, "kept_clean": 2, "noise_breakdown": {}},
+                "flags": [],
+                "anomalies": {"review_count": 2, "duplicate_count": 0, "duplicate_rate": 0.0, "duplicate_clusters": []},
+                "reviews_by_id": {"R01": "Pin tụt nhanh sau 2 ngày.", "R02": "Pin dùng bình thường ổn."},
+                "risks": [{
+                    "title": "Pin tụt nhanh",
+                    "summary": "1 người báo pin tụt nhanh.",
+                    "severity": "medium",
+                    "citations": [{"id": "R01", "text": "Pin tụt nhanh sau 2 ngày.", "rating": 2, "date": "2026-11-01", "variant": "Đen"}],
+                    "counter_citations": [{"id": "R02", "text": "Pin dùng bình thường ổn.", "rating": 5, "date": "2026-11-02", "variant": "Trắng"}],
+                }],
+            },
+        }
+        with patch.object(agent, "answer", return_value=mock_reply):
+            data = self.post({"mode": "reviews", "text": "[R01] Pin tụt nhanh sau 2 ngày.\n[R02] Pin dùng bình thường ổn."})
+        self.assertEqual(data["analysis"]["risks"][0]["counter_citations"][0]["id"], "R02")
+        by_id = {s["id"]: s for s in data["sources"]}
+        self.assertEqual(by_id["R02"]["rating"], 5)
+        self.assertEqual(by_id["R02"]["variant"], "Trắng")
+
     def test_extension_handoff_env_allowlist_override_and_fail_closed(self):
         custom_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
         payload = {

@@ -258,45 +258,79 @@ def filter_review_noise(reviews: list) -> dict:
         "tuyet voi", "dang mua",
     )
     user_damage_terms = ("danh roi", "tu lam roi", "lam roi", "tu lam vo", "lam vo")
+    injection_terms = (
+        "ignore all previous", "ignore previous", "bo qua cac quy tac", "bo qua quy tac",
+    )
     outside_terms = (
         "giao hang", "giao nhanh", "giao cham", "giao dung hen", "nhan hang",
-        "nhan duoc hang", "ship", "shipper", "dong goi", "van chuyen", "nhan vien",
+        "nhan duoc hang", "ship", "shipper", "dong goi", "bao bi", "tui boc", "hoa don",
+        "van chuyen", "nhan vien", "vo hop",
         "khuyen mai", "gia ban", "gia le", "gia bien dong", "chenh lech gia",
         "mua 1 tang 1", "tang len", "tang gia", "giam gia",
         "han bao hanh", "le bao hanh", "thieu phu kien", "khong kem", "trong hop chi co",
-        "ignore all previous", "ignore previous", "bo qua cac quy tac", "bo qua quy tac",
     )
+    courtesy_terms = ("cam on shop", "cam on", "thanks shop", "thank shop", "tks shop", "yeu shop")
     incentive_terms = ("nhan xu", "tang xu", "hoan xu", "nhan diem", "tang diem", "duoc xu")
     not_used_terms = (
         "chua dung", "chua su dung", "chua test", "chua mo hop",
         "chua trai nghiem", "chua xai", "chua dung thu",
     )
+    question_nfc_terms = ("hỏi",)
     question_terms = (
-        "hoi", "thu cu doi moi", "chinh sach", "huong dan", "cach su dung", "cai dat",
+        "thu cu doi moi", "chinh sach", "huong dan", "cach su dung", "cai dat",
         "pass lai", "ban lai", "thu lai", "doi sang", "doi mau", "tra hang", "doi tra",
         "co ben khong", "co tot khong", "co nen mua", "mua duoc khong",
     )
-    # Diacritic-sensitive words where stripping accents causes collisions (rè/rẻ, yếu/yêu, cháy/chạy, phồng/phòng, nứt/nút)
+    inquiry_preamble_terms = ("thac mac", "cho minh hoi", "cho em hoi", "shop cho hoi", "xin hoi")
+    # Diacritic-sensitive words where stripping accents causes collisions (rè/rẻ, yếu/yêu, cháy/chạy, phồng/phòng, nứt/nút, êm/em)
     product_nfc_terms = (
         "hỏng", "lỗi", "lổi", "rè", "xoẹt", "phồng", "nứt", "rò", "nóng", "rỉ", "gỉ",
         "kẹt", "bung", "trầy", "xước", "lỏng", "cháy", "khét", "yếu", "ngừng", "ngắt",
+        "êm", "mượt", "mỏi tay",
     )
     # Unambiguous multi-word product performance / defect / experience phrases (accent-insensitive)
     product_plain_terms = (
         "am thanh", "chat am", "am luong", "chat lieu", "mui nhua", "mui khet",
         "toa nhiet", "bong son", "ri set", "ro dien", "ro nuoc", "tray xuoc",
         "mat tieng", "khong hoat dong", "khong su dung duoc", "khong ket noi",
-        "khong len nguon", "khong sac duoc", "sac khong vao", "khong vao pin",
+        "mat ket noi", "khong nhan", "khong len nguon", "khong sac duoc", "sac khong vao", "khong vao pin",
         "sac cham", "sac qua cham", "sac lau", "sac rat lau", "sac vao lau",
         "sac vao rat lau", "sac day", "sac cho", "cam sac", "len vach", "vach pin",
         "muc pin", "tut pin", "het pin", "pin dung", "pin lau", "pin yeu", "pin ao",
         "dung luong", "tu tat", "chap chon", "khong khit", "de roi", "lot am", "leak",
         "de su dung", "it hao dien", "nuong nhanh", "chien nhanh", "ket noi on dinh",
         "khong nong", "van mat", "chat hon", "vua chan", "size",
+        "giu nhiet", "luc phun", "phun giot", "khong thang", "lech mau",
+        "khac voi mau", "khac hinh", "sai mau", "khac mo ta", "khong giong mo ta",
+        "khong duoc nhu ky vong", "khong giong hinh",
     )
 
     def has_product_signal(lower_nfc: str, plain: str) -> bool:
         return _has_nfc_term(lower_nfc, product_nfc_terms) or _has_plain_term(plain, product_plain_terms)
+
+    def has_substantive_product_remainder(raw_comment: str) -> bool:
+        """Return True if stripping shipping/packaging/price/courtesy clauses still leaves product commentary."""
+        kept_clauses = []
+        raw_clauses = re.split(r"[.!?;,\n]+|\b(?:nhưng\s+mà|nhưng|tuy\s+nhiên|chỉ\s+tiếc)\b", raw_comment, flags=re.IGNORECASE)
+        for clause in raw_clauses:
+            c_plain = _normalize_plain(clause)
+            c_nfc = _normalize_nfc(clause)
+            if not c_plain or c_plain in exact_praise:
+                continue
+            if _has_plain_term(c_plain, outside_terms) or _has_plain_term(c_plain, incentive_terms) or _has_plain_term(c_plain, courtesy_terms) or _has_plain_term(c_plain, inquiry_preamble_terms):
+                continue
+            if has_product_signal(c_nfc, c_plain):
+                return True
+            if len(c_plain.split()) <= 4 and _has_plain_term(c_plain, generic_praise_terms):
+                continue
+            kept_clauses.append(c_plain)
+        remainder = " ".join(kept_clauses).strip()
+        if not remainder:
+            return False
+        rem_words = remainder.split()
+        if len(rem_words) >= 5 and not (len(rem_words) <= 10 and _has_plain_term(remainder, generic_praise_terms)):
+            return True
+        return False
 
     seen = set()
     kept, noise = [], []
@@ -312,6 +346,8 @@ def filter_review_noise(reviews: list) -> dict:
 
         if _is_empty_comment(normalized):
             label = "nhieu_trong"
+        elif _has_plain_term(normalized, injection_terms):
+            label = "nhieu_ngoai_chat_luong"
         elif _has_plain_term(normalized, user_damage_terms):
             label = "nhieu_ngoai_chat_luong"
         elif normalized in exact_praise:
@@ -322,9 +358,9 @@ def filter_review_noise(reviews: list) -> dict:
             label = "nhieu_nhan_xu"
         elif _has_plain_term(normalized, not_used_terms) and not has_prod:
             label = "nhieu_chua_dung"
-        elif _has_plain_term(normalized, question_terms) and not has_prod:
+        elif (_has_nfc_term(lower_nfc, question_nfc_terms) or _has_plain_term(normalized, question_terms)) and not has_prod:
             label = "nhieu_hoi_dap_rao_ban"
-        elif _has_plain_term(normalized, outside_terms) and not has_prod:
+        elif _has_plain_term(normalized, outside_terms) and not has_prod and not has_substantive_product_remainder(comment):
             label = "nhieu_ngoai_chat_luong"
         elif len(normalized.replace(" ", "")) < 5 or (len(words) <= 2 and not has_prod):
             label = "nhieu_qua_ngan"

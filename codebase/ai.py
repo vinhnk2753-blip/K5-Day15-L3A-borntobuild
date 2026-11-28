@@ -19,12 +19,28 @@ Nhánh OpenAI bên dưới gửi request dạng JSON và lấy token trực ti�
 """
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 
 from tracing import model_call
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RETRYABLE_HTTP_CODES = {429, 502, 503, 504}
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        return max(0, int((os.environ.get(name) or "").strip() or default))
+    except ValueError:
+        return default
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        return max(0.0, float((os.environ.get(name) or "").strip() or default))
+    except ValueError:
+        return default
 
 
 def load_env(path=os.path.join(ROOT, ".env")):
@@ -50,6 +66,20 @@ OPENAI_URL = (
     if OPENAI_BASE_URL.endswith("/chat/completions")
     else OPENAI_BASE_URL + "/chat/completions"
 )
+OPENAI_MAX_RETRIES = _env_int("OPENAI_MAX_RETRIES", 2)
+OPENAI_RETRY_BACKOFF = _env_float("OPENAI_RETRY_BACKOFF", 1.0)
+
+
+def _retry_delay(attempt: int, retry_after_header=None) -> float:
+    base = OPENAI_RETRY_BACKOFF * (2 ** attempt)
+    if retry_after_header:
+        try:
+            header_wait = float(str(retry_after_header).strip())
+            if 0.0 <= header_wait <= 10.0:
+                return header_wait
+        except ValueError:
+            pass
+    return min(base, 10.0)
 
 
 @model_call
@@ -68,30 +98,41 @@ def call_model(system: str, user: str) -> dict:
 
     messages = ([{"role": "system", "content": system}] if system else [])
     messages.append({"role": "user", "content": user})
-    request = urllib.request.Request(
-        OPENAI_URL,
-        data=json.dumps({
-            "model": MODEL_NAME,
-            "messages": messages,
-            "response_format": {"type": "json_object"},
-        }).encode("utf-8"),
-        method="POST",
-        headers={
-            "Authorization": "Bearer " + API_KEY,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=90) as response:
-            result = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", "replace")[:500]
-        raise RuntimeError("OpenAI API trả HTTP %s: %s" % (exc.code, detail)) from None
-    except urllib.error.URLError as exc:
-        raise RuntimeError("Không kết nối được OpenAI API: %s" % exc.reason) from None
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        raise RuntimeError("OpenAI API trả phản hồi không phải JSON hợp lệ.") from None
+    payload = json.dumps({
+        "model": MODEL_NAME,
+        "messages": messages,
+        "response_format": {"type": "json_object"},
+    }).encode("utf-8")
+    headers = {
+        "Authorization": "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    result = None
+    for attempt in range(OPENAI_MAX_RETRIES + 1):
+        request = urllib.request.Request(OPENAI_URL, data=payload, method="POST", headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=90) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:500]
+            if exc.code in RETRYABLE_HTTP_CODES and attempt < OPENAI_MAX_RETRIES:
+                wait = _retry_delay(attempt, exc.headers.get("Retry-After") if exc.headers else None)
+                if wait > 0:
+                    time.sleep(wait)
+                continue
+            raise RuntimeError("OpenAI API trả HTTP %s: %s" % (exc.code, detail)) from None
+        except urllib.error.URLError as exc:
+            if attempt < OPENAI_MAX_RETRIES:
+                wait = _retry_delay(attempt)
+                if wait > 0:
+                    time.sleep(wait)
+                continue
+            raise RuntimeError("Không kết nối được OpenAI API: %s" % exc.reason) from None
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise RuntimeError("OpenAI API trả phản hồi không phải JSON hợp lệ.") from None
 
     try:
         text = result["choices"][0]["message"]["content"]

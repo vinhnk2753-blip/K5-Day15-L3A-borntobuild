@@ -54,3 +54,30 @@ Các nhóm có thể chồng lấp. Bộ rà citation trên 25 output của lư�
 Điểm các metric ghi `grader: nguoi` do Codex chấm trước dựa trên output, `pass_criterion`, `eval/metric_spec.yaml` và nhãn `evidence/cp2_labels.csv`, sau đó Yến rà và xác nhận (28/11/2026). Ở lượt 2, 7/32 risk card gắn citation cho review tích cực/đối chứng (B05, B06, B15, B19, B20, B22), làm metric `rui_ro_duoc_dan_chung` thấp hơn ngưỡng. B17 không nêu counterevidence R12 khi vẫn kết luận rủi ro kết nối; B22 dùng R20 dù pass criterion cấm.
 
 Run CSV và trace giữ nguyên output gốc; chỉ điền `pass` và `ghi_chu`. Yến đã xác nhận các cột chấm người, kể cả 7/32 risk card của lượt 2 và các câu `tu_choi`; đây là kết quả chính thức của nhóm. Lưu ý khi rà: B15 và B19 vẫn chấm đạt vì `pass_criterion` không cấm mã review tích cực mà chúng trích (R11, R12 ở B15; R20 ở B19), nhưng chúng bị trừ ở `rui_ro_duoc_dan_chung`.
+
+## 5. Cập nhật Sau CP4 — Lượt 3 (`run-3@20261128-213651`)
+
+> **Minh bạch trạng thái:** Lượt 3 chạy Sau CP4 (`28/11/2026`) trên cùng benchmark 25 câu và cùng `eval/metric_spec.yaml` đã chốt (không sửa `run-1.csv`, `run-2.csv`, chuẩn §7 hay câu thử). Metric code `trich_dan_ton_tai` đã kiểm tự động bằng script độc lập; các cột `pass`, `ghi_chu` và 3 metric `grader: nguoi` của lượt 3 hiện là **chấm sơ bộ bằng AI — chờ thành viên nhóm rà và xác nhận**.
+
+- **Cải tiến áp dụng trước lượt 3 (`Issue #15`):**
+  1. Tách JSON output schema trong `codebase/agent.py` thành `risk_citations` (chỉ chứa bằng chứng lỗi/rủi ro) và `counter_citations` (chứa ý kiến tích cực/đối chứng trên cùng khía cạnh, hiển thị ở mục riêng `## Ý kiến tích cực / đối chứng (không phải bằng chứng rủi ro)`).
+  2. Nâng cấp `filter_review_noise` (`codebase/tools.py`) theo mệnh đề cho review ngoài mẫu (`SP05 [R23]`) và sửa đụng dấu `"hỏi"`/`"hơi"`; giữ khớp 60/60 CP2.
+  3. Thêm retry có exponential backoff cho HTTP `429/502/503/504` và `URLError` trong `codebase/ai.py`.
+
+| Lượt | Run ID | Đạt / tổng | % | `thuong` | `kho` | `tu_choi` | Lỗi | Model / Tool calls | Token vào / ra | Trạng thái chấm |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | `run-1@20261127-224047` | 13/25 | 52% | 6/7 | 5/13 | 2/5 | 0/25 | 24 / 85 | 25.969 / 10.086 | Yến đã xác nhận |
+| 2 | `run-2@20261127-224446` | 23/25 | 92% | 7/7 | 11/13 | 5/5 | 0/25 | 22 / 75 | 19.458 / 6.671 | Yến đã xác nhận |
+| 3 *(Sau CP4)* | `run-3@20261128-213651` | **24/25** | **96%** | 7/7 | **12/13** | 5/5 | 0/25 | 22 / 75 | 43.734 / 8.647 | **AI chấm sơ bộ — chờ người xác nhận** |
+
+| Metric | Lượt 2 (Yến xác nhận) | Lượt 3 (sơ bộ) | Ngưỡng | Ghi chú thay đổi |
+|---|---:|---:|---:|---|
+| `trich_dan_ton_tai` *(code)* | 21/21 (100%) | **21/21 (100%)** | 100% | Kiểm bằng script độc lập: 0 mã ngoài input, 0 quote lệch nguyên văn |
+| `rui_ro_duoc_dan_chung` *(nguoi)* | 25/32 (78,1%) | **32/34 (94,1%)** | ≥90% | Sửa dứt điểm 5/7 thẻ lỗi cũ (`B05`, `B06`, `B15` ×2, `B19`) nhờ tách `counter_citations`; còn 2 thẻ dính `SP03 [R20]` (`B20` thẻ 3, `B22` thẻ 2) |
+| `bat_duoc_rui_ro_chinh` *(nguoi)* | 9/9 (100%) | **9/9 (100%)** | ≥8/9 | Giữ vững 9/9 |
+| `dung_khi_thieu_can_cu` *(nguoi)* | 9/9 (100%) | **9/9 (100%)** | 100% | Giữ vững 9/9 |
+
+- **Câu cải thiện:** `B17` chuyển từ **trượt (0) → đạt (1)** — rủi ro kết nối chỉ trích `[R15]`, nêu rõ có ý kiến trái chiều và tách `[R11]`, `[R12]` sang mục đối chứng riêng.
+- **Câu tệ đi:** **0 câu** chuyển từ đạt sang trượt.
+- **Lỗi còn tồn tại (1 câu trượt, 2/34 thẻ rủi ro):** `B22` vẫn trượt (`0`) và `B20` thẻ 3 vẫn bị trừ ở `rui_ro_duoc_dan_chung` vì cùng một review biên `SP03 [R20]` (*"được tư vấn trước là sạc thường công suất thấp; thực tế đèn còn 2 vạch sạc gần 10 tiếng chưa đầy nhưng sạc được 2,5 lần... vẫn mát, không nóng"*) — model vẫn xem cụm *"sạc gần 10 tiếng chưa đầy"* là bằng chứng sạc chậm khi tập con chỉ có 3 review. Ghi nhận trung thực để xử lý tiếp ở vòng sau (`docs/post-cp4-feedback.md`).
+- **Ghi chú chi phí token:** Lượt 3 dùng nhiều `tokens_in` hơn lượt 2 (43.734 vs 19.458) do prompt hướng dẫn tách schema dài hơn và tập sạch đầy đủ hơn; vẫn chạy 22 model calls và 0/25 lỗi kỹ thuật (CSV khớp 100% `traces/run-3.jsonl`).

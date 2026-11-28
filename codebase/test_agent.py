@@ -435,6 +435,69 @@ class TestAgentWorkflowAndContract(unittest.TestCase):
         self.assertIn("SP01", unknown["output"])
         self.assertNotIn("catalog CP2", unknown["output"])
 
+    def test_filter_noise_keeps_out_of_sample_mixed_product_and_shipping_reviews(self):
+        # SP05 [R23]: phan anh lech mau binh nhung co khen giao hang nhanh — phai duoc giu lai.
+        sp05 = tools.load_product_reviews("SP05")
+        filt_sp05 = tools.filter_review_noise(sp05["reviews"])
+        kept_ids = {r["review_id"] for r in filt_sp05["kept"]}
+        self.assertIn("R23", kept_ids, "SP05 [R23] co phan anh lech mau binh, khong duoc loc nham")
+
+        sample = [
+            {"review_id": "R01", "comment": "Giao hàng nhanh, đóng gói cẩn thận, shipper thân thiện."},
+            {"review_id": "R02", "comment": "Giá ổn, giao nhanh, hộp đẹp."},
+            {"review_id": "R03", "comment": "Giao hàng nhanh, đóng gói kỹ. Bình bị tróc sơn nhẹ ở nắp sau vài ngày."},
+            {"review_id": "R04", "comment": "Màu sản phẩm khác hình đăng nhưng giao nhanh nên ngại đổi trả."},
+            {"review_id": "R05", "comment": "Đế bình hơi nghiêng khi đặt lên mặt bàn nhưng giao hàng khá nhanh."},
+        ]
+        res = tools.filter_review_noise(sample)
+        self.assertEqual([r["review_id"] for r in res["kept"]], ["R03", "R04", "R05"])
+        self.assertEqual([r["review_id"] for r in res["noise"]], ["R01", "R02"])
+        self.assertEqual(res["noise_breakdown"]["nhieu_ngoai_chat_luong"], 2)
+
+    def test_split_risk_and_counter_citations_preserves_verbatim_checks(self):
+        text = (
+            "[R01] Pin tụt nhanh chỉ dùng được khoảng 1 tiếng.\n"
+            "[R02] Mình dùng bình thường thấy pin khá lâu, nghe cả buổi chiều ổn.\n"
+            "[R03] Giao hàng nhanh, đóng gói kỹ."
+        )
+        expected_map = {
+            "R01": "Pin tụt nhanh chỉ dùng được khoảng 1 tiếng.",
+            "R02": "Mình dùng bình thường thấy pin khá lâu, nghe cả buổi chiều ổn.",
+            "R03": "Giao hàng nhanh, đóng gói kỹ.",
+        }
+
+        def fake_split_call(system, user):
+            return {
+                "text": json.dumps({
+                    "status": "risks",
+                    "summary": "Có 1 phản ánh về thời lượng pin kèm 1 ý kiến đối chứng.",
+                    "risks": [{
+                        "title": "Pin tụt nhanh",
+                        "summary": "1 review báo pin chỉ dùng được khoảng 1 tiếng, dù có trải nghiệm khác thấy ổn.",
+                        "severity": "medium",
+                        "risk_citations": ["R01"],
+                        "counter_citations": ["R01", "R02"],  # R01 trung phai bi loai khoi counter_citations
+                    }],
+                }, ensure_ascii=False),
+                "model": "mock-gpt",
+                "tokens_in": 60,
+                "tokens_out": 40,
+            }
+
+        with mock.patch.object(agent, "call_model", side_effect=fake_split_call):
+            res = agent.answer(text)
+
+        risk = res["structured"]["risks"][0]
+        self.assertEqual(risk["citation_ids"], ["R01"])
+        self.assertEqual(risk["risk_citation_ids"], ["R01"])
+        self.assertEqual(risk["counter_citation_ids"], ["R02"])
+        self.assertIn("## Ý kiến tích cực / đối chứng (không phải bằng chứng rủi ro)", res["output"])
+        self.assertIn('[R01]: "Pin tụt nhanh chỉ dùng được khoảng 1 tiếng."', res["output"])
+        self.assertIn('[R02]: "Mình dùng bình thường thấy pin khá lâu, nghe cả buổi chiều ổn."', res["output"])
+        _, missing, bad_quotes = _check_trich_dan_ton_tai(res["output"], expected_map)
+        self.assertEqual(missing, [])
+        self.assertEqual(bad_quotes, [])
+
 
 if __name__ == "__main__":
     unittest.main()

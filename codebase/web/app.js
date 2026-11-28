@@ -76,7 +76,9 @@ function render(data) {
   $("empty-state").hidden = true; $("results").hidden = false;
   $("result-kind").textContent = data.mock ? "CHẾ ĐỘ GIẢ · CHƯA PHÂN TÍCH BẰNG AI THẬT" :
     data.usage?.model_calls ? "KẾT QUẢ PHÂN TÍCH" : "KIỂM TRA DỮ LIỆU · CHƯA GỌI AI";
-  $("result-heading").textContent = titles[r.status] || "Chưa thể hiển thị kết quả";
+  $("result-heading").textContent = (data.mock && r.status === "insufficient")
+    ? "Chế độ giả — chưa gọi AI thật"
+    : (titles[r.status] || "Chưa thể hiển thị kết quả");
   $("result-message").textContent = r.summary;
   const measured = data.origin === "backend" && r.stats && !["error", "invalid_input", "refused"].includes(r.status);
   ["quantitative", "coverage-section", "signals-section", "sources-section"].forEach(id => $(id).hidden = !measured);
@@ -106,7 +108,18 @@ function render(data) {
     risk.citations.forEach(source => {
       const canonical = snapshot.find(row => row.id === source.id); if (!canonical) return;
       const el = node("div", undefined, "evidence"); el.append(node("blockquote", canonical.text), sourceButton(source.id)); card.append(el);
-    }); return card;
+    });
+    const counters = Array.isArray(risk.counter_citations) ? risk.counter_citations : [];
+    if (counters.length) {
+      const box = node("div", undefined, "counter-evidence");
+      box.append(node("p", "Ý kiến tích cực / đối chứng liên quan (không phải bằng chứng lỗi):", "counter-label"));
+      counters.forEach(source => {
+        const canonical = snapshot.find(row => row.id === source.id); if (!canonical) return;
+        const el = node("div", undefined, "evidence evidence-counter"); el.append(node("blockquote", canonical.text), sourceButton(source.id)); box.append(el);
+      });
+      card.append(box);
+    }
+    return card;
   }));
   $("state-action").hidden = r.status === "risks"; $("retry").hidden = r.status !== "error";
   const usage = data.usage;
@@ -179,16 +192,34 @@ $("edit").addEventListener("click", () => {
 $("retry").addEventListener("click", () => form.requestSubmit());
 $("close-source").addEventListener("click", () => $("source-dialog").close());
 $("source-dialog").addEventListener("close", () => { if (lastSourceButton?.isConnected) lastSourceButton.focus(); });
-$("product-select").addEventListener("change", async () => {
-  const id = $("product-select").value; invalidate(); const ticket = revision;
-  if (!id) { $("reviews").value = ""; preview(); return; }
+async function loadCatalogProduct(id) {
+  invalidate(); const ticket = revision;
+  if (!id) { $("reviews").value = ""; preview(); return false; }
   try {
     const response = await fetch(`/api/products/${encodeURIComponent(id)}`);
     if (!response.ok) throw new Error("catalog");
-    const data = await response.json(); if (ticket !== revision) return;
+    const data = await response.json(); if (ticket !== revision) return false;
     $("reviews").value = data.text; preview();
     $("catalog-note").textContent = data.synthetic ? "Bộ synthetic để thử UI, không phải dữ liệu thu thập thật." : "Mẫu review công khai đã lưu; không tải lại trang nguồn.";
-  } catch (_) { if (ticket === revision) inputError("Chưa tải được sản phẩm; có thể chuyển sang dán review.", "product-select"); }
+    return true;
+  } catch (_) {
+    if (ticket === revision) inputError("Chưa tải được sản phẩm; có thể chuyển sang dán review.", "product-select");
+    return false;
+  }
+}
+$("product-select").addEventListener("change", () => { loadCatalogProduct($("product-select").value); });
+$("try-sp01").addEventListener("click", async () => {
+  if (busy) return;
+  $("input-mode").value = "catalog";
+  changeMode();
+  if (!$("product-select").querySelector('option[value="SP01"]')) {
+    const opt = node("option", "SP01 · Nồi chiên không dầu Sunhouse 9 lít SHD4035 · 20 review");
+    opt.value = "SP01";
+    $("product-select").append(opt);
+  }
+  $("product-select").value = "SP01";
+  const loaded = await loadCatalogProduct("SP01");
+  if (loaded) form.requestSubmit();
 });
 async function loadExtensionHandoff(handoffId) {
   $("input-mode").value = "payload";
