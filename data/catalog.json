@@ -1,6 +1,6 @@
 {
-  "version": "cp2-v1",
-  "updated_at": "2026-11-27",
+  "version": "cp3-v1",
+  "updated_at": "2026-11-28",
   "note": "Tập dữ liệu mẫu công khai đã ẩn danh đợt 1 (CP2) gồm 3 sản phẩm phổ biến >= 200.000đ, 20 đánh giá mới nhất/sản phẩm (tổng N=60). Không chứa nhãn gán tay trong file sản phẩm để tránh rò rỉ nhãn vào luồng AI.",
   "products": [
     {
@@ -53,6 +53,58 @@
       "source_url": "https://www.thegioididong.com/sac-dtdd/pin-sac-du-phong-polymer-20000mah-10-5w-ava-plus-q7/danh-gia",
       "accessed_date": "2026-11-27",
       "file": "data/products/ava_plus_q7.json"
+    },
+    {
+      "product_code": "SP04",
+      "product_id": "logitech_signature_m650",
+      "product_name": "Chuột không dây bluetooth Logitech Signature M650 - Hàng chính hãng",
+      "category": "Phụ kiện máy tính",
+      "platform": "Tiki",
+      "price_vnd": 678000,
+      "original_price_vnd": 795300,
+      "displayed_rating": 4.8,
+      "displayed_five_star_pct": 91.0,
+      "total_reviews_displayed": 849,
+      "sample_review_count": 30,
+      "product_url": "https://tiki.vn/chuot-khong-day-bluetooth-logitech-signature-m650-hang-chinh-hang-p176899932.html",
+      "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=176899932",
+      "accessed_date": "2026-11-28",
+      "file": "data/products/logitech_signature_m650.json"
+    },
+    {
+      "product_code": "SP05",
+      "product_id": "locknlock_lhc6180slv",
+      "product_name": "Bình Giữ Nhiệt Bằng Thép Không Gỉ Lock&Lock Vacuum Bottle LHC6180SLV (800ML)",
+      "category": "Đồ dùng gia đình",
+      "platform": "Tiki",
+      "price_vnd": 440220,
+      "original_price_vnd": 759000,
+      "displayed_rating": 4.7,
+      "displayed_five_star_pct": 83.0,
+      "total_reviews_displayed": 8092,
+      "sample_review_count": 30,
+      "product_url": "https://tiki.vn/binh-giu-nhiet-bang-thep-khong-gi-lock-lock-vacuum-bottle-lhc6180slv-800ml-p73124602.html",
+      "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=73124602",
+      "accessed_date": "2026-11-28",
+      "file": "data/products/locknlock_lhc6180slv.json"
+    },
+    {
+      "product_code": "SP06",
+      "product_id": "philips_sth3010_70",
+      "product_name": "Bàn Ủi Hơi Nước Philips STH3010/70 (1000W) - Hàng Chính Hãng",
+      "category": "Thiết bị gia dụng",
+      "platform": "Tiki",
+      "price_vnd": 784917,
+      "original_price_vnd": 1399000,
+      "displayed_rating": 4.7,
+      "displayed_five_star_pct": 81.0,
+      "total_reviews_displayed": 271,
+      "sample_review_count": 30,
+      "product_url": "https://tiki.vn/ban-ui-hoi-nuoc-philips-sth3010-70-1000w-hang-chinh-hang-p81676555.html",
+      "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=81676555",
+      "accessed_date": "2026-11-28",
+      "file": "data/products/philips_sth3010_70.json"
     }
-  ]
+  ],
+  "notes": "Tập dữ liệu review công khai đã ẩn danh hoàn toàn (N = 150: đợt 1 CP2 60 review từ Điện máy XANH / Thế Giới Di Động [SP01–SP03, giữ nguyên làm chuẩn eval/test] + đợt 2 CP3 90 review từ sàn TMĐT mở Tiki [SP04–SP06]). Bảng nhãn gán tay tách riêng tại evidence/cp2_labels.csv và evidence/cp3_labels.csv."
 }

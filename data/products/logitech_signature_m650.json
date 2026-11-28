@@ -1,0 +1,289 @@
+{
+  "product_code": "SP04",
+  "product_id": "logitech_signature_m650",
+  "product_name": "Chuột không dây bluetooth Logitech Signature M650 - Hàng chính hãng",
+  "category": "Phụ kiện máy tính",
+  "platform": "Tiki",
+  "seller_name": "Tiki Trading",
+  "price_vnd": 678000,
+  "original_price_vnd": 795300,
+  "displayed_rating": 4.8,
+  "displayed_five_star_pct": 91.0,
+  "total_reviews_displayed": 849,
+  "product_url": "https://tiki.vn/chuot-khong-day-bluetooth-logitech-signature-m650-hang-chinh-hang-p176899932.html",
+  "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=176899932",
+  "accessed_date": "2026-11-28",
+  "sampling_rule": "Lấy trọn 30 đánh giá mới nhất (sort=id|desc, trang 1 lấy 20 + trang 2 lấy 10 đầu), không chọn lọc; đã xoá toàn bộ tên tài khoản, avatar và thông tin người đánh giá.",
+  "reviews": [
+    {
+      "id": "R01",
+      "rating_star": 5,
+      "text": "Giao nhanh á",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R02",
+      "rating_star": 5,
+      "text": "Chuột êm, sài mượt, ko ồn",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R03",
+      "rating_star": 4,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R04",
+      "rating_star": 5,
+      "text": "Mua đồ điện tử thì cứ lên tiki đặt cho an tâm",
+      "usage_duration": "Đã dùng 5 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R05",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R06",
+      "rating_star": 5,
+      "text": "Gói hàng cẩn thận, giao hàng cực nhanh. Chuột dùng mượt và êm. Hiện đang rất hài lòng.",
+      "usage_duration": "Đã dùng 3 giờ",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R07",
+      "rating_star": 1,
+      "text": "Khi đang sử dụng mà để lâu tý ko đụng đến là mất kết nối, phải bật tắt lại chuột mới dùng lại được",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R08",
+      "rating_star": 5,
+      "text": "Chuột mượt, chắc chắn, dùng sướng, đáng tiền",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R09",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R10",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R11",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R12",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R13",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R14",
+      "rating_star": 5,
+      "text": "Phím bấm cực êm, không ồn ào, chắc tay",
+      "usage_duration": "",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R15",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R16",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R17",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R18",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R19",
+      "rating_star": 5,
+      "text": "Xài ngon",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R20",
+      "rating_star": 5,
+      "text": "Chuột xài êm, chất lượng, giao hàng nhanh",
+      "usage_duration": "Đã dùng 2 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R21",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R22",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 13 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R23",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R24",
+      "rating_star": 5,
+      "text": "Hàng chính hãng, nguyên seal",
+      "usage_duration": "Đã dùng 2 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R25",
+      "rating_star": 5,
+      "text": "Chuột xài rất ok, click k bị kêu, có vẻ bền",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R26",
+      "rating_star": 4,
+      "text": "",
+      "usage_duration": "Đã dùng 4 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R27",
+      "rating_star": 2,
+      "text": "Sản phẩm bị lỗi không nhận tín hiều bằng đầu usb .Đổi trả 2 lần, lần này là lần thứ 3. Nếu sản phẩm bị lỗi nữa xin ko bao giờ mua hàng này nữa.",
+      "usage_duration": "Đã dùng 10 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R28",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R29",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R30",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    }
+  ]
+}

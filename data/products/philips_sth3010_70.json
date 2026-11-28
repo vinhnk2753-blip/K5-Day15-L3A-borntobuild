@@ -1,0 +1,289 @@
+{
+  "product_code": "SP06",
+  "product_id": "philips_sth3010_70",
+  "product_name": "Bàn Ủi Hơi Nước Philips STH3010/70 (1000W) - Hàng Chính Hãng",
+  "category": "Thiết bị gia dụng",
+  "platform": "Tiki",
+  "seller_name": "Tiki Trading",
+  "price_vnd": 784917,
+  "original_price_vnd": 1399000,
+  "displayed_rating": 4.7,
+  "displayed_five_star_pct": 81.0,
+  "total_reviews_displayed": 271,
+  "product_url": "https://tiki.vn/ban-ui-hoi-nuoc-philips-sth3010-70-1000w-hang-chinh-hang-p81676555.html",
+  "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=81676555",
+  "accessed_date": "2026-11-28",
+  "sampling_rule": "Lấy trọn 30 đánh giá mới nhất (sort=id|desc, trang 1 lấy 20 + trang 2 lấy 10 đầu), không chọn lọc; đã xoá toàn bộ tên tài khoản, avatar và thông tin người đánh giá.",
+  "reviews": [
+    {
+      "id": "R01",
+      "rating_star": 4,
+      "text": "Ok",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R02",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R03",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R04",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R05",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 10 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R06",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R07",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R08",
+      "rating_star": 5,
+      "text": "Hàng Philips xịn xò, chi tiết nào cũng đẹp , màu đẹp, dùng tiện lợi, dùng thời gian sẽ đánh giá chất lượng. Cám ơn Tiki và Philips",
+      "usage_duration": "Đã dùng 1 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R09",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 5 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R10",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R11",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R12",
+      "rating_star": 4,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R13",
+      "rating_star": 5,
+      "text": "Bàn ủi rất oke nhé mọi người!",
+      "usage_duration": "Đã dùng 2 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R14",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R15",
+      "rating_star": 5,
+      "text": "Lực phun tốt",
+      "usage_duration": "Đã dùng 3 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R16",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R17",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R18",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R19",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 9 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R20",
+      "rating_star": 4,
+      "text": "Ủi phẳng một số vải dễ ủi thôi nhé.",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R21",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R22",
+      "rating_star": 5,
+      "text": "Gọn nhẹ và phù hợp mang đi du lịch. Mình rất thích sản phẩm này. Nếu chỗ đựng nước to hơn tí nữa là perfect.",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R23",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R24",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R25",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R26",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R27",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R28",
+      "rating_star": 4,
+      "text": "Sử dụngng k tien, moi tay",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R29",
+      "rating_star": 2,
+      "text": "Nước phun giọt lớn, máy ủi không thẳng",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R30",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    }
+  ]
+}

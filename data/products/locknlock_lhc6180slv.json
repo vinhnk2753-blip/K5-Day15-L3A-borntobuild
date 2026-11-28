@@ -1,0 +1,289 @@
+{
+  "product_code": "SP05",
+  "product_id": "locknlock_lhc6180slv",
+  "product_name": "Bình Giữ Nhiệt Bằng Thép Không Gỉ Lock&Lock Vacuum Bottle LHC6180SLV (800ML)",
+  "category": "Đồ dùng gia đình",
+  "platform": "Tiki",
+  "seller_name": "Tiki Trading",
+  "price_vnd": 440220,
+  "original_price_vnd": 759000,
+  "displayed_rating": 4.7,
+  "displayed_five_star_pct": 83.0,
+  "total_reviews_displayed": 8092,
+  "product_url": "https://tiki.vn/binh-giu-nhiet-bang-thep-khong-gi-lock-lock-vacuum-bottle-lhc6180slv-800ml-p73124602.html",
+  "source_url": "https://tiki.vn/api/v2/reviews?limit=20&sort=id|desc&product_id=73124602",
+  "accessed_date": "2026-11-28",
+  "sampling_rule": "Lấy trọn 30 đánh giá mới nhất (sort=id|desc, trang 1 lấy 20 + trang 2 lấy 10 đầu), không chọn lọc; đã xoá toàn bộ tên tài khoản, avatar và thông tin người đánh giá.",
+  "reviews": [
+    {
+      "id": "R01",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 7 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R02",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R03",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R04",
+      "rating_star": 5,
+      "text": "Sp nhìn dc",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R05",
+      "rating_star": 5,
+      "text": "Hàng chất lượng, giữ nhiệt tốt.",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R06",
+      "rating_star": 5,
+      "text": "Đang dùng hàng của shop mua rất lâu nhưng vẫn dùng tốt. Vì mất cái ron nên mua thêm . Chất lượng vẫn như trước👍",
+      "usage_duration": "Đã dùng 8 phút",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R07",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R08",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R09",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R10",
+      "rating_star": 5,
+      "text": "Bình đẹp mới dùng không biết có nóng lâu không",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R11",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R12",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R13",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R14",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R15",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R16",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 9 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R17",
+      "rating_star": 4,
+      "text": "",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R18",
+      "rating_star": 5,
+      "text": "Oke ạ",
+      "usage_duration": "Đã dùng 5 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R19",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R20",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 8 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R21",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R22",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 4 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R23",
+      "rating_star": 5,
+      "text": "Hàng giao nhanh, bao bì đóng gói cẩn thận. Chỉ tiếc là màu bình (xanh đậm) không được như kỳ vọng, khác với màu hình trên hộp. Có lẽ bình có màu tím nhạt thì đúng hơn. Cảm ơn shop.",
+      "usage_duration": "Đã dùng 4 giờ",
+      "helpful_count": 0,
+      "has_images": true,
+      "support_replied": false
+    },
+    {
+      "id": "R24",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R25",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 2 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R26",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 5 giờ",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R27",
+      "rating_star": 5,
+      "text": "Nhìn đẹp, hàng đúng như mo tả, chất lượng để sài 1 thời gian.",
+      "usage_duration": "Đã dùng 1 ngày",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R28",
+      "rating_star": 5,
+      "text": "Rất tốt . Mình đã dùng gần 2 năm nhưng thấy rất ổn",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R29",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 1 năm",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    },
+    {
+      "id": "R30",
+      "rating_star": 5,
+      "text": "",
+      "usage_duration": "Đã dùng 3 tháng",
+      "helpful_count": 0,
+      "has_images": false,
+      "support_replied": false
+    }
+  ]
+}

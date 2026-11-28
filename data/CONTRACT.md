@@ -1,6 +1,6 @@
 # Hợp đồng dữ liệu & I/O — Nhóm borntobuild (Track D)
 
-> Chốt ở **CP2 (Issue #1)** để cả 4 thành viên làm song song: #2 (Eval/Benchmark), #3 (Agent/Tools), #4 (UI demo) và #5 (Mở rộng dữ liệu CP3).
+> Chốt ở **CP2 (Issue #1)** và mở rộng danh mục dữ liệu ở **CP3 (Issue #5)** (giữ nguyên 100% hợp đồng I/O §3 và 3 sản phẩm gốc `SP01–SP03` để không ảnh hưởng benchmark/test).
 
 ---
 
@@ -8,13 +8,16 @@
 
 ```text
 data/
-├── CONTRACT.md                  # Tài liệu hợp đồng này
-├── DATA_CARD.md                 # Data card mô tả nguồn, xử lý, giới hạn
-├── catalog.json                 # Chỉ mục sản phẩm sẵn có cho tool & UI
+├── CONTRACT.md                     # Tài liệu hợp đồng này
+├── DATA_CARD.md                    # Data card mô tả nguồn, xử lý, giới hạn (N = 150)
+├── catalog.json                    # Chỉ mục 6 sản phẩm sẵn có cho tool & UI (cp3-v1)
 └── products/
-    ├── sunhouse_shd4035.json    # SP01 — Nồi chiên không dầu Sunhouse 9 lít SHD4035
-    ├── airpods_4_mxp63.json     # SP02 — Tai nghe Bluetooth Apple AirPods 4 (MXP63)
-    └── ava_plus_q7.json         # SP03 — Pin sạc dự phòng Polymer 20000mAh 10.5W AVA+ Q7
+    ├── sunhouse_shd4035.json       # SP01 — Nồi chiên không dầu Sunhouse 9L SHD4035 (ĐMX · 20 review)
+    ├── airpods_4_mxp63.json        # SP02 — Tai nghe Apple AirPods 4 MXP63 (TGDĐ · 20 review)
+    ├── ava_plus_q7.json            # SP03 — Pin sạc dự phòng AVA+ Q7 (TGDĐ · 20 review)
+    ├── logitech_signature_m650.json # SP04 — Chuột không dây Logitech Signature M650 (Tiki · 30 review)
+    ├── locknlock_lhc6180slv.json   # SP05 — Bình giữ nhiệt Lock&Lock LHC6180SLV 800ml (Tiki · 30 review)
+    └── philips_sth3010_70.json     # SP06 — Bàn ủi hơi nước Philips STH3010/70 (Tiki · 30 review)
 ```
 
 ### 1.1. Schema `data/catalog.json`
@@ -98,11 +101,14 @@ Mỗi file chứa metadata sản phẩm và mảng `reviews` đã ẩn danh hoà
 | **Nhiễu / không phản ánh chất lượng SP** (`nhieu`) | `nhieu_trong` | Nội dung văn bản trống (`""`) hoặc chỉ có dấu câu/ký tự vô nghĩa (vd `"."`). |
 | | `nhieu_khen_chung` | Khen ngắn chung chung (vd `"Tốt"`, `"Sài ổn"`, `"Sản phẩm rất là ok"`) không nêu thuộc tính kỹ thuật, độ bền hay trải nghiệm sử dụng cụ thể. |
 | | `nhieu_hoi_dap_rao_ban` | Hỏi chính sách thu cũ/đổi trả, hỏi hướng dẫn cài đặt tính năng, hoặc rao bán/pass lại sản phẩm. |
-| | `nhieu_ngoai_chat_luong` | Chỉ phàn nàn/bình luận về yếu tố ngoài chất lượng kỹ thuật sản phẩm: biến động giá/khuyến mãi, thái độ nhân viên, đóng gói/giao hàng, lệch ngày kích hoạt bảo hành, thiếu phụ kiện vốn không có trong hộp, hoặc người mua tự đánh rơi làm hỏng. |
-| **Có thông tin chất lượng SP** (`co_thong_tin`) | `co_thong_tin_rui_ro` | Mô tả lỗi, hạn chế, rủi ro chất lượng/độ bền/an toàn/tương thích/trải nghiệm sử dụng cụ thể của bản thân sản phẩm. |
-| | `co_thong_tin_tich_cuc` | Mô tả trải nghiệm tốt có ít nhất 1 chi tiết cụ thể về công năng, hiệu năng hoặc sử dụng thực tế (vd dễ dùng, ít hao điện, chiên nhanh, pin lâu, không nóng). |
+| | `nhieu_ngoai_chat_luong` | Chỉ phàn nàn/bình luận về yếu tố ngoài chất lượng kỹ thuật sản phẩm: giao hàng/ship, khen sàn, đóng gói nguyên seal, biến động giá/khuyến mãi, thái độ nhân viên, lệch ngày kích hoạt bảo hành, thiếu phụ kiện vốn không có trong hộp, hoặc người mua tự đánh rơi làm hỏng. |
+| | `nhieu_chua_dung` | Mới nhận hàng/mới mở hộp, tự ghi rõ chưa sử dụng đủ lâu để đánh giá chất lượng thực tế. |
+| | `nhieu_nhan_xu` | Đánh giá đối phó nhằm nhận xu/thưởng điểm của sàn, không mô tả chất lượng sản phẩm. |
+| | `nhieu_lap_bat_thuong` | Lặp lại nguyên văn (≥8 ký tự chuẩn hoá) trong cùng một sản phẩm. |
+| **Có thông tin chất lượng SP** (`co_thong_tin`) | `co_thong_tin_rui_ro` | Mô tả lỗi, hạn chế, lệch mô tả hoặc rủi ro chất lượng/độ bền/an toàn/tương thích/trải nghiệm sử dụng cụ thể của bản thân sản phẩm. |
+| | `co_thong_tin_tich_cuc` | Mô tả trải nghiệm tốt có ít nhất 1 chi tiết cụ thể về công năng, hiệu năng hoặc sử dụng thực tế (vd dễ dùng, ít hao điện, chiên nhanh, êm mượt, giữ nhiệt tốt, lực phun tốt). |
 
-*Lưu ý cho giai đoạn mở rộng CP3 (Shopee/Tiki/Lazada):* giữ nguyên 2 nhóm lớn (`nhieu` / `co_thong_tin`) và bổ sung các nhãn con đặc trưng sàn mở nếu xuất hiện (vd `nhieu_nhan_xu`, `nhieu_chua_dung`, `nhieu_lap_bat_thuong`).
+*Ghi chú CP3 (28/11/2026):* Trường `rating_star` (số nguyên `1..5`, tùy chọn) được bổ sung vào schema review trong `data/products/*.json` đối với các sàn công khai sao từng bình luận (vd Tiki `SP04–SP06`); `codebase/tools.py` đã hỗ trợ đọc trực tiếp trường này.
 
 ---
 
