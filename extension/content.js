@@ -107,8 +107,14 @@
     if (msg.source === PROGRESS_SOURCE) {
       const counts = Object.entries(msg.counts_by_star || {})
         .map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      const action = msg.stage === "requesting" ? "Đang tải" : "Đã xử lý";
-      status.textContent = `${action} trang ${msg.page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
+      const starLabel = msg.star === 0 ? "mọi mức sao" : msg.star ? `${msg.star}★` : "review";
+      const page = msg.star_page || msg.page;
+      const action = msg.stage === "requesting"
+        ? `Đang tải ${starLabel}`
+        : msg.stage === "star_done"
+          ? `Đã xong ${starLabel}`
+          : `Đã xử lý ${starLabel}`;
+      status.textContent = `${action}, trang ${page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
       return;
     }
 
@@ -240,7 +246,10 @@
       renderResult(analysis.structured, crawlData.product?.url || location.href);
       agentOutput.textContent = JSON.stringify(analysis, null, 2);
       agentDetails.hidden = false;
-      status.textContent = `Phân tích xong (${analysis.structured.status || "không rõ"}): ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.`;
+      const crawlWarnings = Array.isArray(crawlData.crawl_warnings) && crawlData.crawl_warnings.length
+        ? ` Cảnh báo crawl: ${crawlData.crawl_warnings.join(" ")}`
+        : "";
+      status.textContent = `Phân tích xong (${analysis.structured.status || "không rõ"}): ${analysis.structured.review_count ?? 0} review sạch, model ${analysis.structured.model || "không rõ"}.${crawlWarnings}`;
     } catch (error) {
       status.textContent = `Đã giữ JSON (${crawlData.review_count} review), nhưng agent local chưa phân tích được: ${error.message}\nHãy bật python codebase/extension_server.py rồi bấm "Phân tích lại".`;
     } finally {
