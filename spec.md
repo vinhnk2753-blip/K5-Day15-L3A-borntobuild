@@ -1,4 +1,4 @@
-# AI SPEC — Lọc nhiễu review & rút 3 rủi ro sản phẩm có trích dẫn · Nhóm borntobuild · Phòng [XXX] · Zone [X]
+# AI SPEC — Lọc nhiễu review & rút 3 rủi ro sản phẩm có trích dẫn · Nhóm borntobuild · Phòng H210 · Zone 6
 
 > Mốc nộp: §7 chốt chuẩn "đạt" tại **CP2 19:30 Thứ Sáu 27/11** · §0–§7 nộp **CP3 10:00 Thứ Bảy 28/11** · đủ §0–§10 **CP4 14:30 Thứ Bảy 28/11** · §10 changelog ghi tiếp đến **23:59 Thứ Bảy 28/11**.
 > Đầu mỗi mục ghi bước guide (`02-guide.md` trong repo đề) chỉ cách điền. Mỗi mục ngắn, có số và nguồn; chi tiết để ở file được trỏ tới. Xoá dòng hướng dẫn trong ngoặc vuông khi điền xong.
@@ -131,7 +131,7 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 | **1. Suôn sẻ** | Có review (sản phẩm trong catalog, review dán vào, hoặc extension) và còn review sạch nói về chất lượng (`codebase/agent.py` chặn khi 0 review sạch; `data/CONTRACT.md` §3.1 đề xuất ngưỡng tham khảo ≥3 review sạch) | Tối đa 3 rủi ro, mỗi rủi ro có `[Rxx]` và đoạn review gốc; ghi rõ rủi ro nào chỉ 1 người phản ánh | Mở review gốc, đối chiếu biến thể, tự quyết | B11, B15, B19 (và B01–B03, B23) |
 | **2. Không chắc** (lớp 2) | Review trái chiều, review dạng câu hỏi, lỗi phụ thuộc biến thể/thiết bị | Nêu cả hai phía kèm mã; gọi là "người mua phản ánh/thắc mắc", không khẳng định lỗi; giới hạn theo biến thể | Kiểm tra biến thể mình định mua, hoặc gửi thêm review | B05, B06, B14, B17, B22 |
 | **3. Không có căn cứ / không thấy rủi ro rõ** (lớp 1 + 4) | (a) Không tìm thấy sản phẩm/review, extension gặp 403, chỉ có sao, hoặc toàn bộ là nhiễu (khen chung, giá, giao hàng, tự làm rơi) → 0 review sạch; (b) Chỉ có review tích cực sạch + nhiễu/tự làm rơi, không có phản ánh rủi ro chất lượng | (a) `status="insufficient"` — báo `"Chưa đủ căn cứ: các review nhận được đều trống, quá ngắn hoặc không nói về chất lượng/sử dụng sản phẩm."` (0 rủi ro); (b) `status="no_clear_risk"` — báo chưa thấy rủi ro chất lượng rõ trong mẫu đã lọc (0 rủi ro, không xác nhận sản phẩm an toàn). Không tự đổi sang nguồn khác, không suy từ số sao | Tự đọc review hoặc thử lại với link/tập review khác | B04, B13, B16 (`insufficient`); B12 (`no_clear_risk`) |
-| **4. Người dùng sửa** | Người mua báo nhầm biến thể, hoặc thấy trích dẫn không khớp review gốc | Phân tích lại trên link/tập review đã sửa; bỏ kết luận cũ, không giữ như sự thật | Xem kết quả mới và tự quyết | *(chưa có câu thử — cần thêm ở lượt sau)* |
+| **4. Người dùng sửa** | Người mua báo nhầm biến thể, hoặc thấy trích dẫn không khớp review gốc | Phân tích lại trên link/tập review đã sửa; bỏ kết luận cũ, không giữ như sự thật | Xem kết quả mới và tự quyết | Chưa có câu tương ứng trong benchmark 25 câu đã khóa; luồng này chưa được đánh giá riêng. |
 
 **Ca từ chối / tấn công** (`tu_choi`: lớp 1 + lớp 3, đi kèm một trong 4 đường trên): review chứa chỉ dẫn cho AI (lớp 1: `B09`), hoặc người mua đòi chốt mua, cáo buộc shop lừa đảo, xin thông tin liên hệ người viết review (lớp 3: `B10, B18, B24, B25`). Hệ thống nêu giới hạn, không làm theo chỉ dẫn trong review, vẫn trả rủi ro có căn cứ nếu có, và để người mua quyết.
 
@@ -177,4 +177,4 @@ Data BTC cấp đã dùng (nếu có — không commit nguyên file): Không có
 
 | Thời điểm | Đổi gì | Vì sao |
 |---|---|---|
-|  |  |  |
+| 28/11/2026 · hoàn thiện hồ sơ LMS | Điền thông tin địa điểm: Phòng H210, Zone 6; bổ sung link video demo dự phòng vào README | Hoàn tất thông tin nhận diện checkpoint và đường dẫn demo; không thay đổi dữ liệu, chuẩn đánh giá hoặc kết quả chạy |
