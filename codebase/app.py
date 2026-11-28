@@ -1,4 +1,6 @@
 """Web local dùng backend main thống nhất; chạy bằng python run.py."""
+import base64
+import hashlib
 import json
 import os
 import re
@@ -24,7 +26,46 @@ from ui_backend import ROOT, MAX_BODY_BYTES, MAX_REVIEW_CHARS, MAX_REVIEWS, anal
 HANDOFF_TTL_SECONDS = 900
 MAX_HANDOFFS = 10
 _HANDOFF_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
-_EXT_ORIGIN_RE = re.compile(r"^chrome-extension://[A-Za-z0-9._-]+$")
+_EXT_ID_RE = re.compile(r"^[a-p]{32}$")
+_CHROME_ID_TABLE = str.maketrans("0123456789abcdef", "abcdefghijklmnop")
+
+
+def _derive_manifest_extension_id(manifest_path=None):
+    """Tính Chrome Extension ID 32 ký tự cố định từ trường public `key` trong extension/manifest.json."""
+    path = manifest_path or (ROOT / "extension" / "manifest.json")
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        key = manifest.get("key")
+        if not isinstance(key, str) or not key.strip():
+            return None
+        der = base64.b64decode(key.strip(), validate=True)
+        ext_id = hashlib.sha256(der).hexdigest()[:32].translate(_CHROME_ID_TABLE)
+        return ext_id if _EXT_ID_RE.fullmatch(ext_id) else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def _load_allowed_extension_ids(override=None):
+    """Trả tập Chrome Extension ID được phép gọi /api/extension-handoff (fail-closed)."""
+    if override is not None:
+        return frozenset(
+            ext_id.strip().lower()
+            for ext_id in override
+            if isinstance(ext_id, str) and _EXT_ID_RE.fullmatch(ext_id.strip().lower())
+        )
+    raw = os.environ.get("REVIEW_LENS_EXTENSION_IDS")
+    if raw is not None and raw.strip():
+        tokens = [part.strip().lower() for part in re.split(r"[\s,]+", raw.strip()) if part.strip()]
+        return frozenset(token for token in tokens if _EXT_ID_RE.fullmatch(token))
+    manifest_id = _derive_manifest_extension_id()
+    return frozenset({manifest_id}) if manifest_id else frozenset()
+
+
+def _is_allowed_extension_origin(origin, allowed_ids):
+    if not isinstance(origin, str) or not origin.startswith("chrome-extension://"):
+        return False
+    ext_id = origin[len("chrome-extension://"):]
+    return bool(_EXT_ID_RE.fullmatch(ext_id) and ext_id in allowed_ids)
 
 
 def _validate_handoff_payload(payload):
@@ -72,11 +113,12 @@ def cli_main():
                    usage["tokens_in"], usage["tokens_out"]))
 
 
-def create_server(port=8000):
+def create_server(port=8000, allowed_extension_ids=None):
     catalog = load_catalog()
     lock = threading.Lock()
     handoff_lock = threading.Lock()
     handoffs = {}  # Chỉ lưu trong bộ nhớ tạm (không ghi file theo spec.md §9).
+    allowed_ext_ids = _load_allowed_extension_ids(allowed_extension_ids)
     static = Path(__file__).with_name("web")
 
     def prune_handoffs(now):
@@ -123,8 +165,8 @@ def create_server(port=8000):
                 self.send_data({"message": "Không tìm thấy endpoint."}, 404)
                 return
             origin = self.headers.get("Origin", "")
-            if not _EXT_ORIGIN_RE.fullmatch(origin):
-                self.send_data({"message": "Origin không được phép."}, 403)
+            if not _is_allowed_extension_origin(origin, allowed_ext_ids):
+                self.send_data({"message": "Extension ID không nằm trong danh sách được phép."}, 403)
                 return
             self.send_response(204)
             self.send_header("Access-Control-Allow-Origin", origin)
@@ -188,8 +230,8 @@ def create_server(port=8000):
             path = urlsplit(self.path).path
             if path == "/api/extension-handoff":
                 origin = self.headers.get("Origin", "")
-                if not _EXT_ORIGIN_RE.fullmatch(origin):
-                    self.send_data({"ok": False, "message": "Chỉ nhận dữ liệu tự động từ Chrome extension."}, 403)
+                if not _is_allowed_extension_origin(origin, allowed_ext_ids):
+                    self.send_data({"ok": False, "message": "Extension ID không nằm trong danh sách được phép."}, 403)
                     return
                 cors = {"Access-Control-Allow-Origin": origin, "Vary": "Origin"}
                 payload = self._read_json_body(extra_headers=cors)

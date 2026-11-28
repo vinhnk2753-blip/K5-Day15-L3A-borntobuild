@@ -134,8 +134,11 @@ class WebTests(unittest.TestCase):
             with patch.dict(os.environ, {"REVIEW_LENS_MODE": "web", "REVIEW_LENS_PORT": port}), patch("sys.stdout", new_callable=io.StringIO):
                 self.assertEqual(main(), 1)
 
+    PINNED_EXT_ID = "ioiaamibggpopefebobaeikfaabhnfln"
+    PINNED_EXT_ORIGIN = "chrome-extension://" + PINNED_EXT_ID
+
     def test_extension_handoff_cors_and_origin_isolation(self):
-        ext_origin = "chrome-extension://abcdefghijklmnop"
+        ext_origin = self.PINNED_EXT_ORIGIN
         status, headers, _ = self.raw_request(
             "OPTIONS",
             "/api/extension-handoff",
@@ -146,32 +149,40 @@ class WebTests(unittest.TestCase):
         self.assertIn("POST", headers.get("Access-Control-Allow-Methods", ""))
         self.assertEqual(headers.get("Access-Control-Allow-Private-Network"), "true")
 
-        status, headers, _ = self.raw_request(
-            "OPTIONS",
-            "/api/extension-handoff",
-            headers={"Origin": "https://evil.example", "Access-Control-Request-Private-Network": "true"},
-        )
-        self.assertEqual(status, 403)
-        self.assertNotIn("Access-Control-Allow-Origin", headers)
-        self.assertNotIn("Access-Control-Allow-Private-Network", headers)
+        # Reject web origins AND any Chrome extension ID not in allowlist.
+        for bad_origin in (
+            "https://evil.example",
+            "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "chrome-extension://abcdefghijklmnop",
+            ext_origin + "/extra",
+        ):
+            status, headers, _ = self.raw_request(
+                "OPTIONS",
+                "/api/extension-handoff",
+                headers={"Origin": bad_origin, "Access-Control-Request-Private-Network": "true"},
+            )
+            self.assertEqual(status, 403, f"Expected 403 for OPTIONS Origin={bad_origin}")
+            self.assertNotIn("Access-Control-Allow-Origin", headers)
+            self.assertNotIn("Access-Control-Allow-Private-Network", headers)
 
         manifest_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "extension", "manifest.json")
         with open(manifest_path, encoding="utf-8") as stream:
             manifest = json.load(stream)
         self.assertIn("action", manifest)
+        self.assertTrue(manifest.get("key"))
         self.assertIn("http://127.0.0.1:8000/*", manifest.get("host_permissions", []))
 
         status, headers, _ = self.raw_request("OPTIONS", "/api/analyze", headers={"Origin": ext_origin})
         self.assertNotEqual(status, 204)
         self.assertNotIn("Access-Control-Allow-Origin", headers)
 
-        # POST /api/analyze must remain strictly blocked for extension origins.
+        # POST /api/analyze must remain strictly blocked even for our own extension origin.
         with self.assertRaises(urllib.error.HTTPError) as error:
             self.post({"mode": "catalog", "product_id": "SP01"}, origin=ext_origin)
         self.assertEqual(error.exception.code, 403)
 
     def test_extension_handoff_roundtrip_validation_and_pii_count(self):
-        ext_origin = "chrome-extension://abcdefghijklmnop"
+        ext_origin = self.PINNED_EXT_ORIGIN
         payload = {
             "product": {"shopid": "123", "itemid": "456", "name": "Tai nghe BT", "url": "https://shopee.vn/product/123/456"},
             "counts_by_star": {"5": 0, "4": 0, "3": 0, "2": 1, "1": 1},
@@ -181,11 +192,17 @@ class WebTests(unittest.TestCase):
             ]
         }
 
-        # Reject non-extension origins on POST /api/extension-handoff.
-        for bad_origin in (None, "https://evil.example", self.base):
+        # Reject non-extension origins AND other Chrome extension IDs on POST /api/extension-handoff.
+        for bad_origin in (
+            None,
+            "https://evil.example",
+            self.base,
+            "chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "chrome-extension://abcdefghijklmnop",
+        ):
             with self.assertRaises(urllib.error.HTTPError) as error:
                 self.post(payload, origin=bad_origin, path="/api/extension-handoff")
-            self.assertEqual(error.exception.code, 403)
+            self.assertEqual(error.exception.code, 403, f"Expected 403 for POST Origin={bad_origin}")
 
         # Reject non-Shopee URL and oversized review list.
         for bad_payload in (
@@ -242,7 +259,7 @@ class WebTests(unittest.TestCase):
             self.assertEqual(error.exception.code, 404)
 
     def test_extension_handoff_fifo_cap_and_ui_hooks(self):
-        ext_origin = "chrome-extension://abcdefghijklmnop"
+        ext_origin = self.PINNED_EXT_ORIGIN
         ids = []
         for idx in range(12):
             body = {
@@ -264,6 +281,49 @@ class WebTests(unittest.TestCase):
         self.assertIn('id="payload-file"', html)
         self.assertNotIn('id="product-url"', html)
         self.assertIn("/api/extension-handoff/", self.get("/app.js"))
+
+    def test_extension_handoff_env_allowlist_override_and_fail_closed(self):
+        custom_id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        payload = {
+            "product": {"url": "https://shopee.vn/product/1/2"},
+            "reviews": [{"rating_star": 2, "comment": "Pin nhanh hết sau khi sạc."}],
+        }
+        for env_value, allowed_origin, blocked_origin in (
+            (custom_id, "chrome-extension://" + custom_id, self.PINNED_EXT_ORIGIN),
+            ("*", None, self.PINNED_EXT_ORIGIN),
+        ):
+            with patch.dict(os.environ, {"REVIEW_LENS_EXTENSION_IDS": env_value}):
+                srv = create_server(0)
+            t = threading.Thread(target=srv.serve_forever, daemon=True)
+            t.start()
+            try:
+                conn = http.client.HTTPConnection("127.0.0.1", srv.server_port, timeout=5)
+                try:
+                    conn.request(
+                        "POST", "/api/extension-handoff",
+                        body=json.dumps(payload).encode("utf-8"),
+                        headers={"Content-Type": "application/json", "Origin": blocked_origin},
+                    )
+                    self.assertEqual(conn.getresponse().status, 403)
+                finally:
+                    conn.close()
+                if allowed_origin:
+                    conn = http.client.HTTPConnection("127.0.0.1", srv.server_port, timeout=5)
+                    try:
+                        conn.request(
+                            "POST", "/api/extension-handoff",
+                            body=json.dumps(payload).encode("utf-8"),
+                            headers={"Content-Type": "application/json", "Origin": allowed_origin},
+                        )
+                        resp = conn.getresponse()
+                        self.assertEqual(resp.status, 200)
+                        self.assertEqual(resp.getheader("Access-Control-Allow-Origin"), allowed_origin)
+                    finally:
+                        conn.close()
+            finally:
+                srv.shutdown()
+                srv.server_close()
+                t.join(timeout=5)
 
 
 if __name__ == "__main__":
