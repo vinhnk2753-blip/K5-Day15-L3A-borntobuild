@@ -58,6 +58,7 @@ Trang tự chạy UI và `python run.py simulate --try`; Codex đọc file kết
 - Mẫu seed=42 có 5 phiên dung_it, 5 phiên dung_vua, chưa lấy trúng dung_nhieu; không chỉnh kết quả để ép đủ persona. Lượt 50 phiên thuộc bước tiếp theo.
 - `python cost/check_personas.py` đạt, 0 cảnh báo. Hai test endpoint đạt (mặc định OpenAI, endpoint tùy chỉnh, gửi request và giữ usage); test không đọc `.env` và không gọi mạng ngoài.
 - Summary tự sinh dùng giá OpenAI tham chiếu và tỷ lệ eval có sẵn 23/25 của run-2. Chưa coi là biểu phí ShopAIKey hoặc chất lượng được đo lại qua endpoint này; khi báo chi phí thực trả cần nguồn giá nhà cung cấp.
+- Theo `.gitignore` của khung đề, 3 file lượt thử `cost/simulate-try.csv`, `cost/simulate-try-summary.md` và `traces/simulate-try.jsonl` không commit lên git (số liệu đã đối chiếu và ghi nhận ở trên); bản nộp CP4 sẽ commit lượt chính thức `cost/simulate-1.csv`, `cost/simulate-1-summary.md` và `traces/simulate-1.jsonl` (≥50 phiên).
 
 ## Cách chọn model và đối chiếu
 

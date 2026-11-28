@@ -27,7 +27,7 @@ class EndpointTests(unittest.TestCase):
             return runpy.run_path(str(ROOT / "codebase" / "ai.py"))
 
     def test_default_and_empty_use_openai(self):
-        for base_url in (None, ""):
+        for base_url in (None, "", "   "):
             with self.subTest(base_url=base_url):
                 self.assertEqual(self.load_adapter(base_url)["OPENAI_URL"],
                                  "https://api.openai.com/v1/chat/completions")
@@ -44,6 +44,16 @@ class EndpointTests(unittest.TestCase):
         self.assertEqual(request.get_header("Authorization"), "Bearer test-placeholder")
         self.assertEqual(json.loads(request.data)["model"], "test-model")
         self.assertEqual((result["tokens_in"], result["tokens_out"]), (12, 7))
+
+    def test_endpoint_suffix_not_duplicated_and_invalid_scheme_rejected(self):
+        adapter = self.load_adapter("https://api.shopaikey.com/v1/chat/completions/")
+        self.assertEqual(adapter["OPENAI_URL"], "https://api.shopaikey.com/v1/chat/completions")
+        for bad_url in ("api.shopaikey.com/v1", "file:///etc/passwd"):
+            with self.subTest(bad_url=bad_url):
+                bad_adapter = self.load_adapter(bad_url)
+                with patch("urllib.request.urlopen") as opener, self.assertRaises(RuntimeError):
+                    bad_adapter["call_model"]("system", "user")
+                opener.assert_not_called()
 
 
 if __name__ == "__main__":

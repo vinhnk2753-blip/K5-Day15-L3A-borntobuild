@@ -1,4 +1,4 @@
-# Issue #8 — cấu hình chi phí đồng bộ main ccb534b, 28/11/2026.
+# Issue #8 — cấu hình chi phí đồng bộ main 8ea4cf7, 28/11/2026.
 # Một lượt = một lần gọi answer(text) độc lập; nhiều lượt/phiên là nhiều lần phân tích,
 # không phải chat có bộ nhớ. Chỉ tính token model, chưa gồm crawler/hosting/thuế/phí thẻ.
 # Tham số tải lấy đúng dự toán spec.md §2 sau PR #21, chưa phải người dùng/tần suất đã đo.

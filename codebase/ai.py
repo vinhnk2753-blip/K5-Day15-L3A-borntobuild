@@ -44,8 +44,12 @@ load_env()
 MODEL_PROVIDER = (os.environ.get("MODEL_PROVIDER") or "fake").strip().lower()
 MODEL_NAME = (os.environ.get("MODEL_NAME") or "").strip()
 API_KEY = (os.environ.get("API_KEY") or "").strip()
-OPENAI_BASE_URL = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").strip().rstrip("/")
-OPENAI_URL = OPENAI_BASE_URL + "/chat/completions"
+OPENAI_BASE_URL = (os.environ.get("OPENAI_BASE_URL") or "").strip().rstrip("/") or "https://api.openai.com/v1"
+OPENAI_URL = (
+    OPENAI_BASE_URL
+    if OPENAI_BASE_URL.endswith("/chat/completions")
+    else OPENAI_BASE_URL + "/chat/completions"
+)
 
 
 @model_call
@@ -59,6 +63,8 @@ def call_model(system: str, user: str) -> dict:
         raise RuntimeError("Chưa cấu hình API_KEY trong .env.")
     if not MODEL_NAME:
         raise RuntimeError("Chưa cấu hình MODEL_NAME trong .env (ví dụ: gpt-6-luna).")
+    if not OPENAI_URL.startswith(("https://", "http://")):
+        raise RuntimeError("OPENAI_BASE_URL phải bắt đầu bằng http:// hoặc https://.")
 
     messages = ([{"role": "system", "content": system}] if system else [])
     messages.append({"role": "user", "content": user})
