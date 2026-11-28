@@ -107,8 +107,14 @@
     if (msg.source === PROGRESS_SOURCE) {
       const counts = Object.entries(msg.counts_by_star || {})
         .map(([star, count]) => `${star}★ ${count}`).join(" · ");
-      const action = msg.stage === "requesting" ? "Đang tải" : "Đã xử lý";
-      status.textContent = `${action} trang ${msg.page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
+      const starLabel = msg.star ? `${msg.star}★` : "review";
+      const page = msg.star_page || msg.page;
+      const action = msg.stage === "requesting"
+        ? `Đang tải ${starLabel}`
+        : msg.stage === "star_done"
+          ? `Đã xong ${starLabel}`
+          : "Đã xử lý";
+      status.textContent = `${action}, trang ${page}: đã quét ${msg.scanned} review, đã lấy ${msg.collected} (${counts}).`;
       return;
     }
 
