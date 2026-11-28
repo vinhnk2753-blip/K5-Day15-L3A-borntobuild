@@ -6,21 +6,6 @@
 
 Repo nộp bài hackathon AI20K của nhóm: một bản chạy thử AI cho **một lát cắt** (xem `spec.md` §4), kèm bằng chứng, bộ câu thử và mô phỏng chi phí. Mọi câu trả lời phải chạy được bằng các lệnh dưới đây.
 
-## Quy trình Issue → Pull Request (bắt buộc)
-
-1. Chỉ bắt đầu phần việc đã có GitHub Issue và được assign. Đọc issue, tài liệu liên quan và giới hạn file trước khi sửa; không tự mở rộng sang task khác hoặc sửa phần do thành viên khác phụ trách.
-2. Mỗi issue có branch riêng, tạo từ `dev` mới nhất theo mẫu `feat/<số-issue>-<mô-tả-ngắn>`, `fix/<số-issue>-<mô-tả-ngắn>` hoặc `docs/<số-issue>-<mô-tả-ngắn>`. Không dùng chung branch cho nhiều issue và không làm việc trực tiếp trên `main` hoặc `dev`.
-3. Chia thay đổi thành các commit nhỏ; mỗi commit là một thay đổi logic hoàn chỉnh và có kiểm thử phù hợp. Trước khi push, chạy các kiểm thử liên quan và xử lý lỗi phát hiện được.
-4. Tạo đúng một Pull Request cho branch của issue đó, nhắm vào `dev`; không gộp nhiều issue vào cùng một PR. PR phải nêu phạm vi thay đổi, kết quả kiểm thử và có `Closes #<số-issue>` tương ứng trong phần mô tả.
-5. Yêu cầu ít nhất một thành viên khác review. Chỉ merge sau khi đã có review của người khác; người thực hiện không tự merge PR của mình.
-
-### Ranh giới Git và dữ liệu
-
-- Không commit hoặc push trực tiếp lên `main` hay `dev`; không force-push lên hai nhánh này.
-- Không sửa file ngoài phạm vi issue được giao, trừ khi issue hoặc người phụ trách yêu cầu rõ.
-- Không commit API key, `.env`, dữ liệu khách hàng/cá nhân hoặc dữ liệu nhạy cảm.
-- Nếu repo hoặc quyền truy cập không có nhánh `dev`, issue chưa được assign, hay không thể tuân thủ quy trình trên, dừng trước thao tác GitHub có tác động và báo rõ trở ngại; không tự đổi sang `main`.
-
 ## Lệnh
 
 ```
