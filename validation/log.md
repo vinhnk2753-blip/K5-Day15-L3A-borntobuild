@@ -55,6 +55,6 @@ Buổi tiếp theo nên giao một kết quả cụ thể, ghi thời gian tác 
 - [x] Có U01/U02 ẩn danh, bối cảnh, thao tác, trợ giúp, quote và phân tích mức nghiêm trọng; U02 đã được Trang xác nhận lại giờ.
 - [x] Tổng hợp bài học và hành động giữ/đề xuất/để sau; changelog chỉ ghi việc tổng hợp, không giả nhận đã sửa UI.
 - [x] Trang xác nhận đã rà soát đầy đủ phiếu và bản tổng hợp cuối ngày 28/11/2026.
-- [ ] Trang tạo PR từ nhánh `feat/issue-12-user-validation` để nhóm review.
+- [x] Trang tạo PR #30 từ nhánh `feat/issue-12-user-validation` để nhóm review.
 
 Phần ghi chép và tổng hợp đáp ứng nội dung DoD Issue #12 theo hai buổi đã cung cấp; chưa tự đóng issue hoặc xác nhận các đề xuất UX đã được triển khai.

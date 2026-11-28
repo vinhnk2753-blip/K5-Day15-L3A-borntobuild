@@ -59,4 +59,4 @@ Không cần ép cả 4 ca kiểm kỹ thuật của Issue #8 vào mỗi phiên.
 
 “Mình cần nhờ bạn thử một trang hỗ trợ đọc review sản phẩm trong khoảng 5–10 phút. Bạn sẽ tự chọn một sản phẩm mẫu hoặc tập review công khai rồi thao tác theo cách của mình. Mình muốn biết chỗ nào dễ hiểu/khó hiểu và chỉ ghi chú ẩn danh; bạn không cần mua gì. Bạn có thể tham gia không?”
 
-Đây là bản nháp, chưa gửi lời mời hoặc hẹn với ai.
+Mẫu lời mời chuẩn bị trước buổi thử; xem kết quả 2 buổi thật tại [validation/log.md](log.md).
