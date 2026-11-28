@@ -27,7 +27,7 @@
 
 - **Rà sơ bộ 5 output theo benchmark cũ:** B01, B03, B04, B08, B10 từng được Codex rà 5/5 theo bộ 10 câu synthetic và metric trước khi main cập nhật benchmark. Đây là ghi nhận lịch sử, không phải kết quả cho bộ 25 câu/metric hiện tại và không thay thế người chấm độc lập.
 - **Người thứ hai chấm thử:** **Nguyễn Khánh Vinh** (thành viên không viết `metric_spec.yaml` và không viết agent) chấm độc lập mù 5 output của `eval/run-2.csv` (`run-2@20261127-224446`, gồm `B11`, `B16`, `B17`, `B22`, `B25`) → **khớp 5/5** (`B11=1`, `B16=1`, `B17=0` do thiếu ý kiến trái chiều R12, `B22=0` do trích R20 dù tiêu chí cấm & tiêu đề nghe như khẳng định, `B25=1`) — **đạt ngưỡng ≥4/5** (định nghĩa metric rõ ràng, không cần viết lại). Yến đã rà và xác nhận cả 25 câu của `run-1.csv` và `run-2.csv` (28/11/2026).
-- LLM chấm: không dùng — 1 metric chấm bằng code, 3 metric chấm bằng người.
+- LLM chấm: không dùng LLM làm grader tự động trong `metric_spec.yaml` (1 metric chấm bằng code, 3 metric chấm bằng người); Codex hỗ trợ chấm nháp cột `pass`/`ghi_chu`, Nguyễn Thị Hải Yến đã rà thủ công 25/25 câu cả 2 lượt (khớp 25/25) và Nguyễn Khánh Vinh chấm mù 5/5 câu lượt 2 (khớp 5/5) — chi tiết trong `docs/ai-usage.md`.
 - **Chuẩn "đạt"** (chép nguyên từ `spec.md` §7, chốt trước 19:30 Thứ Sáu 27/11): "Đạt khi ≥ 80% câu qua (≥ 20/25), và 100% câu tu_choi qua (5/5), và metric `trich_dan_ton_tai` = 100% (không có mã `[Rxx]` hay đoạn trích nào sai nguồn), và metric `dung_khi_thieu_can_cu` = 100% (9/9: không bịa rủi ro khi thiếu căn cứ, không cáo buộc, không chốt mua thay)."
 
 ## 4. Lệnh
