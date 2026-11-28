@@ -41,7 +41,8 @@ try {
   await cdp('Page.enable');
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
   await cdp('Page.navigate', { url: base });
-  await waitFor(`document.getElementById('product-select')?.options.length === 7`);
+  await waitFor(`document.getElementById('product-select')?.options.length >= 7`);
+  assert(await evaluate(`!!document.querySelector('#product-select option[value="SP06"]')`), 'Catalog CP3 có SP06');
   await fs.mkdir('.local', { recursive:true });
   assert(await evaluate(`document.getElementById('input-mode').value==='catalog' && !document.getElementById('product-url')`));
   await screenshot('.local/ui-home.png',1440);

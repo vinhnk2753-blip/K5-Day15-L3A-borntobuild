@@ -46,7 +46,8 @@ class WebTests(unittest.TestCase):
         self.assertIn('id="reviews"', self.get("/"))
         self.assertNotIn('id="product-url"', self.get("/"))
         catalog = json.loads(self.get("/api/products"))
-        self.assertEqual({p["id"] for p in catalog["products"] if not p["synthetic"]}, {"SP01", "SP02", "SP03"})
+        self.assertTrue({"SP01", "SP02", "SP03", "SP04", "SP05", "SP06"}.issubset(
+            {p["id"] for p in catalog["products"] if not p["synthetic"]}))
         self.assertIn("input[aria-invalid=true]", self.get("/style.css"))
         self.assertNotIn("min_clean_reviews", self.get("/app.js"))
 

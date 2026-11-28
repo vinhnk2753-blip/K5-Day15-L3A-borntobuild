@@ -44,7 +44,8 @@ load_env()
 MODEL_PROVIDER = (os.environ.get("MODEL_PROVIDER") or "fake").strip().lower()
 MODEL_NAME = (os.environ.get("MODEL_NAME") or "").strip()
 API_KEY = (os.environ.get("API_KEY") or "").strip()
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_BASE_URL = (os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1").strip().rstrip("/")
+OPENAI_URL = OPENAI_BASE_URL + "/chat/completions"
 
 
 @model_call
